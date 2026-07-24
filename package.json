@@ -9,7 +9,12 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "theme:verify": "node scripts/verify-theme-lock.mjs",
+    "theme:lock": "node scripts/verify-theme-lock.mjs --update",
+    "predev": "node scripts/verify-theme-lock.mjs",
+    "prebuild": "node scripts/verify-theme-lock.mjs",
+    "prebuild:dev": "node scripts/verify-theme-lock.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
