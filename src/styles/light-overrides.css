@@ -1,4 +1,12 @@
 /*
+ * ============================================================================
+ *  PROTECTED CORE STYLES — DO NOT MODIFY WITHOUT EXPLICIT USER APPROVAL
+ * ----------------------------------------------------------------------------
+ *  Light-mode brand token overrides. Owned by the user's brand identity.
+ *  Do not rewrite palette values, reformat, or "clean up" this file unless
+ *  the user specifically requests a change to this file by name.
+ * ============================================================================
+ *
  * Light-theme overrides — Modern Minimal: Charcoal (#2D3748) + Light Gray (#F8FAFC).
  * Monochrome, sharp and minimal. Charcoal drives headings, buttons and accents.
  * Scoped to html:not(.dark) so dark mode is completely untouched.
@@ -7,88 +15,54 @@
 
 /* ─── Core palette ─── */
 html:not(.dark) {
-  /* Charcoal anchors structure; original orange drives the accent. */
-  --orange: oklch(0.705 0.187 47.6); /* orange ≈ #F97316 */
-  --orange-glow: oklch(0.78 0.17 60); /* warm highlight ≈ #FDBA74 */
+  /* Charcoal anchors structure; forest/olive green drives the accent. */
+  --orange: oklch(0.48 0.11 145);          /* forest green ≈ #2F6B3A */
+  --orange-glow: oklch(0.60 0.12 140);     /* olive highlight ≈ #5E8A45 */
 
-  --background: oklch(0.985 0.004 247.9); /* clean light gray ≈ #F8FAFC */
-  --foreground: oklch(0.215 0.022 264); /* deep charcoal heading ≈ #161C28 */
-  --card: oklch(1 0 0); /* clean white cards for separation */
+  --background: oklch(0.985 0.004 247.9);  /* clean light gray ≈ #F8FAFC */
+  --foreground: oklch(0.215 0.022 264);    /* deep charcoal heading ≈ #161C28 */
+  --card: oklch(1 0 0);                     /* clean white cards for separation */
   --card-foreground: oklch(0.215 0.022 264);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.215 0.022 264);
 
-  --primary: oklch(0.305 0.03 260.9); /* charcoal primary ≈ #262E3B */
+  --primary: oklch(0.305 0.030 260.9);     /* charcoal primary ≈ #262E3B */
   --primary-foreground: oklch(0.984 0.003 247.9);
-  /* Secondary carries the orange accent wash for chips, tags, highlights */
-  --secondary: oklch(0.965 0.03 60); /* pale orange wash */
-  --secondary-foreground: oklch(0.55 0.18 47.6); /* orange text on pale wash */
+  /* Secondary now carries the forest-green accent for chips, tags, highlights */
+  --secondary: oklch(0.955 0.025 145);     /* pale green wash */
+  --secondary-foreground: oklch(0.40 0.11 145); /* forest text on pale green */
   --muted: oklch(0.965 0.006 247.9);
   --muted-foreground: oklch(0.495 0.038 257.4); /* deeper slate for better contrast */
-  --accent: oklch(0.955 0.035 60); /* light orange accent wash */
-  --accent-foreground: oklch(0.55 0.18 47.6);
-  --border: oklch(0.918 0.012 255.5); /* slightly stronger hairline */
+  --accent: oklch(0.948 0.030 145);        /* light green accent wash */
+  --accent-foreground: oklch(0.40 0.11 145);
+  --border: oklch(0.918 0.012 255.5);      /* slightly stronger hairline */
   --input: oklch(0.918 0.012 255.5);
-  --ring: oklch(0.705 0.187 47.6); /* orange focus ring */
+  --ring: oklch(0.48 0.11 145);            /* forest green focus ring */
   --surface: oklch(0.984 0.003 247.9);
 
-  --navy: oklch(0.305 0.03 260.9);
+  --navy: oklch(0.305 0.030 260.9);
   --navy-deep: oklch(0.215 0.022 264);
   --navy-ink: oklch(0.984 0.003 247.9);
 }
 
 /* ─── Typography: white-on-dark → slate-on-light ─── */
-html:not(.dark) .text-white\/90 {
-  color: color-mix(in oklab, var(--foreground) 90%, transparent) !important;
-}
-html:not(.dark) .text-white\/85 {
-  color: color-mix(in oklab, var(--foreground) 85%, transparent) !important;
-}
-html:not(.dark) .text-white\/80 {
-  color: color-mix(in oklab, var(--foreground) 80%, transparent) !important;
-}
-html:not(.dark) .text-white\/70 {
-  color: color-mix(in oklab, var(--foreground) 70%, transparent) !important;
-}
-html:not(.dark) .text-white\/65 {
-  color: color-mix(in oklab, var(--foreground) 65%, transparent) !important;
-}
-html:not(.dark) .text-white\/60 {
-  color: color-mix(in oklab, var(--foreground) 60%, transparent) !important;
-}
-html:not(.dark) .text-white\/55 {
-  color: color-mix(in oklab, var(--foreground) 55%, transparent) !important;
-}
-html:not(.dark) .text-white\/50 {
-  color: color-mix(in oklab, var(--foreground) 50%, transparent) !important;
-}
-html:not(.dark) .text-white\/45 {
-  color: color-mix(in oklab, var(--foreground) 45%, transparent) !important;
-}
-html:not(.dark) .text-white\/40 {
-  color: color-mix(in oklab, var(--foreground) 40%, transparent) !important;
-}
-html:not(.dark) .text-white\/35 {
-  color: color-mix(in oklab, var(--foreground) 35%, transparent) !important;
-}
-html:not(.dark) .text-white\/30 {
-  color: color-mix(in oklab, var(--foreground) 30%, transparent) !important;
-}
-html:not(.dark) .text-white\/25 {
-  color: color-mix(in oklab, var(--foreground) 25%, transparent) !important;
-}
-html:not(.dark) .text-white\/20 {
-  color: color-mix(in oklab, var(--foreground) 20%, transparent) !important;
-}
-html:not(.dark) .text-white\/15 {
-  color: color-mix(in oklab, var(--foreground) 15%, transparent) !important;
-}
-html:not(.dark) .text-white\/10 {
-  color: color-mix(in oklab, var(--foreground) 10%, transparent) !important;
-}
-html:not(.dark) .text-white\/5 {
-  color: color-mix(in oklab, var(--foreground) 5%, transparent) !important;
-}
+html:not(.dark) .text-white\/90  { color: color-mix(in oklab, var(--foreground) 90%, transparent) !important; }
+html:not(.dark) .text-white\/85  { color: color-mix(in oklab, var(--foreground) 85%, transparent) !important; }
+html:not(.dark) .text-white\/80  { color: color-mix(in oklab, var(--foreground) 80%, transparent) !important; }
+html:not(.dark) .text-white\/70  { color: color-mix(in oklab, var(--foreground) 70%, transparent) !important; }
+html:not(.dark) .text-white\/65  { color: color-mix(in oklab, var(--foreground) 65%, transparent) !important; }
+html:not(.dark) .text-white\/60  { color: color-mix(in oklab, var(--foreground) 60%, transparent) !important; }
+html:not(.dark) .text-white\/55  { color: color-mix(in oklab, var(--foreground) 55%, transparent) !important; }
+html:not(.dark) .text-white\/50  { color: color-mix(in oklab, var(--foreground) 50%, transparent) !important; }
+html:not(.dark) .text-white\/45  { color: color-mix(in oklab, var(--foreground) 45%, transparent) !important; }
+html:not(.dark) .text-white\/40  { color: color-mix(in oklab, var(--foreground) 40%, transparent) !important; }
+html:not(.dark) .text-white\/35  { color: color-mix(in oklab, var(--foreground) 35%, transparent) !important; }
+html:not(.dark) .text-white\/30  { color: color-mix(in oklab, var(--foreground) 30%, transparent) !important; }
+html:not(.dark) .text-white\/25  { color: color-mix(in oklab, var(--foreground) 25%, transparent) !important; }
+html:not(.dark) .text-white\/20  { color: color-mix(in oklab, var(--foreground) 20%, transparent) !important; }
+html:not(.dark) .text-white\/15  { color: color-mix(in oklab, var(--foreground) 15%, transparent) !important; }
+html:not(.dark) .text-white\/10  { color: color-mix(in oklab, var(--foreground) 10%, transparent) !important; }
+html:not(.dark) .text-white\/5   { color: color-mix(in oklab, var(--foreground) 5%, transparent) !important; }
 
 /* Hardcoded heading white → navy */
 html:not(.dark) .text-white {
@@ -96,75 +70,33 @@ html:not(.dark) .text-white {
 }
 
 /* Status-badge colours that are too pale on light backgrounds */
-html:not(.dark) .text-sky-200 {
-  color: oklch(0.55 0.12 220) !important;
-}
-html:not(.dark) .text-emerald-200 {
-  color: oklch(0.5 0.15 160) !important;
-}
+html:not(.dark) .text-sky-200   { color: oklch(0.55 0.12 220) !important; }
+html:not(.dark) .text-emerald-200 { color: oklch(0.50 0.15 160) !important; }
 
 /* ─── Borders: white → subtle grey ─── */
-html:not(.dark) .border-white\/5 {
-  border-color: color-mix(in oklab, var(--border) 50%, transparent) !important;
-}
-html:not(.dark) .border-white\/8 {
-  border-color: color-mix(in oklab, var(--border) 60%, transparent) !important;
-}
-html:not(.dark) .border-white\/10 {
-  border-color: color-mix(in oklab, var(--border) 70%, transparent) !important;
-}
-html:not(.dark) .border-white\/15 {
-  border-color: color-mix(in oklab, var(--border) 80%, transparent) !important;
-}
-html:not(.dark) .border-white\/16 {
-  border-color: color-mix(in oklab, var(--border) 80%, transparent) !important;
-}
-html:not(.dark) .border-white\/20 {
-  border-color: color-mix(in oklab, var(--border) 90%, transparent) !important;
-}
-html:not(.dark) .border-white\/30 {
-  border-color: color-mix(in oklab, var(--border) 100%, transparent) !important;
-}
+html:not(.dark) .border-white\/5   { border-color: color-mix(in oklab, var(--border) 50%, transparent) !important; }
+html:not(.dark) .border-white\/8   { border-color: color-mix(in oklab, var(--border) 60%, transparent) !important; }
+html:not(.dark) .border-white\/10  { border-color: color-mix(in oklab, var(--border) 70%, transparent) !important; }
+html:not(.dark) .border-white\/15  { border-color: color-mix(in oklab, var(--border) 80%, transparent) !important; }
+html:not(.dark) .border-white\/16  { border-color: color-mix(in oklab, var(--border) 80%, transparent) !important; }
+html:not(.dark) .border-white\/20  { border-color: color-mix(in oklab, var(--border) 90%, transparent) !important; }
+html:not(.dark) .border-white\/30  { border-color: color-mix(in oklab, var(--border) 100%, transparent) !important; }
 
 /* ─── Backgrounds: white-opacity → card-opacity ─── */
-html:not(.dark) .bg-white\/\[0\.01\] {
-  background-color: color-mix(in oklab, var(--card) 10%, transparent) !important;
-}
-html:not(.dark) .bg-white\/\[0\.02\] {
-  background-color: color-mix(in oklab, var(--card) 20%, transparent) !important;
-}
-html:not(.dark) .bg-white\/\[0\.03\] {
-  background-color: color-mix(in oklab, var(--card) 30%, transparent) !important;
-}
-html:not(.dark) .bg-white\/\[0\.05\] {
-  background-color: color-mix(in oklab, var(--card) 50%, transparent) !important;
-}
-html:not(.dark) .bg-white\/\[0\.06\] {
-  background-color: color-mix(in oklab, var(--card) 60%, transparent) !important;
-}
-html:not(.dark) .bg-white\/\[0\.08\] {
-  background-color: color-mix(in oklab, var(--card) 80%, transparent) !important;
-}
-html:not(.dark) .bg-white\/\[0\.10\] {
-  background-color: var(--card) !important;
-}
+html:not(.dark) .bg-white\/\[0\.01\] { background-color: color-mix(in oklab, var(--card) 10%, transparent) !important; }
+html:not(.dark) .bg-white\/\[0\.02\] { background-color: color-mix(in oklab, var(--card) 20%, transparent) !important; }
+html:not(.dark) .bg-white\/\[0\.03\] { background-color: color-mix(in oklab, var(--card) 30%, transparent) !important; }
+html:not(.dark) .bg-white\/\[0\.05\] { background-color: color-mix(in oklab, var(--card) 50%, transparent) !important; }
+html:not(.dark) .bg-white\/\[0\.06\] { background-color: color-mix(in oklab, var(--card) 60%, transparent) !important; }
+html:not(.dark) .bg-white\/\[0\.08\] { background-color: color-mix(in oklab, var(--card) 80%, transparent) !important; }
+html:not(.dark) .bg-white\/\[0\.10\] { background-color: var(--card) !important; }
 
 /* ─── Hover states ─── */
-html:not(.dark) .hover\:text-orange-glow:hover {
-  color: var(--orange) !important;
-}
-html:not(.dark) .hover\:border-orange\/50:hover {
-  border-color: color-mix(in oklab, var(--orange) 50%, transparent) !important;
-}
-html:not(.dark) .hover\:bg-white\/\[0\.06\]:hover {
-  background-color: color-mix(in oklab, var(--card) 60%, transparent) !important;
-}
-html:not(.dark) .hover\:text-white:hover {
-  color: var(--foreground) !important;
-}
-html:not(.dark) .hover\:text-white\/65:hover {
-  color: color-mix(in oklab, var(--foreground) 65%, transparent) !important;
-}
+html:not(.dark) .hover\:text-orange-glow:hover { color: var(--orange) !important; }
+html:not(.dark) .hover\:border-orange\/50:hover { border-color: color-mix(in oklab, var(--orange) 50%, transparent) !important; }
+html:not(.dark) .hover\:bg-white\/\[0\.06\]:hover { background-color: color-mix(in oklab, var(--card) 60%, transparent) !important; }
+html:not(.dark) .hover\:text-white:hover { color: var(--foreground) !important; }
+html:not(.dark) .hover\:text-white\/65:hover { color: color-mix(in oklab, var(--foreground) 65%, transparent) !important; }
 
 /* ─── Utility classes from styles.css ─── */
 
@@ -214,26 +146,10 @@ html:not(.dark) .orange-aurora {
 html:not(.dark) .blueprint-grid {
   background-color: var(--navy-ink);
   background-image:
-    linear-gradient(
-      to right,
-      color-mix(in oklab, var(--orange) 6%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--orange) 6%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to right,
-      color-mix(in oklab, var(--foreground) 3%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--foreground) 3%, transparent) 1px,
-      transparent 1px
-    );
+    linear-gradient(to right,  color-mix(in oklab, var(--orange) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--orange) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to right,  color-mix(in oklab, var(--foreground) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 3%, transparent) 1px, transparent 1px);
 }
 
 /* Live dot */
@@ -258,11 +174,9 @@ html:not(.dark) .dark-input:focus-visible {
 
 /* Intake cards */
 html:not(.dark) .intake-card {
-  background: linear-gradient(
-    180deg,
+  background: linear-gradient(180deg,
     color-mix(in oklab, white 10%, transparent),
-    color-mix(in oklab, white 5%, transparent)
-  );
+    color-mix(in oklab, white 5%, transparent));
   border: 1px solid var(--border);
 }
 html:not(.dark) .intake-card-tone-1,
@@ -290,34 +204,17 @@ html:not(.dark) .intake-input:focus-visible {
 html:not(.dark) .intake-grid {
   background-color: color-mix(in oklab, var(--navy) 8%, var(--background));
   background-image:
-    linear-gradient(
-      to right,
-      color-mix(in oklab, var(--orange) 4%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--orange) 4%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to right,
-      color-mix(in oklab, var(--foreground) 3%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--foreground) 3%, transparent) 1px,
-      transparent 1px
-    );
+    linear-gradient(to right,  color-mix(in oklab, var(--orange) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--orange) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to right,  color-mix(in oklab, var(--foreground) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 3%, transparent) 1px, transparent 1px);
 }
 
 /* Gradient text */
 html:not(.dark) .bg-gradient-to-r.from-orange-glow.via-orange.to-orange-glow {
   --tw-gradient-from: var(--orange-glow) var(--tw-gradient-from-position);
   --tw-gradient-to: var(--orange-glow) var(--tw-gradient-to-position);
-  --tw-gradient-stops:
-    var(--tw-gradient-from), var(--orange) var(--tw-gradient-via-position), var(--tw-gradient-to);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--orange) var(--tw-gradient-via-position), var(--tw-gradient-to);
 }
 
 /* AI halo */
@@ -334,27 +231,13 @@ html:not(.dark) .ai-breath {
   animation: ai-halo-breath-light 6s ease-in-out infinite;
 }
 @keyframes ai-halo-breath-light {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 0 color-mix(in oklab, var(--orange-glow) 0%, transparent),
-      0 24px 60px -30px rgba(0, 0, 0, 0.15);
-  }
-  50% {
-    box-shadow:
-      0 0 40px -6px color-mix(in oklab, var(--orange-glow) 25%, transparent),
-      0 24px 60px -30px rgba(0, 0, 0, 0.15);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--orange-glow) 0%, transparent), 0 24px 60px -30px rgba(0,0,0,0.15); }
+  50%      { box-shadow: 0 0 40px -6px color-mix(in oklab, var(--orange-glow) 25%, transparent), 0 24px 60px -30px rgba(0,0,0,0.15); }
 }
 
 /* Stream bar */
 html:not(.dark) .stream-bar-line {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklab, var(--orange-glow) 50%, transparent),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--orange-glow) 50%, transparent), transparent);
 }
 
 /* Marquee mask */
@@ -460,6 +343,7 @@ html:not(.dark) [class~="text-slate-900"][class] {
   color: var(--foreground) !important;
 }
 
+
 /* ─── Light-theme typography boost — larger, bolder, higher contrast ─── */
 
 /* Base body text bump for readability on white surfaces */
@@ -471,23 +355,12 @@ html:not(.dark) body {
 }
 
 /* Headings: tighten and embolden */
-html:not(.dark) h1 {
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-html:not(.dark) h2 {
-  font-weight: 800;
-  letter-spacing: -0.015em;
-}
-html:not(.dark) h3 {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
+html:not(.dark) h1 { font-weight: 800; letter-spacing: -0.02em; }
+html:not(.dark) h2 { font-weight: 800; letter-spacing: -0.015em; }
+html:not(.dark) h3 { font-weight: 700; letter-spacing: -0.01em; }
 html:not(.dark) h4,
 html:not(.dark) h5,
-html:not(.dark) h6 {
-  font-weight: 700;
-}
+html:not(.dark) h6 { font-weight: 700; }
 
 /* Labels and form fields — clearer hierarchy */
 html:not(.dark) label,
@@ -505,18 +378,9 @@ html:not(.dark) main li {
 }
 
 /* Bump common small-text utilities one notch for light backgrounds */
-html:not(.dark) .text-xs {
-  font-size: 0.8125rem;
-  line-height: 1.15rem;
-}
-html:not(.dark) .text-sm {
-  font-size: 0.9375rem;
-  line-height: 1.4rem;
-}
-html:not(.dark) .text-base {
-  font-size: 1.0625rem;
-  line-height: 1.6rem;
-}
+html:not(.dark) .text-xs   { font-size: 0.8125rem; line-height: 1.15rem; }
+html:not(.dark) .text-sm   { font-size: 0.9375rem; line-height: 1.4rem; }
+html:not(.dark) .text-base { font-size: 1.0625rem; line-height: 1.6rem; }
 
 /* Tighten muted-foreground for better contrast on light surfaces */
 html:not(.dark) .text-muted-foreground {
@@ -560,24 +424,12 @@ html:not(.dark) .bg-white\/10.text-slate-200 {
 }
 
 /* Status badges: pale colour-on-pale → accessible contrast on white cards */
-html:not(.dark) .text-sky-300 {
-  color: oklch(0.47 0.13 233) !important;
-}
-html:not(.dark) .text-emerald-300 {
-  color: oklch(0.46 0.14 162) !important;
-}
-html:not(.dark) .bg-sky-500\/15 {
-  background-color: oklch(0.93 0.045 233) !important;
-}
-html:not(.dark) .bg-emerald-500\/15 {
-  background-color: oklch(0.93 0.05 162) !important;
-}
-html:not(.dark) .bg-orange\/15 {
-  background-color: color-mix(in oklab, var(--orange) 14%, var(--card)) !important;
-}
-html:not(.dark) .border-sky-400\/30 {
-  border-color: color-mix(in oklab, oklch(0.55 0.13 233) 60%, transparent) !important;
-}
-html:not(.dark) .border-emerald-400\/30 {
-  border-color: color-mix(in oklab, oklch(0.55 0.14 162) 60%, transparent) !important;
-}
+html:not(.dark) .text-sky-300     { color: oklch(0.47 0.13 233) !important; }
+html:not(.dark) .text-emerald-300 { color: oklch(0.46 0.14 162) !important; }
+html:not(.dark) .bg-sky-500\/15     { background-color: oklch(0.93 0.045 233) !important; }
+html:not(.dark) .bg-emerald-500\/15 { background-color: oklch(0.93 0.05 162) !important; }
+html:not(.dark) .bg-orange\/15      { background-color: color-mix(in oklab, var(--orange) 14%, var(--card)) !important; }
+html:not(.dark) .border-sky-400\/30     { border-color: color-mix(in oklab, oklch(0.55 0.13 233) 60%, transparent) !important; }
+html:not(.dark) .border-emerald-400\/30 { border-color: color-mix(in oklab, oklch(0.55 0.14 162) 60%, transparent) !important; }
+
+
