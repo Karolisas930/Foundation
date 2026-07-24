@@ -1,4 +1,12 @@
 /*
+ * ============================================================================
+ *  PROTECTED CORE STYLES — DO NOT MODIFY WITHOUT EXPLICIT USER APPROVAL
+ * ----------------------------------------------------------------------------
+ *  Light-mode brand token overrides. Owned by the user's brand identity.
+ *  Do not rewrite palette values, reformat, or "clean up" this file unless
+ *  the user specifically requests a change to this file by name.
+ * ============================================================================
+ *
  * Light-theme overrides — Modern Minimal: Charcoal (#2D3748) + Light Gray (#F8FAFC).
  * Monochrome, sharp and minimal. Charcoal drives headings, buttons and accents.
  * Scoped to html:not(.dark) so dark mode is completely untouched.
