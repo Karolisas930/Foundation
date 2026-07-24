@@ -1,0 +1,2 @@
+-- inlined from supabase/migrations/20260722154200 + Phase 3 notifications
+-- see /tmp/mig.sql for exact SQL

@@ -1,0 +1,737 @@
+{
+  "project": "app-preview-helper",
+  "generated_at": "2026-07-21",
+  "stack": {
+    "framework": "TanStack Start v1 (React 19, Vite 7)",
+    "styling": "Tailwind CSS v4",
+    "backend": "Lovable Cloud (Supabase)",
+    "routing": "file-based (src/routes)",
+    "state": "TanStack Query"
+  },
+  "top_level": [
+    "AGENTS.md",
+    "README.md",
+    "bunfig.toml",
+    "components.json",
+    "eslint.config.js",
+    "package.json",
+    "public",
+    "src",
+    "supabase",
+    "tsconfig.json",
+    "vite.config.ts"
+  ],
+  "src_tree": {
+    "src": {
+      "routeTree.gen.ts": null,
+      "router.tsx": null,
+      "server.ts": null,
+      "start.ts": null,
+      "styles.css": null,
+      "components": {
+        "ui": {
+          "accordion.tsx": null,
+          "alert-dialog.tsx": null,
+          "alert.tsx": null,
+          "aspect-ratio.tsx": null,
+          "avatar.tsx": null,
+          "badge.tsx": null,
+          "breadcrumb.tsx": null,
+          "button.tsx": null,
+          "calendar.tsx": null,
+          "card.tsx": null,
+          "carousel.tsx": null,
+          "chart.tsx": null,
+          "checkbox.tsx": null,
+          "collapsible.tsx": null,
+          "command.tsx": null,
+          "context-menu.tsx": null,
+          "dialog.tsx": null,
+          "drawer.tsx": null,
+          "dropdown-menu.tsx": null,
+          "form.tsx": null,
+          "hover-card.tsx": null,
+          "input-otp.tsx": null,
+          "input.tsx": null,
+          "label.tsx": null,
+          "menubar.tsx": null,
+          "navigation-menu.tsx": null,
+          "pagination.tsx": null,
+          "popover.tsx": null,
+          "progress.tsx": null,
+          "radio-group.tsx": null,
+          "resizable.tsx": null,
+          "scroll-area.tsx": null,
+          "select.tsx": null,
+          "separator.tsx": null,
+          "sheet.tsx": null,
+          "sidebar.tsx": null,
+          "skeleton.tsx": null,
+          "slider.tsx": null,
+          "sonner.tsx": null,
+          "switch.tsx": null,
+          "table.tsx": null,
+          "tabs.tsx": null,
+          "textarea.tsx": null,
+          "toggle-group.tsx": null,
+          "toggle.tsx": null,
+          "tooltip.tsx": null
+        },
+        "layouts": {
+          "AuthLayout.tsx": null,
+          "DashboardLayout.tsx": null
+        },
+        "shared": {
+          "AppSideMenu.tsx": null,
+          "AuthGuard.tsx": null,
+          "BottomBar.tsx": null,
+          "BusinessSettingsModals.tsx": null,
+          "ComplianceBanner.tsx": null,
+          "FormShell.tsx": null,
+          "HeaderActions.tsx": null,
+          "KmTrackerQuickModal.tsx": null,
+          "LanguageSelector.tsx": null,
+          "OnboardingPage.tsx": null,
+          "PageHeader.tsx": null,
+          "PinGate.tsx": null,
+          "PinLock.tsx": null,
+          "SecureDocumentUpload.tsx": null,
+          "TestingSwitchboard.tsx": null,
+          "ThemeCycleButton.tsx": null,
+          "ThemeToggle.tsx": null,
+          "TopBar.tsx": null,
+          "UserAvatar.tsx": null,
+          "shared.ts": null,
+          "business-settings": {
+            "ConnectEmailModal.tsx": null,
+            "ModalShell.tsx": null,
+            "PayoutModal.tsx": null,
+            "StatusBadge.tsx": null,
+            "UploadModal.tsx": null,
+            "types.ts": null
+          },
+          "side-menu": {
+            "QuickSheets.tsx": null,
+            "SideMenuFooter.tsx": null,
+            "SideMenuNav.tsx": null,
+            "SideMenuProfileHeader.tsx": null,
+            "menu-types.ts": null,
+            "useMenuSections.tsx": null
+          }
+        }
+      },
+      "hooks": {
+        "use-mobile.tsx": null,
+        "use-theme.tsx": null,
+        "useUser.ts": null
+      },
+      "lib": {
+        "country-data.ts": null,
+        "demo-auth.ts": null,
+        "dev-seeder.functions.ts": null,
+        "ecosystem-actions.ts": null,
+        "error-capture.ts": null,
+        "error-page.ts": null,
+        "finanz-ocr.functions.ts": null,
+        "i18n.ts": null,
+        "job-feed.functions.ts": null,
+        "km-tax.ts": null,
+        "lovable-error-reporting.ts": null,
+        "network-chat.functions.ts": null,
+        "openplz.ts": null,
+        "password-strength.ts": null,
+        "permissions.ts": null,
+        "postcode-de.ts": null,
+        "privacy-gate.functions.ts": null,
+        "sector-panels.tsx": null,
+        "streets-de.ts": null,
+        "supabase.ts": null,
+        "trade-categories.ts": null,
+        "types.ts": null,
+        "utils.ts": null,
+        "verification-ocr.functions.ts": null,
+        "voice-intake.functions.ts": null,
+        "voice-processor.ts": null
+      },
+      "routes": {
+        "README.md": null,
+        "__root.tsx": null,
+        "auth.login.tsx": null,
+        "auth.tsx": null,
+        "dashboard.tsx": null,
+        "datenschutz.tsx": null,
+        "finanz.tsx": null,
+        "impressum.tsx": null,
+        "index.tsx": null,
+        "onboarding.$sector.tsx": null,
+        "onboarding.index.tsx": null,
+        "p.$profileId.tsx": null,
+        "reset-password.tsx": null,
+        "search.tsx": null,
+        "sitemap[.]xml.ts": null,
+        "_authenticated": {
+          "contractor.calendar.tsx": null,
+          "daily-log.tsx": null,
+          "dev.tsx": null,
+          "jobs.active.tsx": null,
+          "jobs.quotes.tsx": null,
+          "messages.tsx": null,
+          "network.$threadId.tsx": null,
+          "network.index.tsx": null,
+          "network.tsx": null,
+          "notifications.tsx": null,
+          "performance.tsx": null,
+          "profile.tsx": null,
+          "reports.tsx": null,
+          "route.tsx": null,
+          "security.tsx": null,
+          "settings.tsx": null,
+          "staff-hours.tsx": null,
+          "team.locations.tsx": null,
+          "team.tsx": null
+        },
+        "api": {
+          "transcribe-stream.ts": null
+        },
+        "dashboard": {
+          "client.tsx": null,
+          "index.tsx": null
+        }
+      },
+      "api": {
+        "db": {
+          "schema.ts": null
+        },
+        "routers": {
+          "auth.ts": null,
+          "jobs.ts": null,
+          "profile.ts": null,
+          "team.ts": null,
+          "timesheets.ts": null
+        }
+      },
+      "core": {
+        "DynamicSectorRenderer.tsx": null,
+        "demo-session.ts": null,
+        "sector-config.ts": null
+      },
+      "features": {
+        "auth": {
+          "components": {
+            "LoginForm.tsx": null,
+            "SignupForm.tsx": null
+          },
+          "hooks": {
+            "useAuth.ts": null
+          },
+          "route": {
+            "AuthModeTabs.tsx": null,
+            "CloudNotConnectedBanner.tsx": null,
+            "EmailPasswordPanel.tsx": null,
+            "ForgotPasswordPanel.tsx": null,
+            "PasswordStrengthMeter.tsx": null,
+            "SocialAuthPanel.tsx": null,
+            "auth-errors.ts": null,
+            "provider-icons.tsx": null,
+            "types.ts": null,
+            "useAuthActions.ts": null
+          }
+        },
+        "contractor": {
+          "calendar": {
+            "components": {
+              "CalendarPage.tsx": null
+            }
+          },
+          "dashboard": {
+            "components": {
+              "BigVoiceCTA.tsx": null,
+              "ContractorDashboard.tsx": null,
+              "MetricCard.tsx": null,
+              "MiniRadar.tsx": null,
+              "QuickAction.tsx": null,
+              "RecentActivity.tsx": null,
+              "helpers.ts": null
+            }
+          },
+          "jobs": {
+            "components": {
+              "ActiveJobsPage.tsx": null,
+              "AddReceiptDialog.tsx": null,
+              "CrewTile.tsx": null,
+              "EmptyState.tsx": null,
+              "JobCard.tsx": null,
+              "JobDetailSheet.tsx": null,
+              "LogHoursDialog.tsx": null,
+              "NewJobDialog.tsx": null,
+              "active-jobs-store.ts": null,
+              "atoms.tsx": null
+            }
+          },
+          "leads": {
+            "lead-dispatch.ts": null,
+            "lead-gate.functions.ts": null,
+            "lead-gate.ts": null
+          },
+          "onboarding": {
+            "components": {
+              "AppleIcon.tsx": null,
+              "ArchitectForm.tsx": null,
+              "BusinessForm.tsx": null,
+              "CompactToolsPanel.tsx": null,
+              "CompleteProfileForm.tsx": null,
+              "DigitalPunchList.tsx": null,
+              "FeatureModal.tsx": null,
+              "GoogleIcon.tsx": null,
+              "HandymanForm.tsx": null,
+              "HandymanOnboarding.tsx": null,
+              "HandymanProSection.tsx": null,
+              "HandymanProTools.tsx": null,
+              "HandymanProToolsExtra.tsx": null,
+              "HandymanWorkspace.tsx": null,
+              "InvoiceHistoryList.tsx": null,
+              "LanguageGrid.tsx": null,
+              "LeadQuality.tsx": null,
+              "MaterialComparator.tsx": null,
+              "MeisterVerification.tsx": null,
+              "OnboardingWizard.tsx": null,
+              "PostHelpRequestSheet.tsx": null,
+              "QuickStartForm.tsx": null,
+              "ReceiptsManager.tsx": null,
+              "ReviewRequests.tsx": null,
+              "ShowcasePortfolio.tsx": null,
+              "SmartReceiptAI.tsx": null,
+              "StreetAutocomplete.tsx": null,
+              "TeamManagement.tsx": null,
+              "ToolTracker.tsx": null,
+              "TradeAccordion.tsx": null,
+              "VoiceDictateButton.tsx": null,
+              "VoiceToInvoiceConnected.tsx": null,
+              "onboarding-constants.ts": null,
+              "profile-types.ts": null,
+              "handyman": {
+                "MeisterDialog.tsx": null,
+                "SecureAccountDialog.tsx": null,
+                "StepTracker.tsx": null,
+                "WizardFooterNav.tsx": null,
+                "finalizeRegistration.ts": null,
+                "hooks": {
+                  "useOnboardingDraft.ts": null,
+                  "usePostcodeLookup.ts": null
+                },
+                "steps": {
+                  "ContactStep.tsx": null,
+                  "IdentityStep.tsx": null,
+                  "ProfileStep.tsx": null,
+                  "ServiceAreaStep.tsx": null,
+                  "TradesStep.tsx": null
+                }
+              },
+              "profile": {
+                "ContactSection.tsx": null,
+                "EditProfileForm.tsx": null,
+                "IdentitySection.tsx": null,
+                "PerformanceStats.tsx": null,
+                "ProfileDetailsSection.tsx": null,
+                "ProfileOverview.tsx": null,
+                "ProfileProgressBar.tsx": null,
+                "SectionShell.tsx": null,
+                "ServiceAreaSection.tsx": null,
+                "ToolsModalLauncher.tsx": null,
+                "TradesSection.tsx": null,
+                "index.ts": null,
+                "types.ts": null
+              }
+            }
+          },
+          "profile": {
+            "index.ts": null,
+            "match-invoices.functions.ts": null,
+            "private-invoice.functions.ts": null,
+            "profile-gate.ts": null,
+            "profile-reports.functions.ts": null,
+            "components": {
+              "AlertsFilterPill.tsx": null,
+              "AlertsJobDrawer.tsx": null,
+              "AlertsLeadCard.tsx": null,
+              "AlertsPanel.tsx": null,
+              "EditProfilePanel.tsx": null,
+              "FinanzMatrix.tsx": null,
+              "HandymanProfilePage.tsx": null,
+              "PerformancePanel.tsx": null,
+              "PrivateInvoiceDrawer.tsx": null,
+              "ProfileAppPage.tsx": null,
+              "ProfileHeader.tsx": null,
+              "ProfileInfoSection.tsx": null,
+              "RadiusSlider.tsx": null,
+              "ResendInvoiceDialog.tsx": null,
+              "ToolbeltPanel.tsx": null,
+              "alerts-types.ts": null,
+              "finanz-matrix": {
+                "RecentEntriesList.tsx": null,
+                "ScanReceiptDrawer.tsx": null,
+                "constants.ts": null
+              },
+              "toolbelt": {
+                "InvoiceHistorySheet.tsx": null,
+                "JobRadar.tsx": null,
+                "TaxToolsSheet.tsx": null,
+                "ToolbeltModals.tsx": null,
+                "invoice-datev.ts": null,
+                "invoice-store.ts": null,
+                "marketplace-clients.ts": null,
+                "template-merge.ts": null,
+                "tax-tools": {
+                  "TaxDeductionSummary.tsx": null,
+                  "TaxExportsSection.tsx": null,
+                  "TaxQuarterlyChart.tsx": null,
+                  "TaxToolsUi.tsx": null,
+                  "TaxVatFields.tsx": null,
+                  "tax-calc.ts": null,
+                  "useTaxData.ts": null
+                }
+              }
+            },
+            "trades": {
+              "ArchitectCards.tsx": null,
+              "BusinessCards.tsx": null,
+              "DisposalCards.tsx": null,
+              "HandymanCards.tsx": null,
+              "LogisticsCards.tsx": null,
+              "SectorCard.tsx": null,
+              "SecurityCards.tsx": null,
+              "index.ts": null
+            }
+          },
+          "quotes": {
+            "quotes-store.ts": null,
+            "components": {
+              "QuotesPage.tsx": null,
+              "quotes-page": {
+                "EmptyState.tsx": null,
+                "QuoteCard.tsx": null,
+                "QuoteEditorSheet.tsx": null,
+                "QuoteForm.tsx": null,
+                "SourcePicker.tsx": null,
+                "StatCard.tsx": null,
+                "constants.ts": null
+              }
+            }
+          },
+          "reports": {
+            "components": {
+              "DownloadsReportsPage.tsx": null
+            }
+          },
+          "team": {
+            "site-diary-store.ts": null,
+            "staff-activity.ts": null,
+            "staff-locations-store.ts": null,
+            "team-store.ts": null,
+            "components": {
+              "DailyLog.tsx": null,
+              "MemberDetail.tsx": null,
+              "SiteDiarySheet.tsx": null,
+              "StaffLocationsPage.tsx": null,
+              "TeamPage.tsx": null,
+              "TradeComplianceChecklist.tsx": null,
+              "site-diary": {
+                "PhotosPanel.tsx": null,
+                "ReceiptsPanel.tsx": null,
+                "SaveFlash.tsx": null,
+                "SignaturePanel.tsx": null,
+                "TimelinePanel.tsx": null,
+                "VoicePanel.tsx": null,
+                "utils.ts": null
+              },
+              "team": {
+                "EditMemberDialog.tsx": null,
+                "InviteMemberDialog.tsx": null,
+                "TeamMembersList.tsx": null,
+                "TeamPills.tsx": null,
+                "TeamStats.tsx": null
+              }
+            },
+            "hooks": {
+              "useTeamPermissions.ts": null
+            }
+          },
+          "timesheets": {
+            "components": {
+              "EditEntryDialog.tsx": null,
+              "MemberDetailDialog.tsx": null,
+              "PayCalculationSection.tsx": null,
+              "ReviewTab.tsx": null,
+              "StaffHoursCharts.tsx": null,
+              "StaffHoursPage.tsx": null,
+              "StaffHoursPrimitives.tsx": null,
+              "staff-hours-utils.ts": null,
+              "useStaffHoursData.ts": null
+            }
+          },
+          "tools": {
+            "components": {
+              "FinancialToolsPage.tsx": null,
+              "FinanzReserveGauge.tsx": null,
+              "KmTrackerSheet.tsx": null,
+              "ReceiptsPanel.tsx": null,
+              "ReserveChart.tsx": null,
+              "SmartReceiptsSheet.tsx": null,
+              "ToolbeltStyles.tsx": null,
+              "TripsPanel.tsx": null,
+              "VoiceToInvoiceSheet.tsx": null,
+              "voice-invoice": {
+                "VoiceDraftEditor.tsx": null,
+                "VoiceInvoicePreviewDialog.tsx": null,
+                "VoiceRecorderPanel.tsx": null,
+                "useVoiceInvoice.ts": null,
+                "voice-invoice-shared.ts": null
+              }
+            }
+          }
+        },
+        "homeowner": {
+          "dashboard": {
+            "components": {
+              "HomeownerPortal.tsx": null,
+              "index.ts": null,
+              "parts": {
+                "AISummaryCard.tsx": null,
+                "Breakdown.tsx": null,
+                "ContractorAvatar.tsx": null,
+                "InfoRow.tsx": null,
+                "LiveActivityFeed.tsx": null,
+                "MatchScoreBadge.tsx": null,
+                "MilestoneTimeline.tsx": null,
+                "OverviewStats.tsx": null,
+                "Panel.tsx": null,
+                "ProfileStat.tsx": null,
+                "QuickActionsBar.tsx": null,
+                "StatusPill.tsx": null,
+                "SubCard.tsx": null,
+                "helpers.ts": null
+              }
+            }
+          },
+          "jobs": {
+            "components": {
+              "CancelAcceptanceDialog.tsx": null,
+              "ChatDialog.tsx": null,
+              "ContractorProfileDialog.tsx": null,
+              "EditProjectDialog.tsx": null,
+              "MyProjectsList.tsx": null,
+              "ProjectDetailsPanel.tsx": null,
+              "ProjectTimelinePanel.tsx": null,
+              "ProposalsPanel.tsx": null,
+              "SiteVisitScheduler.tsx": null,
+              "use-site-visits.ts": null
+            },
+            "hooks": {
+              "useMyProjects.ts": null
+            },
+            "matching": {
+              ".gitkeep": null
+            },
+            "my-projects": {
+              ".gitkeep": null
+            },
+            "post-project": {
+              ".gitkeep": null,
+              "AISpecCard.tsx": null,
+              "AddressContactCard.tsx": null,
+              "BudgetTimelineCard.tsx": null,
+              "ConfirmPostDialog.tsx": null,
+              "HomeownerForm.tsx": null,
+              "HomeownerWizard.tsx": null,
+              "IntakeProgress.tsx": null,
+              "LanguagePreferenceCard.tsx": null,
+              "ProjectBasicsCard.tsx": null,
+              "QuickVoiceCard.tsx": null,
+              "SuccessScreen.tsx": null,
+              "apply-voice-fields.ts": null,
+              "index.ts": null,
+              "parts.tsx": null,
+              "project-language.ts": null,
+              "homeowner-form": {
+                "ContactStep.tsx": null,
+                "DetailsStep.tsx": null,
+                "LazyCardFallback.tsx": null,
+                "ProjectStep.tsx": null,
+                "WizardNav.tsx": null,
+                "WizardProgress.tsx": null
+              },
+              "homeowner-wizard": {
+                "BudgetStep.tsx": null,
+                "CategoryStep.tsx": null,
+                "LocationStep.tsx": null,
+                "WizardHeader.tsx": null,
+                "constants.ts": null,
+                "useWizardStep.ts": null
+              },
+              "parts": {
+                "Card.tsx": null,
+                "TradeAccordion.tsx": null,
+                "TradeCombobox.tsx": null,
+                "TradeDetailsFields.tsx": null
+              },
+              "quick-voice": {
+                "DraftReviewPanel.tsx": null,
+                "ErrorPanel.tsx": null,
+                "ProcessingPanel.tsx": null,
+                "TipsPanel.tsx": null,
+                "VoiceRecorderButton.tsx": null,
+                "draft-mappers.ts": null,
+                "transcript-utils.ts": null,
+                "types.ts": null,
+                "use-voice-intake.ts": null,
+                "use-voice-recorder.ts": null
+              }
+            }
+          },
+          "notifications": {
+            ".gitkeep": null
+          },
+          "profile": {
+            "ContactBlock.tsx": null,
+            "ReportProfileDialog.tsx": null
+          }
+        },
+        "landing": {
+          "components": {
+            "CtaFooterSection.tsx": null,
+            "FeaturedTrades.tsx": null,
+            "Hero.tsx": null,
+            "HomeCarousel.tsx": null,
+            "LandingPage.tsx": null,
+            "LiveFeed.tsx": null,
+            "SiteFooter.tsx": null,
+            "Testimonials.tsx": null,
+            "ValueCards.tsx": null,
+            "shared.tsx": null
+          }
+        },
+        "shared": {
+          "dashboard": {
+            "components": {
+              "DashboardShell.tsx": null
+            }
+          },
+          "help": {
+            "help-requests.ts": null
+          },
+          "matches": {
+            "match.functions.ts": null,
+            "matches.functions.ts": null,
+            "matching-engine.ts": null,
+            "matching.functions.ts": null,
+            "components": {
+              "MatchUnlockInbox.tsx": null
+            }
+          },
+          "messaging": {
+            "ChatWindow.tsx": null,
+            "ChatsAppPage.tsx": null,
+            "NetworkDirectory.tsx": null,
+            "PendingMatchesStrip.tsx": null,
+            "network": {
+              "ContractorSearch.tsx": null,
+              "NetworkBadge.tsx": null,
+              "NetworkChatPage.tsx": null,
+              "NetworkThreadView.tsx": null
+            }
+          },
+          "notifications": {
+            "NotificationsList.tsx": null,
+            "components": {
+              "NotificationFeed.tsx": null
+            },
+            "hooks": {
+              "useUnreadNotifications.ts": null
+            }
+          },
+          "profile": {
+            "components": {
+              "BioSection.tsx": null,
+              "LanguagesSelector.tsx": null,
+              "OverviewPanel.tsx": null,
+              "ProfileHeader.tsx": null,
+              "ProfileInfoBox.tsx": null,
+              "ProfileTabs.tsx": null,
+              "SaveButton.tsx": null,
+              "SettingsAccountSecurity.tsx": null,
+              "SettingsBusinessDocuments.tsx": null,
+              "SettingsDangerZone.tsx": null,
+              "SettingsDisplayPreferences.tsx": null,
+              "SettingsNotificationToggles.tsx": null,
+              "SettingsPanel.tsx": null,
+              "SettingsVerificationUploadRow.tsx": null,
+              "settings-types.ts": null
+            }
+          },
+          "security": {
+            "components": {
+              "SecurityPage.tsx": null
+            }
+          }
+        }
+      },
+      "i18n": {
+        "config.ts": null,
+        "locales": {
+          "de.json": null,
+          "en.json": null
+        }
+      },
+      "integrations": {
+        "lovable": {
+          "index.ts": null
+        },
+        "supabase": {
+          "auth-attacher.ts": null,
+          "auth-middleware.ts": null,
+          "client.server.ts": null,
+          "client.ts": null,
+          "config.ts": null,
+          "types.ts": null
+        }
+      },
+      "regions": {
+        "config.ts": null,
+        "germany.ts": null,
+        "index.ts": null
+      },
+      "styles": {
+        "light-overrides.css": null
+      },
+      "types": {
+        "supabase-augment.d.ts": null,
+        "supabase-types-shim.ts": null
+      }
+    }
+  },
+  "supabase": {
+    "migrations": [
+      "20260720100704_e40010fe-f34e-4757-9568-599105a21ecd.sql",
+      "20260720100725_860968d1-d36b-4d69-a158-67ca9256f0eb.sql",
+      "20260721125746_1f1135af-4fd0-449a-bf5e-f74a952bda99.sql",
+      "20260721205851_39ce3cb8-5992-4039-a107-2d3f64a410f5.sql"
+    ],
+    "config": "supabase/config.toml"
+  },
+  "conventions": {
+    "routes": "src/routes/**  (dot-separated flat naming; _authenticated layout gate)",
+    "auth_gated": "src/routes/_authenticated/*",
+    "public_api": "src/routes/api/public/*  (webhooks, cron)",
+    "server_fns": "*.functions.ts co-located under src/lib/ or src/features/",
+    "server_only": "*.server.ts (never imported client-side)",
+    "features": "src/features/<domain>/<area>/{components,hooks,route}/",
+    "shared_ui": "src/components/ui/  (shadcn primitives)",
+    "shared_app": "src/components/shared/",
+    "layouts": "src/components/layouts/",
+    "hooks": "src/hooks/",
+    "libs": "src/lib/",
+    "api_layer": "src/api/  (db schema + routers)",
+    "core_sector": "src/core/  (sector config + dynamic renderer)",
+    "integrations": "src/integrations/supabase/  (auto-generated, do not edit)"
+  }
+}
