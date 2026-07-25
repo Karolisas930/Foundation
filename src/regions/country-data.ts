@@ -100,3 +100,84 @@ export const MEISTER_ELIGIBLE_TRADES = new Set<string>([
   ...REGULATED_TRADES,
   ...VOLUNTARY_MEISTER_TRADES,
 ]);
+
+// Grouped trade categories rendered in the accordion pickers.
+// Shared by both Homeowner and Handyman onboarding forms.
+export const TRADE_GROUPS = [
+  {
+    id: "cat-building-tech",
+    label: "Building Technology & Electrical",
+    trades: [
+      "Electrical Systems & Smart Home",
+      "Plumbing, Heating & HVAC",
+      "Gas & Water Installation",
+      "Refrigeration, Air Conditioning & Cooling Systems",
+      "EV Charging Station & Heat Pump Installation",
+      "Chimney Sweeping & Energy Auditing",
+      "Smart Home & Building Automation",
+      "Solar & Photovoltaic (PV) Installation",
+    ],
+  },
+  {
+    id: "cat-structural",
+    label: "Structural & Renovation",
+    trades: [
+      "Structural Building & Masonry",
+      "Bricklaying & Concrete",
+      "Carpentry & Timber Framing",
+      "Roofing & Waterproofing",
+      "Scaffolding Services",
+      "Demolition, Excavation & Groundworks",
+      "Basement & Foundation Construction",
+      "Loft Conversion & Attic Renovation",
+      "New Build & Extension Specialist",
+      "Facade & Exterior Renovation",
+      "Metalworking, Gates & Fencing",
+      "Water, Fire & Mold Damage Restoration",
+    ],
+  },
+  {
+    id: "cat-interior",
+    label: "Interior & Finishing",
+    trades: [
+      "Glazing & Window Engineering",
+      "Tiling, Mosaics & Natural Stone",
+      "Drywall, Insulation & Plastering",
+      "Painting, Decorating & Facades",
+      "Flooring, Parquet & Carpeting",
+      "Joinery, Custom Cabinetry & Doors",
+      "Interior Finishing & Fit-Out",
+      "Building Cleaning & Property Services",
+      "Landscaping, Patios & Gardening",
+      "General Handyman & Assembly Services",
+      "Stonemasonry & Monument Restoration",
+    ],
+  },
+  {
+    id: "cat-energy-roof",
+    label: "Energy, Roof & Exterior Infrastructure",
+    trades: [
+      "Solar & Photovoltaic (PV) Installation",
+      "EV Charging Station & Heat Pump Power Hookups",
+      "Sheet Metal Work & Exterior Roof Drainage",
+      "Thermal, Cold & Sound Insulation",
+      "Building Waterproofing & Structural Drying",
+      "Tile Stove & Fireplace Construction",
+      "Well Drilling & Geothermal Exploration",
+      "Green Roof & Sustainable Construction",
+      "Energy Efficiency Consulting",
+    ],
+  },
+  {
+    id: "cat-logistics",
+    label: "Upstream Logistics & Project Services",
+    trades: [
+      "Screed & Floor Substrate Laying",
+      "Concrete Core Drilling & Structural Cutting",
+      "Locksmith Services & Home Security Systems",
+      "Asbestos & Hazardous Material Remediation",
+      "Facility Management & Maintenance",
+      "Construction Logistics & Material Supply",
+    ],
+  },
+] as const;

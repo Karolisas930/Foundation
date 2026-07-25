@@ -10,16 +10,36 @@ export type ProjectLanguageCode = "en" | "de" | "fr" | "it" | "tr" | "pl" | "ru"
 
 export const PROJECT_LANGUAGES: Array<{ code: ProjectLanguageCode; label: string; flag: string }> =
   [
-    { code: "en", label: "English", flag: "🇬🇧" },
-    { code: "de", label: "Deutsch", flag: "🇩🇪" },
-    { code: "fr", label: "Français", flag: "🇫🇷" },
-    { code: "it", label: "Italiano", flag: "🇮🇹" },
-    { code: "tr", label: "Türkçe", flag: "🇹🇷" },
-    { code: "pl", label: "Polski", flag: "🇵🇱" },
-    { code: "ru", label: "Русский", flag: "🇷🇺" },
-    { code: "ar", label: "العربية", flag: "🇸🇦" },
-    { code: "other", label: "Other", flag: "🌐" },
-  ];
+  export const AVAILABLE_LANGUAGES = [
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "ro", label: "Română", flag: "🇷🇴" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "el", label: "Ελληνικά", flag: "🇬🇷" },
+  { code: "sk", label: "Slovenčina", flag: "🇸🇰" },
+  { code: "cs", label: "Čeština", flag: "🇨🇿" },
+  { code: "hu", label: "Magyar", flag: "🇭🇺" },
+  { code: "sv", label: "Svenska", flag: "🇸🇪" },
+  { code: "bg", label: "Български", flag: "🇧🇬" },
+  { code: "da", label: "Dansk", flag: "🇩🇰" },
+  { code: "fi", label: "Suomi", flag: "🇫🇮" },
+  { code: "lt", label: "Lietuvių", flag: "🇱🇹" },
+  { code: "lv", label: "Latviešu", flag: "🇱🇻" },
+  { code: "et", label: "Eesti", flag: "🇪🇪" },
+  { code: "sl", label: "Slovenščina", flag: "🇸🇮" },
+  { code: "ga", label: "Gaeilge", flag: "🇮🇪" },
+  { code: "mt", label: "Malti", flag: "🇲🇹" },
+  { code: "hr", label: "Hrvatski", flag: "🇭🇷" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "uk", label: "Українська", flag: "🇺🇦" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+];
 
 /** Render a single code (legacy single-language helper, still used by parts.tsx). */
 export function formatProjectLanguage(code: string | undefined): string {

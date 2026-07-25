@@ -17,6 +17,23 @@ export function useAuthActions() {
 
   async function goToDashboard() {
     await router.invalidate();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("account_type")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        const accountType = profile?.account_type;
+        if (accountType && accountType !== "homeowner") {
+          await navigate({ to: "/contractor" });
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch user profile for dashboard redirect:", e);
+    }
     await navigate({ to: "/homeowner" });
   }
 

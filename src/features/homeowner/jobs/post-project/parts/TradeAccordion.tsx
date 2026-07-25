@@ -40,7 +40,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { TRADE_OPTIONS } from "@/regions";
+import { TRADE_OPTIONS, TRADE_GROUPS } from "@/regions";
 
 const TRADE_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   "Electrical Systems & Smart Home": Zap,
@@ -90,79 +90,7 @@ const TRADE_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   "Construction Logistics & Material Supply": Wrench,
 };
 
-const TRADE_GROUPS: Array<{ label: string; trades: (typeof TRADE_OPTIONS)[number][] }> = [
-  {
-    label: "Building Technology & Electrical",
-    trades: [
-      "Electrical Systems & Smart Home",
-      "Plumbing, Heating & HVAC",
-      "Gas & Water Installation",
-      "Refrigeration, Air Conditioning & Cooling Systems",
-      "EV Charging Station & Heat Pump Installation",
-      "Chimney Sweeping & Energy Auditing",
-      "Smart Home & Building Automation",
-      "Solar & Photovoltaic (PV) Installation",
-    ],
-  },
-  {
-    label: "Structural & Renovation",
-    trades: [
-      "Structural Building & Masonry",
-      "Bricklaying & Concrete",
-      "Carpentry & Timber Framing",
-      "Roofing & Waterproofing",
-      "Scaffolding Services",
-      "Demolition, Excavation & Groundworks",
-      "Basement & Foundation Construction",
-      "Loft Conversion & Attic Renovation",
-      "New Build & Extension Specialist",
-      "Facade & Exterior Renovation",
-      "Metalworking, Gates & Fencing",
-      "Water, Fire & Mold Damage Restoration",
-    ],
-  },
-  {
-    label: "Interior & Finishing",
-    trades: [
-      "Glazing & Window Engineering",
-      "Tiling, Mosaics & Natural Stone",
-      "Drywall, Insulation & Plastering",
-      "Painting, Decorating & Facades",
-      "Flooring, Parquet & Carpeting",
-      "Joinery, Custom Cabinetry & Doors",
-      "Interior Finishing & Fit-Out",
-      "Building Cleaning & Property Services",
-      "Landscaping, Patios & Gardening",
-      "General Handyman & Assembly Services",
-      "Stonemasonry & Monument Restoration",
-    ],
-  },
-  {
-    label: "Energy, Roof & Exterior Infrastructure",
-    trades: [
-      "Solar & Photovoltaic (PV) Installation",
-      "EV Charging Station & Heat Pump Power Hookups",
-      "Sheet Metal Work & Exterior Roof Drainage",
-      "Thermal, Cold & Sound Insulation",
-      "Building Waterproofing & Structural Drying",
-      "Tile Stove & Fireplace Construction",
-      "Well Drilling & Geothermal Exploration",
-      "Green Roof & Sustainable Construction",
-      "Energy Efficiency Consulting",
-    ],
-  },
-  {
-    label: "Upstream Logistics & Project Services",
-    trades: [
-      "Screed & Floor Substrate Laying",
-      "Concrete Core Drilling & Structural Cutting",
-      "Locksmith Services & Home Security Systems",
-      "Asbestos & Hazardous Material Remediation",
-      "Facility Management & Maintenance",
-      "Construction Logistics & Material Supply",
-    ],
-  },
-];
+
 
 export function TradeAccordion({
   value,
