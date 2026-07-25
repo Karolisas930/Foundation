@@ -364,7 +364,9 @@ export function HandymanOnboarding() {
       },
       pw,
     );
-    if (error) toast.error(error);
+    if (error) {
+      toast.error(error);
+    }
 
     setPwOpen(false);
     setSubmitting(false);
@@ -373,10 +375,16 @@ export function HandymanOnboarding() {
     } catch {
       /* ignore */
     }
-    toast.success(
-      signedIn ? "You're signed in. Opening your profile…" : "Profile saved. Opening your profile…",
-    );
-    await navigate({ to: "/contractor/profile", replace: true });
+
+    if (signedIn) {
+      toast.success("You're signed in. Opening your profile…");
+      await navigate({ to: "/contractor/profile", replace: true });
+    } else {
+      toast.info("Profile saved. Please check your email to verify your account.", {
+        duration: 10000,
+      });
+      await navigate({ to: "/login", replace: true });
+    }
   }
 
   // Suppress unused-value lint on lookup handles kept for backward-compat.
