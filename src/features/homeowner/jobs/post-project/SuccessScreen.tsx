@@ -105,12 +105,30 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [postSignup, setPostSignup] = useState(false);
   const strength = scorePassword(passwordValue);
   // Land at the top of the success page so the confirmation is immediately
   // visible (the form can be tall on mobile).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  // If the user just set a password, show the confirmation message.
+  if (postSignup) {
+    return (
+      <main className="min-h-screen intake-grid text-slate-50">
+        <TopBar />
+        <section className="mx-auto max-w-2xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+          <div className="intake-card rounded-2xl p-7 text-center shadow-[0_10px_40px_-20px_rgba(0,0,0,0.6)]">
+            <h2 className="text-xl font-semibold text-white">Check your email</h2>
+            <p className="mt-2 text-slate-300">
+              We've sent a confirmation link to your email address. Please click the link to complete your registration and access your dashboard.
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen intake-grid text-slate-50">
@@ -189,10 +207,14 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
             <Button
               type="button"
               size="lg"
-              onClick={() => navigate({ to: "/homeowner", replace: true })}
+              onClick={async () => {
+                const res = await sendMagicLink(success.email);
+                if (res.ok) toast.success(res.message);
+                else toast.error(res.message);
+              }}
               className="btn-glow btn-glow-hover h-14 w-full rounded-full px-8 text-base font-bold uppercase tracking-wide"
             >
-              Open my dashboard <ArrowRight className="ml-2 size-5" />
+              Sign In & View Dashboard <ArrowRight className="ml-2 size-5" />
             </Button>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Button
@@ -298,56 +320,32 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
                 toast.error("Password must be at least 8 characters.");
                 return;
               }
+              if (!isSupabaseConfigured()) {
+                toast.error("Sign-up service isn't connected yet.");
+                return;
+              }
               setPasswordSaving(true);
-              const goToDashboard = () => {
-                setPasswordOpen(false);
-                setDemoUser({ email: success.email });
-                toast.success("Account created. Opening your dashboard…");
-                navigate({ to: "/homeowner", replace: true });
-              };
 
               try {
-                if (!isSupabaseConfigured()) {
-                  goToDashboard();
-                  return;
-                }
-                const { data: sess } = await supabase.auth.getSession();
-                if (sess.session) {
-                  const { error } = await supabase.auth.updateUser({ password: passwordValue });
-                  if (error && !/failed to fetch|networkerror|load failed/i.test(error.message)) {
-                    toast.error(error.message);
-                  } else {
-                    goToDashboard();
-                  }
+                // This will either create a new user or, if the email exists,
+                // re-send the confirmation link. It will not throw an error
+                // for duplicate emails, which is the correct behavior.
+                const { error } = await supabase.auth.signUp({
+                  email: success.email,
+                  password: passwordValue,
+                  options: {
+                    emailRedirectTo: `${window.location.origin}/homeowner`,
+                  },
+                });
+
+                if (error) {
+                  toast.error(error.message);
                 } else {
-                  const { error: signUpError } = await supabase.auth.signUp({
-                    email: success.email,
-                    password: passwordValue,
-                    options: {
-                      emailRedirectTo: `${window.location.origin}/homeowner`,
-                    },
-                  });
-                  if (
-                    signUpError &&
-                    !/already|registered|exists|failed to fetch|networkerror|load failed/i.test(
-                      signUpError.message,
-                    )
-                  ) {
-                    toast.error(signUpError.message);
-                    return;
-                  }
-                  // Force a fresh session so the top bar flips to "Sign Out"
-                  // and the dashboard loads as authenticated.
-                  await supabase.auth
-                    .signInWithPassword({ email: success.email, password: passwordValue })
-                    .catch(() => undefined);
-                  // Re-read the session so useAuth's onAuthStateChange listener
-                  // emits SIGNED_IN before we navigate to the dashboard.
-                  await supabase.auth.getSession().catch(() => undefined);
-                  goToDashboard();
+                  // On success, show the "Check your email" screen.
+                  setPostSignup(true);
                 }
               } catch {
-                goToDashboard();
+                toast.error("An unexpected error occurred. Please try again.");
               } finally {
                 setPasswordSaving(false);
               }
