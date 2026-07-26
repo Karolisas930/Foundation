@@ -1,232 +1,169 @@
-import { type ComponentType } from "react";
+/**
+ * TradeAccordion — categorised, collapsible card grid used by the Trades
+ * step of the HandymanOnboarding flow. Owns its own open-category state
+ * and search-driven auto-expansion.
+ */
+import { useEffect, useMemo, useState } from "react";
 import {
-  AppWindow,
-  ArrowDownToLine,
-  Building,
-  Building2,
-  ChevronsUp,
-  DoorOpen,
-  Drill,
+  CheckCircle2,
+  ChevronDown,
   Droplet,
-  Fence,
-  Flame,
-  Grid2x2,
   Hammer,
-  HardHat,
-  Home,
+  Home as HomeIcon,
   Layers,
-  Paintbrush,
-  PanelTop,
-  Pickaxe,
-  PlugZap,
   Shield,
-  ShieldAlert,
-  Smartphone,
-  Snowflake,
-  Sofa,
-  Sparkles,
-  Square,
   Sun,
-  Thermometer,
-  Trees,
-  Waves,
   Wrench,
   Zap,
 } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
-import { TRADE_OPTIONS } from "@/regions";
 
-const TRADE_ICONS: Record<string, ComponentType<{ className?: string }>> = {
-  "Electrical Systems & Smart Home": Zap,
-  "Plumbing, Heating & HVAC": Droplet,
-  "Gas & Water Installation": Droplet,
-  "Smart Home & Building Automation": Smartphone,
-  "Chimney Sweeping & Energy Auditing": Flame,
-  "EV Charging Station & Heat Pump Installation": PlugZap,
-  "Structural Building & Masonry": Building,
-  "Bricklaying & Concrete": Building,
-  "Carpentry & Timber Framing": Hammer,
-  "Roofing & Waterproofing": Home,
-  "Scaffolding Services": HardHat,
-  "Demolition, Excavation & Groundworks": Pickaxe,
-  "Basement & Foundation Construction": ArrowDownToLine,
-  "Loft Conversion & Attic Renovation": ChevronsUp,
-  "New Build & Extension Specialist": Building2,
-  "Facade & Exterior Renovation": Square,
-  "Metalworking, Gates & Fencing": Fence,
-  "Water, Fire & Mold Damage Restoration": Waves,
-  "Glazing & Window Engineering": AppWindow,
-  "Tiling, Mosaics & Natural Stone": Grid2x2,
-  "Drywall, Insulation & Plastering": Layers,
-  "Painting, Decorating & Facades": Paintbrush,
-  "Flooring, Parquet & Carpeting": PanelTop,
-  "Joinery, Custom Cabinetry & Doors": DoorOpen,
-  "Interior Finishing & Fit-Out": Sofa,
-  "Building Cleaning & Property Services": Sparkles,
-  "Landscaping, Patios & Gardening": Trees,
-  "General Handyman & Assembly Services": Wrench,
-  "Stonemasonry & Monument Restoration": Building,
-  "Solar & Photovoltaic (PV) Installation": Sun,
-  "EV Charging Station & Heat Pump Power Hookups": PlugZap,
-  "Sheet Metal Work & Exterior Roof Drainage": Wrench,
-  "Refrigeration, Air Conditioning & Cooling Systems": Snowflake,
-  "Well Drilling & Geothermal Exploration": Waves,
-  "Thermal, Cold & Sound Insulation": Thermometer,
-  "Building Waterproofing & Structural Drying": Droplet,
-  "Tile Stove & Fireplace Construction": Flame,
-  "Green Roof & Sustainable Construction": Trees,
-  "Energy Efficiency Consulting": Sun,
-  "Screed & Floor Substrate Laying": Layers,
-  "Concrete Core Drilling & Structural Cutting": Drill,
-  "Locksmith Services & Home Security Systems": Shield,
-  "Asbestos & Hazardous Material Remediation": ShieldAlert,
-  "Facility Management & Maintenance": Wrench,
-  "Construction Logistics & Material Supply": Wrench,
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "cat-building-tech": Zap,
+  "cat-structural": Hammer,
+  "cat-interior": HomeIcon,
+  "cat-energy-roof": Sun,
+  "cat-logistics": Layers,
 };
 
-const TRADE_GROUPS: Array<{ label: string; trades: (typeof TRADE_OPTIONS)[number][] }> = [
-  {
-    label: "Building Technology & Electrical",
-    trades: [
-      "Electrical Systems & Smart Home",
-      "Plumbing, Heating & HVAC",
-      "Gas & Water Installation",
-      "Refrigeration, Air Conditioning & Cooling Systems",
-      "EV Charging Station & Heat Pump Installation",
-      "Chimney Sweeping & Energy Auditing",
-      "Smart Home & Building Automation",
-      "Solar & Photovoltaic (PV) Installation",
-    ],
-  },
-  {
-    label: "Structural & Renovation",
-    trades: [
-      "Structural Building & Masonry",
-      "Bricklaying & Concrete",
-      "Carpentry & Timber Framing",
-      "Roofing & Waterproofing",
-      "Scaffolding Services",
-      "Demolition, Excavation & Groundworks",
-      "Basement & Foundation Construction",
-      "Loft Conversion & Attic Renovation",
-      "New Build & Extension Specialist",
-      "Facade & Exterior Renovation",
-      "Metalworking, Gates & Fencing",
-      "Water, Fire & Mold Damage Restoration",
-    ],
-  },
-  {
-    label: "Interior & Finishing",
-    trades: [
-      "Glazing & Window Engineering",
-      "Tiling, Mosaics & Natural Stone",
-      "Drywall, Insulation & Plastering",
-      "Painting, Decorating & Facades",
-      "Flooring, Parquet & Carpeting",
-      "Joinery, Custom Cabinetry & Doors",
-      "Interior Finishing & Fit-Out",
-      "Building Cleaning & Property Services",
-      "Landscaping, Patios & Gardening",
-      "General Handyman & Assembly Services",
-      "Stonemasonry & Monument Restoration",
-    ],
-  },
-  {
-    label: "Energy, Roof & Exterior Infrastructure",
-    trades: [
-      "Solar & Photovoltaic (PV) Installation",
-      "EV Charging Station & Heat Pump Power Hookups",
-      "Sheet Metal Work & Exterior Roof Drainage",
-      "Thermal, Cold & Sound Insulation",
-      "Building Waterproofing & Structural Drying",
-      "Tile Stove & Fireplace Construction",
-      "Well Drilling & Geothermal Exploration",
-      "Green Roof & Sustainable Construction",
-      "Energy Efficiency Consulting",
-    ],
-  },
-  {
-    label: "Upstream Logistics & Project Services",
-    trades: [
-      "Screed & Floor Substrate Laying",
-      "Concrete Core Drilling & Structural Cutting",
-      "Locksmith Services & Home Security Systems",
-      "Asbestos & Hazardous Material Remediation",
-      "Facility Management & Maintenance",
-      "Construction Logistics & Material Supply",
-    ],
-  },
-];
+const TRADE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  electrical: Zap,
+  plumbing: Droplet,
+  roofing: HomeIcon,
+  solar: Sun,
+  security: Shield,
+  default: Wrench,
+};
+
+function iconForTrade(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes("electric") || n.includes("smart") || n.includes("ev "))
+    return TRADE_ICONS.electrical;
+  if (n.includes("plumb") || n.includes("water") || n.includes("waterproof"))
+    return TRADE_ICONS.plumbing;
+  if (n.includes("roof")) return TRADE_ICONS.roofing;
+  if (n.includes("solar") || n.includes("photovolt")) return TRADE_ICONS.solar;
+  if (n.includes("lock") || n.includes("security")) return TRADE_ICONS.security;
+  return TRADE_ICONS.default;
+}
+
+interface TradeAccordionProps {
+  categories: Array<{ id: string; label: string; trades: string[] }>;
+  customTrades: string[];
+  selected: string[];
+  search: string;
+  onToggle: (t: string) => void;
+}
 
 export function TradeAccordion({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-}) {
-  const openByDefault = value
-    ? TRADE_GROUPS.find((g) => g.trades.includes(value as (typeof TRADE_OPTIONS)[number]))?.label
-    : undefined;
+  categories,
+  customTrades,
+  selected,
+  search,
+  onToggle,
+}: TradeAccordionProps) {
+  const q = search.trim().toLowerCase();
+  // Single-open accordion — opening a category collapses the previous one.
+  const [openId, setOpenId] = useState<string | null>(() => categories[0]?.id ?? null);
+
+  const groups = useMemo(() => {
+    const base = categories.map((c) => ({ ...c }));
+    if (customTrades.length > 0) {
+      base.push({ id: "cat-custom", label: "Your custom trades", trades: [...customTrades] });
+    }
+    if (!q) return base;
+    return base
+      .map((c) => ({ ...c, trades: c.trades.filter((t) => t.toLowerCase().includes(q)) }))
+      .filter((c) => c.trades.length > 0);
+  }, [categories, customTrades, q]);
+
+  // Auto-open all categories that match search
+  useEffect(() => {
+    if (!q) return;
+    // On search, snap to the first matching group so the layout stays compact.
+    setOpenId(groups[0]?.id ?? null);
+  }, [q, groups]);
+
+  function toggleCat(id: string) {
+    setOpenId((cur) => (cur === id ? null : id));
+  }
+
+  if (groups.length === 0) {
+    return (
+      <p className="rounded-xl border border-slate-800 bg-[#0f172a]/70 px-4 py-6 text-center text-xs text-slate-400">
+        No trades match your search. Press the “Add” button above to create a custom trade.
+      </p>
+    );
+  }
 
   return (
-    <Accordion
-      type="single"
-      collapsible={true}
-      defaultValue={openByDefault}
-      className="rounded-xl border border-slate-800 bg-[#0f172a]/70 overflow-hidden space-y-4"
-    >
-      {TRADE_GROUPS.map((group) => (
-        <AccordionItem
-          key={group.label}
-          value={group.label}
-          className="border-b border-slate-800/80 last:border-b-0"
-        >
-          <AccordionTrigger className="px-6 py-5 min-h-[64px] text-sm font-semibold text-white hover:bg-[#1e293b]/60 hover:no-underline data-[state=open]:bg-orange/10 data-[state=open]:text-white">
-            {group.label}
-          </AccordionTrigger>
-          <AccordionContent className="px-6 pb-4 pt-0">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-              {group.trades.map((t) => {
-                const selected = value === t;
-                const TradeIcon = TRADE_ICONS[t];
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => onChange(t)}
-                    aria-pressed={selected}
-                    className={cn(
-                      "group relative flex h-28 min-h-[112px] w-full flex-col items-start justify-start gap-2 rounded-xl border-2 p-3 text-left transition-all",
-                      selected
-                        ? "border-orange bg-orange/15 text-white shadow-[0_0_20px_rgba(251,146,60,0.35)] ring-2 ring-orange/60"
-                        : "border-slate-800 bg-[#1e293b] text-slate-200 hover:border-orange/60 hover:bg-[#1e293b]/90 hover:text-white",
-                    )}
-                  >
-                    {TradeIcon && (
-                      <TradeIcon
-                        className={cn(
-                          "size-5 shrink-0 transition-colors",
-                          selected ? "text-orange" : "text-slate-400 group-hover:text-orange",
-                        )}
-                      />
-                    )}
-                    <span className="line-clamp-2 text-sm font-medium leading-snug text-white">
-                      {t}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <div className="space-y-1.5">
+      {groups.map((cat) => {
+        const isOpen = openId === cat.id;
+        const CatIcon = CATEGORY_ICONS[cat.id] ?? Wrench;
+        return (
+          <div
+            key={cat.id}
+            className="overflow-hidden rounded-xl border border-slate-800 bg-[#0f172a]/70"
+          >
+            <button
+              type="button"
+              onClick={() => toggleCat(cat.id)}
+              className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left transition hover:bg-[#1e293b]/60"
+              aria-expanded={isOpen}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <CatIcon className="size-4 shrink-0 text-orange-glow" />
+                <span className="truncate text-sm font-semibold text-white">{cat.label}</span>
+                <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  {cat.trades.length} trades
+                </span>
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-4 shrink-0 text-slate-400 transition-transform",
+                  isOpen && "rotate-180",
+                )}
+              />
+            </button>
+            {isOpen && (
+              <div className="grid grid-cols-1 gap-2 border-t border-slate-800/80 p-2 md:grid-cols-3">
+                {cat.trades.map((t) => {
+                  const isSelected = selected.includes(t);
+                  const TIcon = iconForTrade(t);
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => onToggle(t)}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "group relative flex flex-col gap-1.5 rounded-lg border-2 px-2.5 py-2 text-left transition-all",
+                        isSelected
+                          ? "border-[#f97316] bg-[#f97316]/10 text-white shadow-[0_0_20px_rgba(251,146,60,0.35)] ring-2 ring-orange/60"
+                          : "border-slate-800 bg-[#1e293b] text-white hover:border-orange/60 hover:bg-[#1e293b]/90",
+                      )}
+                    >
+                      <span className="flex items-center justify-between">
+                        <TIcon
+                          className={cn(
+                            "size-4",
+                            isSelected ? "text-orange-glow" : "text-slate-400",
+                          )}
+                        />
+                        {isSelected && <CheckCircle2 className="size-4 text-orange-glow" />}
+                      </span>
+                      <span className={cn("text-sm font-semibold leading-snug text-white")}>
+                        {t}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

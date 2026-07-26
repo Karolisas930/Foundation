@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import {
   Card,
   Field,
-  TradeAccordion,
   TradeDetailsFields,
   type TradeDetails,
 } from "@/features/homeowner/jobs/post-project/parts";
+import { TradeAccordion } from "@/features/homeowner/jobs/post-project/parts/TradeAccordion";
+import { TRADE_CATEGORIES } from "@/regions/country-data";
 import { applyVoiceFields as mergeVoiceFields } from "@/features/homeowner/jobs/post-project/apply-voice-fields";
 
 import { LazyCardFallback } from "./LazyCardFallback";
@@ -119,8 +120,11 @@ export function ProjectStep(props: ProjectStepProps) {
         subtitle="Tap the closest match — you can refine details next."
       >
         <TradeAccordion
-          value={trade}
-          onChange={(next) => {
+          categories={TRADE_CATEGORIES}
+          customTrades={[]}
+          selected={trade ? [trade] : []}
+          search=""
+          onToggle={(next) => {
             setTrade(next);
             setTradeDetails({});
           }}
