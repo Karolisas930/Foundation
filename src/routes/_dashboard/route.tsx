@@ -15,9 +15,24 @@
  * session and no preview/demo session.
  */
 import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
+
+type DashboardContextType = {
+  accountType: string;
+};
+
+const DashboardContext = createContext<DashboardContextType | null>(null);
+
+/** Hook to access the current user's account type within the dashboard. */
+export function useDashboard() {
+  const context = useContext(DashboardContext);
+  if (!context) {
+    throw new Error("useDashboard must be used within a component wrapped by DashboardGate");
+  }
+  return context;
+}
 
 /**
  * Read `profiles.account_type` for the current user. Never throws — a
@@ -54,7 +69,8 @@ export const Route = createFileRoute("/_dashboard")({
 function DashboardGate() {
   const navigate = useNavigate();
   const router = useRouter();
-  const [status, setStatus] = useState<"pending" | "authed">("pending");
+  const [status, setStatus] = useState<"pending" | "authed" | "redirecting">("pending");
+  const [accountType, setAccountType] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,19 +80,22 @@ function DashboardGate() {
           data: { session },
         } = await supabase.auth.getSession();
         if (cancelled) return;
+
         if (session?.user) {
-          const accountType = await readAccountType(session.user.id);
+          const userAccountType = await readAccountType(session.user.id);
+          setAccountType(userAccountType);
           if (cancelled) return;
 
           const currentPath = window.location.pathname;
-          const isContractor = accountType === "handyman" || accountType === "business";
-          const isHomeowner = accountType === "homeowner";
+          const isContractor = userAccountType === "handyman" || userAccountType === "business";
+          const isHomeowner = userAccountType === "homeowner";
 
           const wantsContractorRoute = currentPath.startsWith("/dashboard/contractor");
           const wantsHomeownerRoute = currentPath.startsWith("/dashboard/homeowner");
 
           // Role mismatch: A contractor is trying to access homeowner-only routes.
           if (isContractor && wantsHomeownerRoute) {
+            setStatus("redirecting");
             router.queryClient.clear(); // Wipe cache to prevent data leaks.
             navigate({ to: "/dashboard/contractor", replace: true });
             return;
@@ -84,6 +103,7 @@ function DashboardGate() {
 
           // Role mismatch: A homeowner is trying to access contractor-only routes.
           if (isHomeowner && wantsContractorRoute) {
+            setStatus("redirecting");
             router.queryClient.clear(); // Wipe cache to prevent data leaks.
             navigate({ to: "/dashboard/homeowner", replace: true });
             return;
@@ -94,29 +114,36 @@ function DashboardGate() {
           setStatus("authed");
           return;
         }
+
+        // No session found, redirect to login.
+        setStatus("redirecting");
+        navigate({
+          to: "/login",
+          search: { redirect: window.location.pathname + window.location.search },
+          replace: true,
+        });
       } catch (e) {
         console.warn("[_dashboard] getSession failed:", e);
         if (!cancelled) setStatus("authed");
-        return;
       }
-      navigate({
-        to: "/login",
-        search: { redirect: window.location.pathname + window.location.search },
-        replace: true,
-      });
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [navigate, router]);
+  }, [navigate, router.queryClient]);
 
-  if (status === "pending") {
+  // Render nothing until the auth check is complete and successful.
+  // This prevents any child components from rendering with the wrong data.
+  if (status !== "authed" || !accountType) {
     return <div className="min-h-screen bg-background" />;
   }
 
   return (
-    <LegalGateWrapper>
-      <Outlet />
-    </LegalGateWrapper>
+    <DashboardContext.Provider value={{ accountType }}>
+      <LegalGateWrapper>
+        <Outlet />
+      </LegalGateWrapper>
+    </DashboardContext.Provider>
   );
 }
