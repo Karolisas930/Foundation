@@ -96,13 +96,6 @@ export const VOLUNTARY_MEISTER_TRADES = new Set<string>(["Painting, Decorating &
 
 // Trades that may upload a Meister certificate and show a Meister badge
 // (regulated trades + voluntary Meister trades like Painting).
-<<<<<<< HEAD
-
-// Grouped trade categories rendered in the accordion picker.
-// Every entry in TRADE_OPTIONS must appear in exactly one category so custom
-// user-added trades can also fall back to an "Other" bucket.
-export const TRADE_CATEGORIES: Array<{ id: string; label: string; trades: string[] }> = [
-=======
 export const MEISTER_ELIGIBLE_TRADES = new Set<string>([
   ...REGULATED_TRADES,
   ...VOLUNTARY_MEISTER_TRADES,
@@ -111,7 +104,6 @@ export const MEISTER_ELIGIBLE_TRADES = new Set<string>([
 // Grouped trade categories rendered in the accordion pickers.
 // Shared by both Homeowner and Handyman onboarding forms.
 export const TRADE_GROUPS = [
->>>>>>> a8a610c8d2c27f0efe9bbbbf6871afff876a3265
   {
     id: "cat-building-tech",
     label: "Building Technology & Electrical",
@@ -188,8 +180,7 @@ export const TRADE_GROUPS = [
       "Construction Logistics & Material Supply",
     ],
   },
-<<<<<<< HEAD
-];
-=======
 ] as const;
->>>>>>> a8a610c8d2c27f0efe9bbbbf6871afff876a3265
+
+// Alias for backward compatibility with components that still import the old name.
+export const TRADE_CATEGORIES = TRADE_GROUPS;

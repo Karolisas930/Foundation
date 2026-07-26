@@ -17,10 +17,6 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-<<<<<<< HEAD
-=======
-import { TRADE_OPTIONS, TRADE_GROUPS } from "@/regions";
->>>>>>> a8a610c8d2c27f0efe9bbbbf6871afff876a3265
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "cat-building-tech": Zap,
@@ -30,7 +26,6 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>
   "cat-logistics": Layers,
 };
 
-<<<<<<< HEAD
 const TRADE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   electrical: Zap,
   plumbing: Droplet,
@@ -59,9 +54,6 @@ interface TradeAccordionProps {
   search: string;
   onToggle: (t: string) => void;
 }
-=======
-
->>>>>>> a8a610c8d2c27f0efe9bbbbf6871afff876a3265
 
 export function TradeAccordion({
   categories,
