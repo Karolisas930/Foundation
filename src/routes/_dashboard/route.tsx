@@ -20,7 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
 
 type DashboardContextType = {
-  accountType: string;
+  accountType: string | null;
+  isContractor: boolean;
 };
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
@@ -139,8 +140,10 @@ function DashboardGate() {
     return <div className="min-h-screen bg-background" />;
   }
 
+  const isContractor = accountType !== "homeowner";
+
   return (
-    <DashboardContext.Provider value={{ accountType }}>
+    <DashboardContext.Provider value={{ accountType, isContractor }}>
       <LegalGateWrapper>
         <Outlet />
       </LegalGateWrapper>

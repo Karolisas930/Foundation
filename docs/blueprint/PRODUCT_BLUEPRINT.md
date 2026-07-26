@@ -29,7 +29,7 @@ could be true of any of the other 23 tables this app queries.
 - [ ] `finanz_settings`
 - [ ] `staff_document_logs`
 - [ ] `verifications`
-- [ ] `profiles`
+- [x] `profiles` — fixed (owner-only SELECT, public view for safe columns)
 - [ ] `bookings`
 - [ ] `calendar_events`
 - [ ] `jobs`

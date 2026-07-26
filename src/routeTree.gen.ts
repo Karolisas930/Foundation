@@ -34,6 +34,7 @@ import { Route as DashboardMessagesRouteImport } from './routes/_dashboard/messa
 import { Route as DashboardDevRouteImport } from './routes/_dashboard/dev'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as DashboardContractorRouteRouteImport } from './routes/_dashboard/contractor/route'
 import { Route as DashboardHomeownerIndexRouteImport } from './routes/_dashboard/homeowner/index'
 import { Route as DashboardContractorIndexRouteImport } from './routes/_dashboard/contractor/index'
 import { Route as DashboardContractorTeamRouteImport } from './routes/_dashboard/contractor/team'
@@ -173,6 +174,12 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const DashboardContractorRouteRoute =
+  DashboardContractorRouteRouteImport.update({
+    id: '/contractor',
+    path: '/contractor',
+    getParentRoute: () => DashboardRouteRoute,
+  } as any)
 const DashboardHomeownerIndexRoute = DashboardHomeownerIndexRouteImport.update({
   id: '/homeowner/',
   path: '/homeowner/',
@@ -180,56 +187,56 @@ const DashboardHomeownerIndexRoute = DashboardHomeownerIndexRouteImport.update({
 } as any)
 const DashboardContractorIndexRoute =
   DashboardContractorIndexRouteImport.update({
-    id: '/contractor/',
-    path: '/contractor/',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorTeamRoute = DashboardContractorTeamRouteImport.update({
-  id: '/contractor/team',
-  path: '/contractor/team',
-  getParentRoute: () => DashboardRouteRoute,
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => DashboardContractorRouteRoute,
 } as any)
 const DashboardContractorStaffHoursRoute =
   DashboardContractorStaffHoursRouteImport.update({
-    id: '/contractor/staff-hours',
-    path: '/contractor/staff-hours',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/staff-hours',
+    path: '/staff-hours',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorReportsRoute =
   DashboardContractorReportsRouteImport.update({
-    id: '/contractor/reports',
-    path: '/contractor/reports',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorProfileRoute =
   DashboardContractorProfileRouteImport.update({
-    id: '/contractor/profile',
-    path: '/contractor/profile',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorPerformanceRoute =
   DashboardContractorPerformanceRouteImport.update({
-    id: '/contractor/performance',
-    path: '/contractor/performance',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/performance',
+    path: '/performance',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorNetworkRoute =
   DashboardContractorNetworkRouteImport.update({
-    id: '/contractor/network',
-    path: '/contractor/network',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/network',
+    path: '/network',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorDailyLogRoute =
   DashboardContractorDailyLogRouteImport.update({
-    id: '/contractor/daily-log',
-    path: '/contractor/daily-log',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/daily-log',
+    path: '/daily-log',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorCalendarRoute =
   DashboardContractorCalendarRouteImport.update({
-    id: '/contractor/calendar',
-    path: '/contractor/calendar',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorNetworkIndexRoute =
   DashboardContractorNetworkIndexRouteImport.update({
@@ -251,15 +258,15 @@ const DashboardContractorNetworkThreadIdRoute =
   } as any)
 const DashboardContractorJobsQuotesRoute =
   DashboardContractorJobsQuotesRouteImport.update({
-    id: '/contractor/jobs/quotes',
-    path: '/contractor/jobs/quotes',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/jobs/quotes',
+    path: '/jobs/quotes',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 const DashboardContractorJobsActiveRoute =
   DashboardContractorJobsActiveRouteImport.update({
-    id: '/contractor/jobs/active',
-    path: '/contractor/jobs/active',
-    getParentRoute: () => DashboardRouteRoute,
+    id: '/jobs/active',
+    path: '/jobs/active',
+    getParentRoute: () => DashboardContractorRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/supabase-setup': typeof SupabaseSetupRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/contractor': typeof DashboardContractorRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/dev': typeof DashboardDevRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/supabase-setup': typeof SupabaseSetupRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/_dashboard/contractor': typeof DashboardContractorRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
   '/_dashboard/dev': typeof DashboardDevRoute
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/supabase-setup'
     | '/terms-of-service'
+    | '/contractor'
     | '/login'
     | '/signup'
     | '/dev'
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/supabase-setup'
     | '/terms-of-service'
+    | '/_dashboard/contractor'
     | '/_auth/login'
     | '/_auth/signup'
     | '/_dashboard/dev'
@@ -706,6 +717,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_dashboard/contractor': {
+      id: '/_dashboard/contractor'
+      path: '/contractor'
+      fullPath: '/contractor'
+      preLoaderRoute: typeof DashboardContractorRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/_dashboard/homeowner/': {
       id: '/_dashboard/homeowner/'
       path: '/homeowner'
@@ -715,66 +733,66 @@ declare module '@tanstack/react-router' {
     }
     '/_dashboard/contractor/': {
       id: '/_dashboard/contractor/'
-      path: '/contractor'
+      path: '/'
       fullPath: '/contractor/'
       preLoaderRoute: typeof DashboardContractorIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/team': {
       id: '/_dashboard/contractor/team'
-      path: '/contractor/team'
+      path: '/team'
       fullPath: '/contractor/team'
       preLoaderRoute: typeof DashboardContractorTeamRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/staff-hours': {
       id: '/_dashboard/contractor/staff-hours'
-      path: '/contractor/staff-hours'
+      path: '/staff-hours'
       fullPath: '/contractor/staff-hours'
       preLoaderRoute: typeof DashboardContractorStaffHoursRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/reports': {
       id: '/_dashboard/contractor/reports'
-      path: '/contractor/reports'
+      path: '/reports'
       fullPath: '/contractor/reports'
       preLoaderRoute: typeof DashboardContractorReportsRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/profile': {
       id: '/_dashboard/contractor/profile'
-      path: '/contractor/profile'
+      path: '/profile'
       fullPath: '/contractor/profile'
       preLoaderRoute: typeof DashboardContractorProfileRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/performance': {
       id: '/_dashboard/contractor/performance'
-      path: '/contractor/performance'
+      path: '/performance'
       fullPath: '/contractor/performance'
       preLoaderRoute: typeof DashboardContractorPerformanceRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/network': {
       id: '/_dashboard/contractor/network'
-      path: '/contractor/network'
+      path: '/network'
       fullPath: '/contractor/network'
       preLoaderRoute: typeof DashboardContractorNetworkRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/daily-log': {
       id: '/_dashboard/contractor/daily-log'
-      path: '/contractor/daily-log'
+      path: '/daily-log'
       fullPath: '/contractor/daily-log'
       preLoaderRoute: typeof DashboardContractorDailyLogRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/calendar': {
       id: '/_dashboard/contractor/calendar'
-      path: '/contractor/calendar'
+      path: '/calendar'
       fullPath: '/contractor/calendar'
       preLoaderRoute: typeof DashboardContractorCalendarRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/network/': {
       id: '/_dashboard/contractor/network/'
@@ -799,17 +817,17 @@ declare module '@tanstack/react-router' {
     }
     '/_dashboard/contractor/jobs/quotes': {
       id: '/_dashboard/contractor/jobs/quotes'
-      path: '/contractor/jobs/quotes'
+      path: '/jobs/quotes'
       fullPath: '/contractor/jobs/quotes'
       preLoaderRoute: typeof DashboardContractorJobsQuotesRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
     '/_dashboard/contractor/jobs/active': {
       id: '/_dashboard/contractor/jobs/active'
-      path: '/contractor/jobs/active'
+      path: '/jobs/active'
       fullPath: '/contractor/jobs/active'
       preLoaderRoute: typeof DashboardContractorJobsActiveRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardContractorRouteRoute
     }
   }
 }
@@ -860,12 +878,7 @@ const DashboardContractorTeamRouteWithChildren =
     DashboardContractorTeamRouteChildren,
   )
 
-interface DashboardRouteRouteChildren {
-  DashboardDevRoute: typeof DashboardDevRoute
-  DashboardMessagesRoute: typeof DashboardMessagesRoute
-  DashboardNotificationsRoute: typeof DashboardNotificationsRoute
-  DashboardSecurityRoute: typeof DashboardSecurityRoute
-  DashboardSettingsRoute: typeof DashboardSettingsRoute
+interface DashboardContractorRouteRouteChildren {
   DashboardContractorCalendarRoute: typeof DashboardContractorCalendarRoute
   DashboardContractorDailyLogRoute: typeof DashboardContractorDailyLogRoute
   DashboardContractorNetworkRoute: typeof DashboardContractorNetworkRouteWithChildren
@@ -875,29 +888,49 @@ interface DashboardRouteRouteChildren {
   DashboardContractorStaffHoursRoute: typeof DashboardContractorStaffHoursRoute
   DashboardContractorTeamRoute: typeof DashboardContractorTeamRouteWithChildren
   DashboardContractorIndexRoute: typeof DashboardContractorIndexRoute
-  DashboardHomeownerIndexRoute: typeof DashboardHomeownerIndexRoute
   DashboardContractorJobsActiveRoute: typeof DashboardContractorJobsActiveRoute
   DashboardContractorJobsQuotesRoute: typeof DashboardContractorJobsQuotesRoute
 }
 
+const DashboardContractorRouteRouteChildren: DashboardContractorRouteRouteChildren =
+  {
+    DashboardContractorCalendarRoute: DashboardContractorCalendarRoute,
+    DashboardContractorDailyLogRoute: DashboardContractorDailyLogRoute,
+    DashboardContractorNetworkRoute:
+      DashboardContractorNetworkRouteWithChildren,
+    DashboardContractorPerformanceRoute: DashboardContractorPerformanceRoute,
+    DashboardContractorProfileRoute: DashboardContractorProfileRoute,
+    DashboardContractorReportsRoute: DashboardContractorReportsRoute,
+    DashboardContractorStaffHoursRoute: DashboardContractorStaffHoursRoute,
+    DashboardContractorTeamRoute: DashboardContractorTeamRouteWithChildren,
+    DashboardContractorIndexRoute: DashboardContractorIndexRoute,
+    DashboardContractorJobsActiveRoute: DashboardContractorJobsActiveRoute,
+    DashboardContractorJobsQuotesRoute: DashboardContractorJobsQuotesRoute,
+  }
+
+const DashboardContractorRouteRouteWithChildren =
+  DashboardContractorRouteRoute._addFileChildren(
+    DashboardContractorRouteRouteChildren,
+  )
+
+interface DashboardRouteRouteChildren {
+  DashboardContractorRouteRoute: typeof DashboardContractorRouteRouteWithChildren
+  DashboardDevRoute: typeof DashboardDevRoute
+  DashboardMessagesRoute: typeof DashboardMessagesRoute
+  DashboardNotificationsRoute: typeof DashboardNotificationsRoute
+  DashboardSecurityRoute: typeof DashboardSecurityRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardHomeownerIndexRoute: typeof DashboardHomeownerIndexRoute
+}
+
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardContractorRouteRoute: DashboardContractorRouteRouteWithChildren,
   DashboardDevRoute: DashboardDevRoute,
   DashboardMessagesRoute: DashboardMessagesRoute,
   DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardSecurityRoute: DashboardSecurityRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
-  DashboardContractorCalendarRoute: DashboardContractorCalendarRoute,
-  DashboardContractorDailyLogRoute: DashboardContractorDailyLogRoute,
-  DashboardContractorNetworkRoute: DashboardContractorNetworkRouteWithChildren,
-  DashboardContractorPerformanceRoute: DashboardContractorPerformanceRoute,
-  DashboardContractorProfileRoute: DashboardContractorProfileRoute,
-  DashboardContractorReportsRoute: DashboardContractorReportsRoute,
-  DashboardContractorStaffHoursRoute: DashboardContractorStaffHoursRoute,
-  DashboardContractorTeamRoute: DashboardContractorTeamRouteWithChildren,
-  DashboardContractorIndexRoute: DashboardContractorIndexRoute,
   DashboardHomeownerIndexRoute: DashboardHomeownerIndexRoute,
-  DashboardContractorJobsActiveRoute: DashboardContractorJobsActiveRoute,
-  DashboardContractorJobsQuotesRoute: DashboardContractorJobsQuotesRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
