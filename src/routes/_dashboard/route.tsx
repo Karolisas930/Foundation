@@ -14,7 +14,7 @@
  * the "automatic logout" bug. We only redirect when there is genuinely no
  * session and no preview/demo session.
  */
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
@@ -53,6 +53,7 @@ export const Route = createFileRoute("/_dashboard")({
 
 function DashboardGate() {
   const navigate = useNavigate();
+  const router = useRouter();
   const [status, setStatus] = useState<"pending" | "authed">("pending");
 
   useEffect(() => {
@@ -67,13 +68,29 @@ function DashboardGate() {
           const accountType = await readAccountType(session.user.id);
           if (cancelled) return;
 
-          const path = window.location.pathname;
-          if (accountType === "homeowner" && (path.startsWith("/contractor") || path === "/contractor")) {
-            await navigate({ to: "/homeowner", replace: true });
-          } else if (accountType && accountType !== "homeowner" && (path.startsWith("/homeowner") || path === "/homeowner")) {
-            await navigate({ to: "/contractor", replace: true });
+          const currentPath = window.location.pathname;
+          const isContractor = accountType === "handyman" || accountType === "business";
+          const isHomeowner = accountType === "homeowner";
+
+          const wantsContractorRoute = currentPath.startsWith("/dashboard/contractor");
+          const wantsHomeownerRoute = currentPath.startsWith("/dashboard/homeowner");
+
+          // Role mismatch: A contractor is trying to access homeowner-only routes.
+          if (isContractor && wantsHomeownerRoute) {
+            router.queryClient.clear(); // Wipe cache to prevent data leaks.
+            navigate({ to: "/dashboard/contractor", replace: true });
+            return;
           }
 
+          // Role mismatch: A homeowner is trying to access contractor-only routes.
+          if (isHomeowner && wantsContractorRoute) {
+            router.queryClient.clear(); // Wipe cache to prevent data leaks.
+            navigate({ to: "/dashboard/homeowner", replace: true });
+            return;
+          }
+
+          // If we are here, the role matches the route or it's a generic dashboard page.
+          // It's safe to render.
           setStatus("authed");
           return;
         }
@@ -91,7 +108,7 @@ function DashboardGate() {
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [navigate, router]);
 
   if (status === "pending") {
     return <div className="min-h-screen bg-background" />;
