@@ -12,7 +12,12 @@
 -- =============================================================================
 
 -- Ensure app_role enum exists
-CREATE TYPE public.app_role AS ENUM ('admin', 'user', 'contractor');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+        CREATE TYPE public.app_role AS ENUM ('admin', 'user', 'contractor');
+    END IF;
+END$$;
 
 -- ---------- services ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.services (
