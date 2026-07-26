@@ -58,8 +58,12 @@ export function ReviewRequests() {
           <span className="text-sm text-white">Auto-send after job completion</span>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-[11px] uppercase tracking-wider text-slate-400">Delay</Label>
+          <Label htmlFor="review-delay-days" className="text-[11px] uppercase tracking-wider text-slate-400">
+            Delay
+          </Label>
           <Input
+            id="review-delay-days"
+            name="review-delay-days"
             type="number"
             min={0}
             value={delayDays}
@@ -70,10 +74,12 @@ export function ReviewRequests() {
         </div>
       </div>
       <div className="mt-3">
-        <Label className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-slate-400">
+        <Label htmlFor="review-template" className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-slate-400">
           <Pencil className="size-3" /> Message template ({"{client}"} replaced automatically)
         </Label>
         <Textarea
+          id="review-template"
+          name="review-template"
           value={template}
           onChange={(e) => setTemplate(e.target.value)}
           className="intake-input mt-1.5 min-h-[110px] text-xs"

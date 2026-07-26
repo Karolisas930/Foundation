@@ -175,7 +175,7 @@ export function TeamManagement({
                   value={hoursDraft.memberId}
                   onValueChange={(v) => setHoursDraft((d) => ({ ...d, memberId: v }))}
                 >
-                  <SelectTrigger className="intake-input h-10">
+                  <SelectTrigger id="log-hours-member" className="intake-input h-10">
                     <SelectValue placeholder="Team member" />
                   </SelectTrigger>
                   <SelectContent>
@@ -187,12 +187,17 @@ export function TeamManagement({
                   </SelectContent>
                 </Select>
                 <Input
+                  id="log-hours-date"
+                  name="log-hours-date"
                   type="date"
                   value={hoursDraft.workDate}
                   onChange={(e) => setHoursDraft((d) => ({ ...d, workDate: e.target.value }))}
                   className="intake-input h-10"
+                  aria-label="Work date"
                 />
                 <Input
+                  id="log-hours-hours"
+                  name="log-hours-hours"
                   type="number"
                   inputMode="decimal"
                   step="0.01"
@@ -219,6 +224,8 @@ export function TeamManagement({
                 </Button>
               </div>
               <Input
+                id="log-hours-notes"
+                name="log-hours-notes"
                 placeholder="Notes (optional) — job, site, task"
                 value={hoursDraft.notes}
                 onChange={(e) => setHoursDraft((d) => ({ ...d, notes: e.target.value }))}
