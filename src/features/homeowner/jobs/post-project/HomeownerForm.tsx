@@ -11,6 +11,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { FormShell } from "@/components/shared/FormShell";
 import { TopBar } from "@/components/shared/TopBar";
 
 import {
@@ -280,20 +281,12 @@ export function HomeownerForm() {
   const percent = Math.round((currentStep / TOTAL_STEPS) * 100);
 
   return (
-    <main className="min-h-screen bg-[#0f172a] intake-grid pb-40 text-slate-50 sm:pb-16">
-      <TopBar />
-
-      <section className="mx-auto max-w-3xl px-4 pb-6 pt-5 sm:px-6 sm:pb-10 sm:pt-8 lg:px-8">
-        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-orange-glow">
-          Homeowner · Project intake
-        </p>
-        <h1 className="mt-3 font-display text-[26px] font-extrabold leading-tight text-white sm:text-4xl">
-          Good work starts with{" "}
-          <span className="bg-gradient-to-r from-orange to-orange-glow bg-clip-text text-transparent">
-            the right people.
-          </span>
-        </h1>
-
+    <>
+      <FormShell
+        eyebrow="Homeowner · Project intake"
+        title="Good work starts with the right people."
+        subtitle="Specify what needs doing, your location, details, and project timeframe."
+      >
         <WizardProgress
           currentStep={currentStep}
           totalSteps={TOTAL_STEPS}
@@ -315,7 +308,7 @@ export function HomeownerForm() {
               goNext();
             }
           }}
-          className="mt-6"
+          className="mt-6 space-y-4"
         >
           <div hidden={currentStep !== 1}>
             <ProjectStep
@@ -383,7 +376,7 @@ export function HomeownerForm() {
             onSubmit={() => formRef.current?.requestSubmit()}
           />
         </form>
-      </section>
+      </FormShell>
 
       <ConfirmPostDialog
         open={confirmOpen}
@@ -400,7 +393,7 @@ export function HomeownerForm() {
         projectLanguages={projectLanguages}
         customLanguage={customLanguage}
       />
-    </main>
+    </>
   );
 }
 

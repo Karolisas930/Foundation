@@ -47,10 +47,19 @@ export const SECTIONS = [
   { id: "profile", label: "Profile", short: "Pr." },
 ] as const;
 
+import { TRADE_GROUPS } from "@/regions";
+
 export const TEAM_PRESETS = [1, 2, 5, 10, 25];
 export const MIN_PROJECT_PRESETS = [500, 1000, 2500, 5000, 10000];
 
+<<<<<<< HEAD
 import { TRADE_CATEGORIES } from "@/regions/country-data";
+=======
+// Grouped trade categories rendered in the accordion picker.
+// Mirrors country-data.ts TRADE_GROUPS canonical source of truth.
+export const TRADE_CATEGORIES: Array<{ id: string; label: string; trades: string[] }> =
+  TRADE_GROUPS as unknown as Array<{ id: string; label: string; trades: string[] }>;
+>>>>>>> a8a610c8d2c27f0efe9bbbbf6871afff876a3265
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const PHONE_RE = /^[+\d][\d\s\-()/]{6,}$/;

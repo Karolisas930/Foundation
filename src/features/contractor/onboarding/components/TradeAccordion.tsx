@@ -63,8 +63,8 @@ export function TradeAccordion({
   onToggle,
 }: TradeAccordionProps) {
   const q = search.trim().toLowerCase();
-  // Single-open accordion — opening a category collapses the previous one.
-  const [openId, setOpenId] = useState<string | null>(() => categories[0]?.id ?? null);
+  // Single-open accordion — opening a category collapses the previous one. Start minimized by default.
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const groups = useMemo(() => {
     const base = categories.map((c) => ({ ...c }));

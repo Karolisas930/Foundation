@@ -64,7 +64,16 @@ function DashboardGate() {
         } = await supabase.auth.getSession();
         if (cancelled) return;
         if (session?.user) {
-          void readAccountType(session.user.id);
+          const accountType = await readAccountType(session.user.id);
+          if (cancelled) return;
+
+          const path = window.location.pathname;
+          if (accountType === "homeowner" && (path.startsWith("/contractor") || path === "/contractor")) {
+            await navigate({ to: "/homeowner", replace: true });
+          } else if (accountType && accountType !== "homeowner" && (path.startsWith("/homeowner") || path === "/homeowner")) {
+            await navigate({ to: "/contractor", replace: true });
+          }
+
           setStatus("authed");
           return;
         }
