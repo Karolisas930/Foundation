@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import { useSearch } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
@@ -15,25 +16,42 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Read the 'account_type' from the URL (e.g., ?account_type=homeowner)
+  // This allows linking directly to a specific signup flow.
+  const { account_type = "homeowner" } = useSearch({
+    // NOTE: This `from` path must match the route where SignupForm is rendered.
+    // Based on the project structure, this is likely '/auth'.
+    from: "/auth",
+  });
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+
+    // This is the critical part: pass the extra data in `options.data`.
+    // The `handle_new_user` trigger in the database will copy this into `public.profiles`.
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, display_name: fullName },
+        data: {
+          full_name: fullName,
+          display_name: fullName,
+          account_type: account_type,
+        },
       },
     });
+
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Account created — check your email to confirm.");
-    onSuccess?.();
+    // On success, update the UI to show the "Check your email" message.
+    setIsSubmitted(true);
   }
 
   async function handleGoogle() {
@@ -46,6 +64,18 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
     }
     if (result.redirected) return;
     onSuccess?.();
+  }
+
+  // If the form has been submitted successfully, show the confirmation message.
+  if (isSubmitted) {
+    return (
+      <div className="text-center">
+        <h2 className="text-xl font-semibold text-white">Check your email</h2>
+        <p className="mt-2 text-slate-300">
+          We've sent a confirmation link to your email address. Please click the link to complete your registration.
+        </p>
+      </div>
+    );
   }
 
   return (
