@@ -21,6 +21,7 @@ import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
 
 type DashboardContextType = {
   accountType: string | null;
+  displayName: string | null;
   isContractor: boolean;
 };
 
@@ -36,22 +37,24 @@ export function useDashboard() {
 }
 
 /**
- * Read `profiles.account_type` for the current user. Never throws — a
- * missing row / RLS block / transient error just yields `null`, and the
- * subtree treats that as "unknown role" (defaults to contractor UI today,
- * but child routes can branch on it).
+ * Read `profiles.account_type` and `display_name` for the current user.
+ * Never throws — a missing row / RLS block / transient error just yields `null`.
  */
-async function readAccountType(uid: string): Promise<string | null> {
+async function readProfileData(
+  uid: string,
+): Promise<{ accountType: string | null; displayName: string | null }> {
   try {
     const { data } = await supabase
       .from("profiles")
-      .select("account_type")
+      .select("account_type, display_name")
       .eq("id", uid)
       .maybeSingle();
-    const at = (data as { account_type: string | null } | null)?.account_type;
-    return at ?? null;
+    return {
+      accountType: (data as { account_type: string | null } | null)?.account_type ?? null,
+      displayName: (data as { display_name: string | null } | null)?.display_name ?? null,
+    };
   } catch {
-    return null;
+    return { accountType: null, displayName: null };
   }
 }
 
@@ -72,6 +75,7 @@ function DashboardGate() {
   const router = useRouter();
   const [status, setStatus] = useState<"pending" | "authed" | "redirecting">("pending");
   const [accountType, setAccountType] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,8 +87,10 @@ function DashboardGate() {
         if (cancelled) return;
 
         if (session?.user) {
-          const userAccountType = await readAccountType(session.user.id);
+          const { accountType: userAccountType, displayName: userDisplayName } =
+            await readProfileData(session.user.id);
           setAccountType(userAccountType);
+          setDisplayName(userDisplayName);
           if (cancelled) return;
 
           const currentPath = window.location.pathname;
@@ -143,7 +149,7 @@ function DashboardGate() {
   const isContractor = accountType !== "homeowner";
 
   return (
-    <DashboardContext.Provider value={{ accountType, isContractor }}>
+    <DashboardContext.Provider value={{ accountType, displayName, isContractor }}>
       <LegalGateWrapper>
         <Outlet />
       </LegalGateWrapper>

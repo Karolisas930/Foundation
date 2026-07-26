@@ -34,6 +34,7 @@ import { Route as DashboardMessagesRouteImport } from './routes/_dashboard/messa
 import { Route as DashboardDevRouteImport } from './routes/_dashboard/dev'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as DashboardHomeownerRouteRouteImport } from './routes/_dashboard/homeowner/route'
 import { Route as DashboardContractorRouteRouteImport } from './routes/_dashboard/contractor/route'
 import { Route as DashboardHomeownerIndexRouteImport } from './routes/_dashboard/homeowner/index'
 import { Route as DashboardContractorIndexRouteImport } from './routes/_dashboard/contractor/index'
@@ -174,6 +175,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const DashboardHomeownerRouteRoute = DashboardHomeownerRouteRouteImport.update({
+  id: '/homeowner',
+  path: '/homeowner',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardContractorRouteRoute =
   DashboardContractorRouteRouteImport.update({
     id: '/contractor',
@@ -181,9 +187,9 @@ const DashboardContractorRouteRoute =
     getParentRoute: () => DashboardRouteRoute,
   } as any)
 const DashboardHomeownerIndexRoute = DashboardHomeownerIndexRouteImport.update({
-  id: '/homeowner/',
-  path: '/homeowner/',
-  getParentRoute: () => DashboardRouteRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardHomeownerRouteRoute,
 } as any)
 const DashboardContractorIndexRoute =
   DashboardContractorIndexRouteImport.update({
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/supabase-setup': typeof SupabaseSetupRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/contractor': typeof DashboardContractorRouteRouteWithChildren
+  '/homeowner': typeof DashboardHomeownerRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
   '/dev': typeof DashboardDevRoute
@@ -364,6 +371,7 @@ export interface FileRoutesById {
   '/supabase-setup': typeof SupabaseSetupRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/_dashboard/contractor': typeof DashboardContractorRouteRouteWithChildren
+  '/_dashboard/homeowner': typeof DashboardHomeownerRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
   '/_dashboard/dev': typeof DashboardDevRoute
@@ -407,6 +415,7 @@ export interface FileRouteTypes {
     | '/supabase-setup'
     | '/terms-of-service'
     | '/contractor'
+    | '/homeowner'
     | '/login'
     | '/signup'
     | '/dev'
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/supabase-setup'
     | '/terms-of-service'
     | '/_dashboard/contractor'
+    | '/_dashboard/homeowner'
     | '/_auth/login'
     | '/_auth/signup'
     | '/_dashboard/dev'
@@ -717,6 +727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_dashboard/homeowner': {
+      id: '/_dashboard/homeowner'
+      path: '/homeowner'
+      fullPath: '/homeowner'
+      preLoaderRoute: typeof DashboardHomeownerRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/_dashboard/contractor': {
       id: '/_dashboard/contractor'
       path: '/contractor'
@@ -726,10 +743,10 @@ declare module '@tanstack/react-router' {
     }
     '/_dashboard/homeowner/': {
       id: '/_dashboard/homeowner/'
-      path: '/homeowner'
+      path: '/'
       fullPath: '/homeowner/'
       preLoaderRoute: typeof DashboardHomeownerIndexRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof DashboardHomeownerRouteRoute
     }
     '/_dashboard/contractor/': {
       id: '/_dashboard/contractor/'
@@ -913,24 +930,38 @@ const DashboardContractorRouteRouteWithChildren =
     DashboardContractorRouteRouteChildren,
   )
 
+interface DashboardHomeownerRouteRouteChildren {
+  DashboardHomeownerIndexRoute: typeof DashboardHomeownerIndexRoute
+}
+
+const DashboardHomeownerRouteRouteChildren: DashboardHomeownerRouteRouteChildren =
+  {
+    DashboardHomeownerIndexRoute: DashboardHomeownerIndexRoute,
+  }
+
+const DashboardHomeownerRouteRouteWithChildren =
+  DashboardHomeownerRouteRoute._addFileChildren(
+    DashboardHomeownerRouteRouteChildren,
+  )
+
 interface DashboardRouteRouteChildren {
   DashboardContractorRouteRoute: typeof DashboardContractorRouteRouteWithChildren
+  DashboardHomeownerRouteRoute: typeof DashboardHomeownerRouteRouteWithChildren
   DashboardDevRoute: typeof DashboardDevRoute
   DashboardMessagesRoute: typeof DashboardMessagesRoute
   DashboardNotificationsRoute: typeof DashboardNotificationsRoute
   DashboardSecurityRoute: typeof DashboardSecurityRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
-  DashboardHomeownerIndexRoute: typeof DashboardHomeownerIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardContractorRouteRoute: DashboardContractorRouteRouteWithChildren,
+  DashboardHomeownerRouteRoute: DashboardHomeownerRouteRouteWithChildren,
   DashboardDevRoute: DashboardDevRoute,
   DashboardMessagesRoute: DashboardMessagesRoute,
   DashboardNotificationsRoute: DashboardNotificationsRoute,
   DashboardSecurityRoute: DashboardSecurityRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
-  DashboardHomeownerIndexRoute: DashboardHomeownerIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
