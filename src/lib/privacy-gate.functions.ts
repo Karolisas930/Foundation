@@ -163,6 +163,7 @@ export const listPublicProfiles = createServerFn({ method: "GET" })
   .validator((data: unknown) => listSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<PublicProfile[]> => {
     const supabase = createClient<Database>(
+  const supabase = createClient<Database>(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_PUBLISHABLE_KEY!,
       { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
