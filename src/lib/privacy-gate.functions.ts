@@ -91,7 +91,7 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
       const { data: full, error } = await supabaseAdmin
         .from("profiles")
         .select(
-          "id, business_name, trade, city, bio, website_url, instagram_handle, phone_e164, created_at",
+          "id, company_name, display_name, full_name, trades, city, bio, website_url, instagram_handle, phone, created_at",
         )
         .eq("id", contractorId)
         .maybeSingle();
@@ -109,8 +109,8 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
       return {
         profile: {
           id: full.id,
-          business_name: full.business_name,
-          trade: full.trade,
+          business_name: full.company_name ?? full.display_name ?? full.full_name ?? null,
+          trade: full.trades?.length ? full.trades.join(", ") : null,
           city: full.city,
           bio: full.bio,
           created_at: full.created_at,
@@ -119,7 +119,7 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
         contact: {
           website_url: full.website_url,
           instagram_handle: full.instagram_handle,
-          phone_e164: full.phone_e164,
+          phone_e164: full.phone,
         },
         matchId: match?.id ?? null,
         matchStatus: match?.status ?? "unlocked",
@@ -147,6 +147,32 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
       matchStatus: match?.status ?? null,
       isOwner,
     };
+  });
+
+const listSchema = z.object({
+  search: z.string().trim().max(120).optional(),
+  limit: z.number().int().positive().max(50).optional(),
+});
+
+/**
+ * PUBLIC (unauth) — safe columns only, for many profiles at once. Backs the
+ * homeowner "Find a Tradesperson" browse page. Optional free-text `search`
+ * matches city, business name, or trade.
+ */
+export const listPublicProfiles = createServerFn({ method: "GET" })
+  .validator((data: unknown) => listSchema.parse(data ?? {}))
+  .handler(async ({ data }): Promise<PublicProfile[]> => {
+    const supabase = createClient<Database>(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
+    );
+    const { data: rows, error } = await supabase.rpc("list_public_profiles", {
+      _search: data.search ?? null,
+      _limit: data.limit ?? 24,
+    });
+    if (error) throw error;
+    return (rows ?? []) as PublicProfile[];
   });
 
 /**
