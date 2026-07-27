@@ -91,7 +91,7 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
       const { data: full, error } = await supabaseAdmin
         .from("profiles")
         .select(
-          "id, business_name, trade, city, bio, website_url, instagram_handle, phone_e164, created_at",
+          "id, company_name, display_name, full_name, trades, city, bio, website_url, instagram_handle, phone, created_at",
         )
         .eq("id", contractorId)
         .maybeSingle();
@@ -109,8 +109,8 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
       return {
         profile: {
           id: full.id,
-          business_name: full.business_name,
-          trade: full.trade,
+          business_name: full.company_name ?? full.display_name ?? full.full_name ?? null,
+          trade: full.trades?.length ? full.trades.join(", ") : null,
           city: full.city,
           bio: full.bio,
           created_at: full.created_at,
@@ -119,7 +119,7 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
         contact: {
           website_url: full.website_url,
           instagram_handle: full.instagram_handle,
-          phone_e164: full.phone_e164,
+          phone_e164: full.phone,
         },
         matchId: match?.id ?? null,
         matchStatus: match?.status ?? "unlocked",
@@ -149,71 +149,17 @@ export const getProfileForViewer = createServerFn({ method: "GET" })
     };
   });
 
-/**
- * AUTH'D — create (or fetch) a pending match between the signed-in client and
- * the target contractor. Idempotent on the (contractor, client) pair.
- */
-export const requestMatch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => z.object({ contractorId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }) => {
-    if (data.contractorId === context.userId) {
-      throw new Error("You cannot request a match with yourself.");
-    }
-    // Try to fetch existing pairing first.
-    const existing = await context.supabase
-      .from("matches")
-      .select("id, status")
-      .eq("contractor_id", data.contractorId)
-      .eq("client_id", context.userId)
-      .maybeSingle();
-    if (existing.data) return existing.data;
-
-    const { data: inserted, error } = await context.supabase
-      .from("matches")
-      .insert({ contractor_id: data.contractorId, client_id: context.userId })
-      .select("id, status")
-      .single();
-    if (error) throw error;
-    return inserted;
-  });
+const listSchema = z.object({
+  search: z.string().trim().max(120).optional(),
+  limit: z.number().int().positive().max(50).optional(),
+});
 
 /**
- * AUTH'D — the signed-in user accepts a match they are a party to.
- * Uses service role to bypass the deliberately-missing UPDATE policy on
- * public.matches (defense-in-depth: the client cannot flip status via Data
- * API — only through this authorized server function).
- * When both parties have accepted, the DB trigger flips status to 'unlocked'.
+ * PUBLIC (unauth) — safe columns only, for many profiles at once. Backs the
+ * homeowner "Find a Tradesperson" browse page. Optional free-text `search`
+ * matches city, business name, or trade.
  */
-export const acceptMatch = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => z.object({ matchId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }) => {
-    // Verify the viewer is a party to the match (RLS on SELECT enforces this,
-    // but we also compute which timestamp to set).
-    const { data: match, error: readErr } = await context.supabase
-      .from("matches")
-      .select("id, contractor_id, client_id, status")
-      .eq("id", data.matchId)
-      .maybeSingle();
-    if (readErr) throw readErr;
-    if (!match) throw new Error("Match not found or not visible.");
-
-    const role: "contractor" | "client" =
-      match.contractor_id === context.userId ? "contractor" : "client";
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch =
-      role === "contractor"
-        ? { contractor_accepted_at: new Date().toISOString() }
-        : { client_accepted_at: new Date().toISOString() };
-
-    const { data: updated, error } = await supabaseAdmin
-      .from("matches")
-      .update(patch)
-      .eq("id", data.matchId)
-      .select("id, status, client_accepted_at, contractor_accepted_at, unlocked_at")
-      .single();
-    if (error) throw error;
-    return updated;
-  });
+export const listPublicProfiles = createServerFn({ method: "GET" })
+  .validator((data: unknown) => listSchema.parse(data ?? {}))
+  .handler(async ({ data }): Promise<PublicProfile[]> => {
+    const supabase = createClient
