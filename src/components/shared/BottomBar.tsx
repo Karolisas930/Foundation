@@ -8,6 +8,8 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Wallet, Bell, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUnreadNotifications } from "@/features/shared/notifications/hooks/useUnreadNotifications";
+import { useDashboard } from "@/routes/_dashboard/route";
+import { HomeownerBottomBar } from "./HomeownerBottomBar";
 
 interface BottomBarItem {
   to: string;
@@ -23,9 +25,14 @@ const ITEMS: BottomBarItem[] = [
 ];
 
 export function BottomBar() {
+  const { isContractor } = useDashboard();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { count: unreadCount } = useUnreadNotifications();
+
+  if (!isContractor) {
+    return <HomeownerBottomBar />;
+  }
 
   return (
     <nav
