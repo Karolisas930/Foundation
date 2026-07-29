@@ -8,6 +8,8 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Wallet, Bell, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUnreadNotifications } from "@/features/shared/notifications/hooks/useUnreadNotifications";
+import { useDashboard } from "@/routes/_dashboard/route";
+import { HomeownerBottomBar } from "./HomeownerBottomBar";
 
 interface BottomBarItem {
   to: string;
@@ -23,19 +25,22 @@ const ITEMS: BottomBarItem[] = [
 ];
 
 export function BottomBar() {
+  const { isContractor } = useDashboard();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { count: unreadCount } = useUnreadNotifications();
+
+  if (!isContractor) {
+    return <HomeownerBottomBar />;
+  }
 
   return (
     <nav
       aria-label="Quick navigation"
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
-        // Light: white frosted glass with hairline top border
         "border-t border-slate-100 bg-white/80 backdrop-blur-md",
         "shadow-[0_-1px_0_0_rgba(15,23,42,0.02),0_-8px_24px_-12px_rgba(15,23,42,0.08)]",
-        // Dark: deep slate frosted glass
         "dark:border-slate-800 dark:bg-slate-950/80",
         "dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]",
       )}
@@ -58,8 +63,6 @@ export function BottomBar() {
                       window.dispatchEvent(
                         new CustomEvent("nav:tab-toggled-off", { detail: { to } }),
                       );
-                      // Smoothly slide the current overlay page down before routing back
-                      // to the Profile dashboard underneath it.
                       const overlay =
                         (document.querySelector("[data-route-overlay]") as HTMLElement | null) ??
                         (document.querySelector("main") as HTMLElement | null);
@@ -93,7 +96,6 @@ export function BottomBar() {
                       className={cn(
                         "absolute -right-2 -top-1.5 grid min-h-[18px] min-w-[18px] place-items-center",
                         "rounded-full px-1 text-[10px] font-black leading-none text-white",
-                        // Amber counter bubble; ring matches surface
                         "bg-amber-500 ring-2 ring-white",
                         "dark:ring-[#0f172a]",
                         "shadow-[0_2px_6px_-1px_rgba(217,119,6,0.55)]",
