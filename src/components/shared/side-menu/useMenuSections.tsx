@@ -1,99 +1,49 @@
-import type { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
-  AlertTriangle,
-  Bell,
-  Compass,
-  FileText,
-  HelpCircle,
-  LayoutDashboard,
-  LifeBuoy,
-  MessageCircle,
-  Settings,
-  Shield,
-} from "lucide-react";
+  useBusinessSettingsStatus,
+  type BusinessSettingsModal,
+} from "@/features/contractor/settings/components/BusinessSettingsModals";
+import { useDashboard } from "@/routes/_dashboard/route";
 import type { Section } from "./menu-types";
+import { getHomeownerSections } from "./homeowner-sections";
+import { getContractorSections } from "./contractor-sections";
 
-type NavigateFn = ReturnType<typeof useNavigate>;
+export type SectionHandlers = {
+  setOpen: (o: boolean) => void;
+  setJobRadarOpen: (o: boolean) => void;
+  setKmOpen: (o: boolean) => void;
+  setInvoicesOpen: (o: boolean) => void;
+  setReceiptsOpen: (o: boolean) => void;
+  setTaxToolsOpen: (o: boolean) => void;
+  setVoiceOpen: (o: boolean) => void;
+  setSiteDiaryOpen: (o: boolean) => void;
+  setHelpRequestOpen: (o: boolean) => void;
+  setBsModal: (m: BusinessSettingsModal) => void;
+};
 
 /**
- * Homeowner-only menu sections: Overview/Notifications, Projects
- * (find a tradesperson, quotes, messages), Settings, Help.
+ * Builds the AppSideMenu navigation sections. Kept as a hook so the
+ * orchestrator only wires state; actual section content lives in
+ * ./homeowner-sections.tsx and ./contractor-sections.tsx.
+ *
+ * Branches on the real account role (`useDashboard().isContractor`) -
+ * homeowners get a small, homeowner-relevant menu instead of the
+ * contractor toolkit.
  */
-export function getHomeownerSections(navigate: NavigateFn, soon: (label: string) => void): Section[] {
-  return [
-    {
-      heading: "Dashboard",
-      collapsible: true,
-      defaultOpen: false,
-      items: [
-        { key: "overview", label: "Overview", icon: LayoutDashboard, route: "home" },
-        { key: "notifications", label: "Notifications", icon: Bell, route: "notifications" },
-      ],
-    },
-    {
-      heading: "Projects",
-      collapsible: true,
-      defaultOpen: false,
-      items: [
-        {
-          key: "find-tradesperson",
-          label: "Find a Tradesperson",
-          icon: Compass,
-          action: () => {
-            void navigate({ to: "/homeowner/browse" });
-          },
-        },
-        {
-          key: "my-quotes",
-          label: "Quotes",
-          icon: FileText,
-          action: () => soon("Quotes"),
-          hint: "Coming soon",
-        },
-        {
-          key: "messages",
-          label: "Messages",
-          icon: MessageCircle,
-          route: "messages",
-        },
-      ],
-    },
-    {
-      heading: "Settings",
-      collapsible: true,
-      defaultOpen: false,
-      items: [
-        { key: "security", label: "Security", icon: Shield, route: "security" },
-        { key: "preferences", label: "Preferences", icon: Settings, route: "settings" },
-      ],
-    },
-    {
-      heading: "Help",
-      collapsible: true,
-      defaultOpen: false,
-      items: [
-        {
-          key: "help-faq",
-          label: "FAQ",
-          icon: HelpCircle,
-          action: () => soon("Help Center / FAQ"),
-          hint: "Coming soon",
-        },
-        {
-          key: "contact-support",
-          label: "Support",
-          icon: LifeBuoy,
-          action: () => soon("Contact Support"),
-          hint: "Coming soon",
-        },
-        {
-          key: "report-problem",
-          label: "Report Problem",
-          icon: AlertTriangle,
-          action: () => soon("Report a Problem"),
-          hint: "Coming soon",
-        },
-      ],
-    },
-  ];
+export function useMenuSections(handlers: SectionHandlers): Section[] {
+  const navigate = useNavigate();
+  const bsStatus = useBusinessSettingsStatus();
+  const { isContractor } = useDashboard();
+
+  function soon(label: string) {
+    handlers.setOpen(false);
+    toast.message(label, { description: "Coming in your next release." });
+  }
+
+  if (!isContractor) {
+    return getHomeownerSections(navigate, soon);
+  }
+
+  return getContractorSections(navigate, soon, bsStatus, handlers);
 }
