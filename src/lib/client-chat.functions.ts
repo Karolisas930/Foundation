@@ -14,6 +14,7 @@
  * as the "peer".
  */
 import { createServerFn } from "@tanstack/react-start";
+import type { Json } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type MatchRow = {
@@ -195,6 +196,24 @@ export const sendClientMessage = createServerFn({ method: "POST" })
       .from("matches")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", match.id);
+
+    // Notify the recipient - same shared `notifications` table the bell
+    // badge and quote_sent alerts already read from. Never throws: a
+    // failed notification insert shouldn't block the message from sending.
+    const snippet = data.body.slice(0, 240);
+    const metadata: Json = { match_id: match.id };
+    try {
+      await supabase.from("notifications").insert({
+        recipient_id: recipientId,
+        sender_id: userId,
+        match_id: match.id,
+        type: "message_sent",
+        message: snippet,
+        metadata,
+      });
+    } catch (notifyErr) {
+      console.warn("[sendClientMessage] notification insert failed:", notifyErr);
+    }
 
     return { message: inserted as MessageRow };
   });
