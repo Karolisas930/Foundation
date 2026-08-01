@@ -1,15 +1,21 @@
 /**
- * /auth/callback — the ONLY place email confirmation / magic links should
+ * /auth/callback - the ONLY place email confirmation / magic links should
  * ever redirect to. Supabase needs a moment to turn the token in the URL
  * into an actual session; landing straight on a protected route (e.g.
  * /homeowner) races that process and the dashboard guard bounces the user
  * before the session exists. This page waits for the session, then routes
  * to the right dashboard - no race, no flash-and-crash.
+ *
+ * Deliberately self-contained - no AuthLayout/TopBar here. TopBar renders
+ * AppSideMenu the instant the user is signed in, and AppSideMenu calls
+ * useDashboard(), which only works inside the /_dashboard route tree. On
+ * this page the user becomes signed-in WHILE still on it (that is the
+ * whole point), so using TopBar here crashes the page the moment the
+ * session appears, before the redirect below even finishes.
  */
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthLayout } from "@/components/layouts/AuthLayout";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
@@ -46,8 +52,6 @@ function AuthCallbackPage() {
     async function waitForSession() {
       const startedAt = Date.now();
 
-      // Fires the instant supabase-js finishes exchanging the URL token
-      // for a session - the normal case, usually well under a second.
       const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
         if (cancelled) return;
         if (session?.user) {
@@ -56,7 +60,6 @@ function AuthCallbackPage() {
         }
       });
 
-      // Fallback poll in case the event already fired before we subscribed.
       while (!cancelled && Date.now() - startedAt < MAX_WAIT_MS) {
         const { data } = await supabase.auth.getSession();
         if (data.session?.user) {
@@ -79,21 +82,30 @@ function AuthCallbackPage() {
     };
   }, [navigate]);
 
-  if (state === "expired") {
-    return (
-      <AuthLayout title="Link expired" subtitle="This confirmation link is no longer valid.">
-        <p className="text-sm text-slate-300">
-          Please request a new confirmation email and try again.
-        </p>
-      </AuthLayout>
-    );
-  }
-
   return (
-    <AuthLayout title="Confirming your account" subtitle="Just a moment...">
-      <div className="flex items-center justify-center py-6">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-glow border-t-transparent" />
+    <div className="flex min-h-screen items-center justify-center bg-[#0f172a] px-4 text-slate-50">
+      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center shadow-xl backdrop-blur-sm">
+        {state === "expired" ? (
+          <>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-white">
+              Link expired
+            </h1>
+            <p className="mt-2 text-sm text-slate-300">
+              This confirmation link is no longer valid. Please request a new one and try again.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-white">
+              Confirming your account
+            </h1>
+            <p className="mt-2 text-sm text-slate-300">Just a moment...</p>
+            <div className="mt-6 flex justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-glow border-t-transparent" />
+            </div>
+          </>
+        )}
       </div>
-    </AuthLayout>
+    </div>
   );
-    }
+}
