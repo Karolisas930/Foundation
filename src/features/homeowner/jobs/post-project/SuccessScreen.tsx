@@ -78,7 +78,7 @@ async function sendMagicLink(email: string): Promise<{ ok: boolean; message: str
   if (!isSupabaseConfigured()) {
     return { ok: true, message: "Sign-in link sent. Check your inbox (and spam)." };
   }
-  const redirectTo = `${window.location.origin}/homeowner`;
+  const redirectTo = `${window.location.origin}/auth/callback`;
   try {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -150,7 +150,7 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
           </div>
 
           <p className="mt-5 break-words text-sm leading-6 text-slate-200">
-            <span className="font-semibold text-white break-words">“{success.project.title}”</span>{" "}
+            <span className="font-semibold text-white break-words">"{success.project.title}"</span>{" "}
             is now visible to verified Baden-Württemberg trades. The first matched bids are already
             in your dashboard.
           </p>
@@ -266,7 +266,7 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
                   toast.error("Sign-in service isn't connected yet.");
                   return;
                 }
-                const redirectTo = `${window.location.origin}/homeowner`;
+                const redirectTo = `${window.location.origin}/auth/callback`;
                 try {
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "google",
@@ -290,7 +290,7 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
                   toast.error("Sign-in service isn't connected yet.");
                   return;
                 }
-                const redirectTo = `${window.location.origin}/homeowner`;
+                const redirectTo = `${window.location.origin}/auth/callback`;
                 try {
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "apple",
@@ -334,7 +334,7 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
                   email: success.email,
                   password: passwordValue,
                   options: {
-                    emailRedirectTo: `${window.location.origin}/homeowner`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                   },
                 });
 
