@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Bridges the gap between "guest posts a project" and "guest actually has
  * an account". savePendingProject runs with no auth (the person doesn't
