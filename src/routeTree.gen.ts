@@ -25,6 +25,7 @@ import { Route as OnboardingIndexRouteImport } from './routes/onboarding.index'
 import { Route as TradesSpecialtyRouteImport } from './routes/trades.$specialty'
 import { Route as PProfileIdRouteImport } from './routes/p.$profileId'
 import { Route as OnboardingProfileRouteImport } from './routes/onboarding/profile'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiTranscribeStreamRouteImport } from './routes/api/transcribe-stream'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as DashboardSettingsRouteImport } from './routes/_dashboard/settings'
@@ -38,6 +39,7 @@ import { Route as DashboardHomeownerRouteRouteImport } from './routes/_dashboard
 import { Route as DashboardContractorRouteRouteImport } from './routes/_dashboard/contractor/route'
 import { Route as DashboardHomeownerIndexRouteImport } from './routes/_dashboard/homeowner/index'
 import { Route as DashboardContractorIndexRouteImport } from './routes/_dashboard/contractor/index'
+import { Route as DashboardHomeownerBrowseRouteImport } from './routes/_dashboard/homeowner/browse'
 import { Route as DashboardContractorTeamRouteImport } from './routes/_dashboard/contractor/team'
 import { Route as DashboardContractorStaffHoursRouteImport } from './routes/_dashboard/contractor/staff-hours'
 import { Route as DashboardContractorReportsRouteImport } from './routes/_dashboard/contractor/reports'
@@ -130,6 +132,11 @@ const OnboardingProfileRoute = OnboardingProfileRouteImport.update({
   path: '/onboarding/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTranscribeStreamRoute = ApiTranscribeStreamRouteImport.update({
   id: '/api/transcribe-stream',
   path: '/api/transcribe-stream',
@@ -196,6 +203,12 @@ const DashboardContractorIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => DashboardContractorRouteRoute,
+  } as any)
+const DashboardHomeownerBrowseRoute =
+  DashboardHomeownerBrowseRouteImport.update({
+    id: '/browse',
+    path: '/browse',
+    getParentRoute: () => DashboardHomeownerRouteRoute,
   } as any)
 const DashboardContractorTeamRoute = DashboardContractorTeamRouteImport.update({
   id: '/team',
@@ -297,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof DashboardSettingsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/transcribe-stream': typeof ApiTranscribeStreamRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/p/$profileId': typeof PProfileIdRoute
   '/trades/$specialty': typeof TradesSpecialtyRoute
@@ -309,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/contractor/reports': typeof DashboardContractorReportsRoute
   '/contractor/staff-hours': typeof DashboardContractorStaffHoursRoute
   '/contractor/team': typeof DashboardContractorTeamRouteWithChildren
+  '/homeowner/browse': typeof DashboardHomeownerBrowseRoute
   '/contractor/': typeof DashboardContractorIndexRoute
   '/homeowner/': typeof DashboardHomeownerIndexRoute
   '/contractor/jobs/active': typeof DashboardContractorJobsActiveRoute
@@ -337,6 +352,7 @@ export interface FileRoutesByTo {
   '/settings': typeof DashboardSettingsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/transcribe-stream': typeof ApiTranscribeStreamRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/p/$profileId': typeof PProfileIdRoute
   '/trades/$specialty': typeof TradesSpecialtyRoute
@@ -348,6 +364,7 @@ export interface FileRoutesByTo {
   '/contractor/reports': typeof DashboardContractorReportsRoute
   '/contractor/staff-hours': typeof DashboardContractorStaffHoursRoute
   '/contractor/team': typeof DashboardContractorTeamRouteWithChildren
+  '/homeowner/browse': typeof DashboardHomeownerBrowseRoute
   '/contractor': typeof DashboardContractorIndexRoute
   '/homeowner': typeof DashboardHomeownerIndexRoute
   '/contractor/jobs/active': typeof DashboardContractorJobsActiveRoute
@@ -381,6 +398,7 @@ export interface FileRoutesById {
   '/_dashboard/settings': typeof DashboardSettingsRoute
   '/api/health': typeof ApiHealthRoute
   '/api/transcribe-stream': typeof ApiTranscribeStreamRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/p/$profileId': typeof PProfileIdRoute
   '/trades/$specialty': typeof TradesSpecialtyRoute
@@ -393,6 +411,7 @@ export interface FileRoutesById {
   '/_dashboard/contractor/reports': typeof DashboardContractorReportsRoute
   '/_dashboard/contractor/staff-hours': typeof DashboardContractorStaffHoursRoute
   '/_dashboard/contractor/team': typeof DashboardContractorTeamRouteWithChildren
+  '/_dashboard/homeowner/browse': typeof DashboardHomeownerBrowseRoute
   '/_dashboard/contractor/': typeof DashboardContractorIndexRoute
   '/_dashboard/homeowner/': typeof DashboardHomeownerIndexRoute
   '/_dashboard/contractor/jobs/active': typeof DashboardContractorJobsActiveRoute
@@ -425,6 +444,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/health'
     | '/api/transcribe-stream'
+    | '/auth/callback'
     | '/onboarding/profile'
     | '/p/$profileId'
     | '/trades/$specialty'
@@ -437,6 +457,7 @@ export interface FileRouteTypes {
     | '/contractor/reports'
     | '/contractor/staff-hours'
     | '/contractor/team'
+    | '/homeowner/browse'
     | '/contractor/'
     | '/homeowner/'
     | '/contractor/jobs/active'
@@ -465,6 +486,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/api/health'
     | '/api/transcribe-stream'
+    | '/auth/callback'
     | '/onboarding/profile'
     | '/p/$profileId'
     | '/trades/$specialty'
@@ -476,6 +498,7 @@ export interface FileRouteTypes {
     | '/contractor/reports'
     | '/contractor/staff-hours'
     | '/contractor/team'
+    | '/homeowner/browse'
     | '/contractor'
     | '/homeowner'
     | '/contractor/jobs/active'
@@ -508,6 +531,7 @@ export interface FileRouteTypes {
     | '/_dashboard/settings'
     | '/api/health'
     | '/api/transcribe-stream'
+    | '/auth/callback'
     | '/onboarding/profile'
     | '/p/$profileId'
     | '/trades/$specialty'
@@ -520,6 +544,7 @@ export interface FileRouteTypes {
     | '/_dashboard/contractor/reports'
     | '/_dashboard/contractor/staff-hours'
     | '/_dashboard/contractor/team'
+    | '/_dashboard/homeowner/browse'
     | '/_dashboard/contractor/'
     | '/_dashboard/homeowner/'
     | '/_dashboard/contractor/jobs/active'
@@ -544,6 +569,7 @@ export interface RootRouteChildren {
   TermsOfServiceRoute: typeof TermsOfServiceRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiTranscribeStreamRoute: typeof ApiTranscribeStreamRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   OnboardingProfileRoute: typeof OnboardingProfileRoute
   PProfileIdRoute: typeof PProfileIdRoute
   TradesSpecialtyRoute: typeof TradesSpecialtyRoute
@@ -664,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/transcribe-stream': {
       id: '/api/transcribe-stream'
       path: '/api/transcribe-stream'
@@ -754,6 +787,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/contractor/'
       preLoaderRoute: typeof DashboardContractorIndexRouteImport
       parentRoute: typeof DashboardContractorRouteRoute
+    }
+    '/_dashboard/homeowner/browse': {
+      id: '/_dashboard/homeowner/browse'
+      path: '/browse'
+      fullPath: '/homeowner/browse'
+      preLoaderRoute: typeof DashboardHomeownerBrowseRouteImport
+      parentRoute: typeof DashboardHomeownerRouteRoute
     }
     '/_dashboard/contractor/team': {
       id: '/_dashboard/contractor/team'
@@ -931,11 +971,13 @@ const DashboardContractorRouteRouteWithChildren =
   )
 
 interface DashboardHomeownerRouteRouteChildren {
+  DashboardHomeownerBrowseRoute: typeof DashboardHomeownerBrowseRoute
   DashboardHomeownerIndexRoute: typeof DashboardHomeownerIndexRoute
 }
 
 const DashboardHomeownerRouteRouteChildren: DashboardHomeownerRouteRouteChildren =
   {
+    DashboardHomeownerBrowseRoute: DashboardHomeownerBrowseRoute,
     DashboardHomeownerIndexRoute: DashboardHomeownerIndexRoute,
   }
 
@@ -983,6 +1025,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsOfServiceRoute: TermsOfServiceRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiTranscribeStreamRoute: ApiTranscribeStreamRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   OnboardingProfileRoute: OnboardingProfileRoute,
   PProfileIdRoute: PProfileIdRoute,
   TradesSpecialtyRoute: TradesSpecialtyRoute,
