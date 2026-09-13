@@ -54,6 +54,19 @@ export function SecureAccountDialog({
     }
   }
 
+  const getStrengthColor = (score: number) => {
+    if (score <= 1) return "bg-destructive";
+    if (score === 2) return "bg-warning";
+    return "bg-success";
+  };
+
+  const getStrengthWidth = (score: number) => {
+    if (score === 0) return "w-0";
+    if (score === 1) return "w-1/3";
+    if (score === 2) return "w-2/3";
+    return "w-full";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-white/10 bg-[color:var(--navy-deep)] text-slate-100 sm:max-w-md shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]">
@@ -154,3 +167,21 @@ export function SecureAccountDialog({
             />
             <div className="mt-2" aria-live="polite">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className={`h-full transition-all duration-300 ${getStrengthColor(strength)} ${getStrengthWidth(strength)}`} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="pt-2">
+            <Button
+              type="submit"
+              disabled={passwordSaving || passwordValue.length < 8}
+              className="w-full h-11 rounded-xl bg-white font-bold text-slate-900 hover:bg-slate-100"
+            >
+              {passwordSaving ? "Securing account..." : "Save password & finish"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
