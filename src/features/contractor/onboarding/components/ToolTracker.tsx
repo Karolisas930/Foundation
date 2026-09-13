@@ -71,18 +71,23 @@ export function ToolTracker() {
     >
       <div className="grid gap-2 sm:grid-cols-[1fr_110px_auto]">
         <Input
+          id="tool-name"
+          name="tool-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Tool name (e.g. Festool sander)"
           className="intake-input h-10"
         />
         <Input
+          id="tool-interval"
+          name="tool-interval"
           type="number"
           min={7}
           value={interval}
           onChange={(e) => setInterval(Number(e.target.value) || 180)}
           placeholder="Days"
           className="intake-input h-10"
+          aria-label="Service interval in days"
         />
         <Button
           type="button"

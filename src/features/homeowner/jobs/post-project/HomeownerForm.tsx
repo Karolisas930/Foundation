@@ -10,6 +10,7 @@
  */
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 
 import { FormShell } from "@/components/shared/FormShell";
 import { TopBar } from "@/components/shared/TopBar";
@@ -23,6 +24,7 @@ import {
 } from "@/core/demo-session";
 import { persistOnboardingProfile } from "@/components/shared/shared";
 import { supabase } from "@/integrations/supabase/client";
+import { savePendingProject } from "@/lib/pending-projects.functions";
 
 import { type TradeDetails } from "@/features/homeowner/jobs/post-project/parts";
 import {
@@ -46,6 +48,7 @@ const TOTAL_STEPS = 3;
 const STEP_LABELS = ["Project", "Contact", "Details"] as const;
 
 export function HomeownerForm() {
+  const savePendingProjectFn = useServerFn(savePendingProject);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessState | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -256,6 +259,33 @@ export function HomeownerForm() {
         } else if (jobRow?.id) {
           newProject.id = jobRow.id;
           updateEcosystemLedger(ledger);
+        }
+      } else {
+        // No account yet - this is the common case for a brand-new guest.
+        // Save server-side (keyed by email) so it can be claimed into the
+        // real jobs table once they actually confirm an account, from
+        // whatever tab/device that confirmation happens on. See
+        // src/lib/pending-projects.functions.ts and /auth/callback.
+        try {
+          await savePendingProjectFn({
+            data: {
+              email: profile.email,
+              title: newProject.title,
+              description: newProject.description,
+              trade: trade || undefined,
+              estimatedBudget: budget,
+              locationZip: profile.postalCode || undefined,
+              city: profile.city || undefined,
+              language: newProject.language ?? undefined,
+              urgency: timeline === "asap" ? "urgent" : "normal",
+            },
+          });
+        } catch (pendingErr) {
+          toast.warning(
+            `Project saved locally — we'll sync it once you confirm your account${
+              pendingErr instanceof Error ? ` (${pendingErr.message})` : ""
+            }.`,
+          );
         }
       }
     } catch (err) {

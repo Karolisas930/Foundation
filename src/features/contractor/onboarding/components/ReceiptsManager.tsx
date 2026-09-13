@@ -141,11 +141,15 @@ export function ReceiptsManager({
 
               <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <Input
+                  id="material-item"
+                  name="material-item"
                   placeholder="Item (e.g. Tiles)"
                   value={materialDraft.item}
                   onChange={(e) => setMaterialDraft((d) => ({ ...d, item: e.target.value }))}
                 />
                 <Input
+                  id="material-cost"
+                  name="material-cost"
                   type="number"
                   placeholder="Cost €"
                   value={materialDraft.cost || ""}

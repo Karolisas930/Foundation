@@ -181,3 +181,6 @@ export const TRADE_GROUPS = [
     ],
   },
 ] as const;
+
+// Alias for backward compatibility with components that still import the old name.
+export const TRADE_CATEGORIES = TRADE_GROUPS;

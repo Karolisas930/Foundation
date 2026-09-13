@@ -57,6 +57,8 @@ export function MaterialComparator() {
       }
     >
       <Textarea
+        id="material-list-input"
+        name="material-list-input"
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
         placeholder={

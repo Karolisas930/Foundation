@@ -20,33 +20,33 @@ line notes what was checked.
 `team_members` had **zero RLS policies** until it was fixed. The same
 could be true of any of the other 23 tables this app queries.
 
-- [ ] Run the two audit queries below and paste both result sets into the
+- [x] Run the two audit queries below and paste both result sets into the
       **Findings** subsection — do not summarize, paste the raw rows.
-- [ ] `invoices`
-- [ ] `receipts`
-- [ ] `match_invoices`
-- [ ] `clients`
-- [ ] `finanz_settings`
-- [ ] `staff_document_logs`
-- [ ] `verifications`
-- [ ] `profiles`
-- [ ] `bookings`
-- [ ] `calendar_events`
-- [ ] `jobs`
-- [ ] `matches`
-- [ ] `messages`
-- [ ] `network_messages`
-- [ ] `network_thread_members`
-- [ ] `network_threads`
-- [ ] `notifications`
-- [ ] `profile_reports`
-- [ ] `reviews`
-- [ ] `services`
-- [ ] `staff_hours`
+- [x] `invoices` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `receipts` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `match_invoices` — fixed (participant-only SELECT/INSERT/UPDATE)
+- [x] `clients` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `finanz_settings` — fixed (owner-only SELECT/INSERT/UPDATE)
+- [x] `staff_document_logs` — fixed (owner-only SELECT/INSERT/DELETE)
+- [x] `verifications` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `profiles` — fixed (owner-only SELECT, public view for safe columns)
+- [x] `bookings` — fixed (participant-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `calendar_events` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `jobs` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE, public SELECT for open jobs)
+- [x] `matches` — fixed (participant-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `messages` — fixed (participant-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `network_messages` — fixed (thread member-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `network_thread_members` — fixed (thread member-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `network_threads` — fixed (thread member-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `notifications` — fixed (recipient-only SELECT/UPDATE/DELETE, admin/recipient INSERT)
+- [x] `profile_reports` — fixed (reporter-only SELECT/INSERT, admin UPDATE)
+- [x] `reviews` — fixed (participant-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `services` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `staff_hours` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
 - [x] `team_members` — fixed (owner/self-scoped SELECT, owner-only
       INSERT/UPDATE/DELETE)
-- [ ] `trips`
-- [ ] `user_roles`
+- [x] `trips` — fixed (owner-only SELECT/INSERT/UPDATE/DELETE)
+- [x] `user_roles` — fixed (owner-only SELECT, admin INSERT/UPDATE/DELETE)
 
 Check a table's box once its RLS status is confirmed safe (already has
 correct scoped policies, or a fix migration has been written and applied).

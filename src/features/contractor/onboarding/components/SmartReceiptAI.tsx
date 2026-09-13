@@ -160,28 +160,41 @@ export function SmartReceiptAI() {
             </div>
             <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
               <Input
+                id={`receipt-vendor-${r.id}`}
+                name={`receipt-vendor-${r.id}`}
                 value={r.vendor}
                 onChange={(e) => update(r.id, "vendor", e.target.value)}
                 className="intake-input h-8 text-xs"
+                aria-label="Vendor"
               />
               <Input
+                id={`receipt-amount-${r.id}`}
+                name={`receipt-amount-${r.id}`}
                 type="number"
                 step="0.01"
                 value={r.amount}
                 onChange={(e) => update(r.id, "amount", Number(e.target.value) || 0)}
                 className="intake-input h-8 text-xs"
+                aria-label="Amount"
               />
               <Input
+                id={`receipt-date-${r.id}`}
+                name={`receipt-date-${r.id}`}
                 type="date"
                 value={r.date}
                 onChange={(e) => update(r.id, "date", e.target.value)}
                 className="intake-input h-8 text-xs"
+                aria-label="Date"
               />
               <Select
                 value={r.category}
                 onValueChange={(v) => update(r.id, "category", v as SmartReceipt["category"])}
               >
-                <SelectTrigger className="intake-input h-8 text-xs">
+                <SelectTrigger
+                  id={`receipt-category-${r.id}`}
+                  className="intake-input h-8 text-xs"
+                  aria-label="Category"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

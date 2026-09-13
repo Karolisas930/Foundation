@@ -13,8 +13,8 @@ export function useAuthActions() {
   const cloudReady = isSupabaseConfigured();
 
   const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/homeowner` : "/homeowner";
-
+    typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : "/auth/callback";
+  
   async function goToDashboard() {
     await router.invalidate();
     try {
