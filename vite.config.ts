@@ -12,4 +12,16 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Pass additional deployment configuration safely via the nested vite block
+  vite: {
+    server: {
+      headers: {
+        'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co;"
+      }
+    },
+    // Safely override Nitro's deployment preset to target Vercel instead of Cloudflare
+    nitro: {
+      preset: 'vercel'
+    }
+  }
 });
