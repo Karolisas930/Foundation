@@ -17,12 +17,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { stampAccountTypeIfMissing } from "@/lib/account-type";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
 });
 
-const MAX_WAIT_MS = 8000;
+const MAX_WAIT_MS = 15000;
 const POLL_INTERVAL_MS = 300;
 
 function AuthCallbackPage() {
@@ -31,6 +32,12 @@ function AuthCallbackPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const sectorParam = new URL(window.location.href).searchParams.get("sector") as
+      | "homeowner"
+      | "handyman"
+      | "business"
+      | "architect"
+      | null;
 
     async function routeToDashboard() {
       try {
@@ -40,6 +47,14 @@ function AuthCallbackPage() {
         if (!userId) {
           await navigate({ to: "/homeowner" });
           return;
+        }
+
+        if (sectorParam) {
+          try {
+            await stampAccountTypeIfMissing(sectorParam);
+          } catch {
+            // non-fatal
+          }
         }
 
         const { data: profile } = await supabase

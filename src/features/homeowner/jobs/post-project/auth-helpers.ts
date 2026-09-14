@@ -52,7 +52,7 @@ export async function sendMagicLink(email: string): Promise<{ ok: boolean; messa
   if (!isSupabaseConfigured()) {
     return { ok: true, message: "Sign-in link sent. Check your inbox (and spam)." };
   }
-  const redirectTo = `${window.location.origin}/auth/callback`;
+  const redirectTo = `${window.location.origin}/auth/callback?sector=homeowner`;
   try {
     const { error } = await supabase.auth.signInWithOtp({
       email,

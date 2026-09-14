@@ -44,7 +44,7 @@ export function SecureAccountDialog({
       toast.error("Sign-in service isn't connected yet.");
       return;
     }
-    const redirectTo = `${window.location.origin}/auth/callback`;
+    const redirectTo = `${window.location.origin}/auth/callback?sector=homeowner`;
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
       if (error) toast.error(error.message);
@@ -122,7 +122,7 @@ export function SecureAccountDialog({
                 email,
                 password: passwordValue,
                 options: {
-                  emailRedirectTo: `${window.location.origin}/auth/callback`,
+                  emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner`,
                 },
               });
               if (error) {
