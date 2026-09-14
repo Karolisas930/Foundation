@@ -129,7 +129,7 @@ export function SiteFooter() {
               },
               { label: "How it works", to: "/" },
               { label: "Pricing", to: "/" },
-              { label: "Dashboard", to: "/dashboard" },
+              { label: "Dashboard", to: "/homeowner" },
             ]}
           />
           <FooterCol
@@ -155,7 +155,7 @@ export function SiteFooter() {
               { label: "Heavy Machinery", soon: true },
               { label: "Disposal & Recycling", soon: true },
               { label: "Local Building Control", soon: true },
-              { label: "Sign in", to: "/auth" },
+              { label: "Sign in", to: "/login" },
             ]}
           />
           <FooterCol
@@ -165,7 +165,7 @@ export function SiteFooter() {
               { label: "Trust & safety", to: "/trust-safety" },
               { label: "Impressum", to: "/impressum" },
               { label: "Privacy Policy", to: "/datenschutz" },
-              { label: "Terms of Service", to: "/terms" },
+              { label: "Terms of Service", to: "/terms-of-service" },
             ]}
           />
         </div>
