@@ -118,7 +118,7 @@ export function SecureAccountDialog({
             }
             setPasswordSaving(true);
             try {
-              const { error } = await supabase.auth.signUp({
+              const { data: signUpData, error } = await supabase.auth.signUp({
                 email,
                 password: passwordValue,
                 options: {
@@ -129,7 +129,27 @@ export function SecureAccountDialog({
                   },
                 },
               });
-              if (error) {
+
+              // Supabase signUp() no-ops (no error, no email, no session) when
+              // the email already has an account — it never reveals that via
+              // `error` to prevent account enumeration. Detect that case via
+              // the empty `identities` array and fall back to signing in with
+              // the password just entered, instead of reporting false success.
+              const alreadyRegistered =
+                !error && !signUpData?.session && signUpData?.user?.identities?.length === 0;
+
+              if (alreadyRegistered) {
+                const { data: signInData, error: signInError } =
+                  await supabase.auth.signInWithPassword({ email, password: passwordValue });
+                if (signInData?.session) {
+                  onPasswordCreated();
+                } else {
+                  toast.error(
+                    signInError?.message ??
+                      "This email already has an account. Try signing in instead.",
+                  );
+                }
+              } else if (error) {
                 toast.error(error.message);
               } else {
                 onPasswordCreated();
