@@ -122,7 +122,22 @@ function DashboardGate() {
           return;
         }
 
-        // No session found, redirect to login.
+        // No session found. However, if we're landing on the Supabase
+        // callback page (or the URL contains auth tokens) we must NOT
+        // immediately redirect — the callback component needs a chance
+        // to let Supabase convert the token into a session.
+        const url = typeof window !== "undefined" ? new URL(window.location.href) : null;
+        const isAuthCallback =
+          url &&
+          (url.pathname === "/auth/callback" || url.searchParams.has("access_token") || url.searchParams.has("type") || url.searchParams.has("provider_token"));
+
+        if (isAuthCallback) {
+          // Defer redirecting and let the callback component mount.
+          if (!cancelled) setStatus("pending");
+          return;
+        }
+
+        // Otherwise, redirect to login as before.
         setStatus("redirecting");
         navigate({
           to: "/login",

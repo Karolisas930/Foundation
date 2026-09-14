@@ -123,6 +123,10 @@ export function SecureAccountDialog({
                 password: passwordValue,
                 options: {
                   emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner`,
+                  data: {
+                    display_name: email.split("@")[0],
+                    account_type: "homeowner",
+                  },
                 },
               });
               if (error) {
