@@ -9,7 +9,7 @@ function ContractorGuard() {
   const { isContractor } = useDashboard();
 
   if (!isContractor) {
-    return <Navigate to="/dashboard/homeowner" replace />;
+    return <Navigate to="/homeowner" replace />;
   }
 
   return <Outlet />;
