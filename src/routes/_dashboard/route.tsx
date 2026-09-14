@@ -97,14 +97,14 @@ function DashboardGate() {
           const isContractor = userAccountType === "handyman" || userAccountType === "business";
           const isHomeowner = userAccountType === "homeowner";
 
-          const wantsContractorRoute = currentPath.startsWith("/dashboard/contractor");
-          const wantsHomeownerRoute = currentPath.startsWith("/dashboard/homeowner");
+          const wantsContractorRoute = currentPath.startsWith("/contractor");
+          const wantsHomeownerRoute = currentPath.startsWith("/homeowner");
 
           // Role mismatch: A contractor is trying to access homeowner-only routes.
           if (isContractor && wantsHomeownerRoute) {
             setStatus("redirecting");
             router.queryClient.clear(); // Wipe cache to prevent data leaks.
-            navigate({ to: "/dashboard/contractor", replace: true });
+            navigate({ to: "/contractor", replace: true });
             return;
           }
 
@@ -112,7 +112,7 @@ function DashboardGate() {
           if (isHomeowner && wantsContractorRoute) {
             setStatus("redirecting");
             router.queryClient.clear(); // Wipe cache to prevent data leaks.
-            navigate({ to: "/dashboard/homeowner", replace: true });
+            navigate({ to: "/homeowner", replace: true });
             return;
           }
 
