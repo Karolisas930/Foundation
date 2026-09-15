@@ -18,6 +18,7 @@ import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
+import { stampAccountTypeIfMissing } from "@/lib/account-type";
 
 type DashboardContextType = {
   accountType: string | null;
@@ -87,8 +88,22 @@ function DashboardGate() {
         if (cancelled) return;
 
         if (session?.user) {
-          const { accountType: userAccountType, displayName: userDisplayName } =
+          let { accountType: userAccountType, displayName: userDisplayName } =
             await readProfileData(session.user.id);
+
+          // Safety net: some entry points (plain magic-link login, direct
+          // OAuth returns with no `?sector=` param) never call
+          // stampAccountTypeIfMissing, so profiles.account_type can be
+          // NULL here. Without this, the render guard below blocks
+          // forever on a blank screen because accountType never becomes
+          // truthy. Default new/unstamped users to "homeowner" — the
+          // same default the auth callback and login flows already use.
+          if (!userAccountType) {
+            await stampAccountTypeIfMissing("homeowner", session.user.email);
+            ({ accountType: userAccountType, displayName: userDisplayName } =
+              await readProfileData(session.user.id));
+          }
+
           setAccountType(userAccountType);
           setDisplayName(userDisplayName);
           if (cancelled) return;
