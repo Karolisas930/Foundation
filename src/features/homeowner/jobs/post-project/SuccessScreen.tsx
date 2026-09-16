@@ -16,6 +16,8 @@ import { SecureAccountDialog } from "./SecureAccountDialog";
 
 export type SuccessState = {
   email: string;
+  fullName: string;
+  phone: string;
   project: EcosystemProject;
   mediaCount: number;
   hasVoice: boolean;
@@ -169,6 +171,8 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
         open={passwordOpen}
         onOpenChange={setPasswordOpen}
         email={success.email}
+        fullName={success.fullName}
+        phone={success.phone}
         onPasswordCreated={() => setPostSignup(true)}
       />
     </main>
