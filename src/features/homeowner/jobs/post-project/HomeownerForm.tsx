@@ -299,6 +299,8 @@ export function HomeownerForm() {
     toast.success(`"${newProject.title}" is live — check your inbox to sign in.`);
     setSuccess({
       email: profile.email,
+      fullName: profile.fullName,
+      phone: profile.mobile,
       project: newProject,
       mediaCount: mediaFiles.length,
       hasVoice: Boolean(audioUrl),
