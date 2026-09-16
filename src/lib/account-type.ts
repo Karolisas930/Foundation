@@ -1,142 +1,97 @@
 /**
- * /auth/callback - the ONLY place email confirmation / magic links should
- * ever redirect to. Supabase needs a moment to turn the token in the URL
- * into an actual session; landing straight on a protected route (e.g.
- * /homeowner) races that process and the dashboard guard bounces the user
- * before the session exists. This page waits for the session, claims any
- * project the person posted as a guest before they had an account, then 
- * routes to the right dashboard - no race, no flash-and-crash.
+ * Shared helper — stamp `profiles.account_type` for the currently signed-in
+ * user. Idempotent by design: `stampIfMissing` only writes when the row is
+ * missing or `account_type` is null, so it's safe to call on every dashboard
+ * mount without clobbering an existing role (contractor upgrades, admin
+ * overrides, etc.).
  *
- * Deliberately self-contained - no AuthLayout/TopBar here. TopBar renders
- * AppSideMenu the instant the user is signed in, and AppSideMenu calls
- * useDashboard(), which only works inside the /_dashboard route tree. On
- * this page the user becomes signed-in WHILE still on it (that is the
- * whole point), so using TopBar here crashes the page the moment the
- * session appears, before the redirect below even finishes.
+ * Used by:
+ *  - SuccessScreen (password signup / update paths).
+ *  - homeowner/index.tsx first-load check (covers magic-link + OAuth
+ *    returns that redirect through /dashboard?sector=homeowner).
  */
-import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny } from "@/lib/account-type";
 
-export const Route = createFileRoute("/auth/callback")({
-  component: AuthCallbackPage,
-});
+export async function stampAccountTypeIfMissing(
+  accountType: "homeowner" | "handyman" | "business" | "architect",
+  displayNameFallback?: string | null,
+): Promise<void> {
+  try {
+    const { data: sess } = await supabase.auth.getSession();
+    const user = sess?.session?.user;
+    if (!user) return;
 
-const MAX_WAIT_MS = 15000;
-const POLL_INTERVAL_MS = 300;
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id, account_type")
+      .eq("id", user.id)
+      .maybeSingle();
 
-function AuthCallbackPage() {
-  const navigate = useNavigate();
-  const [state, setState] = useState<"waiting" | "expired">("waiting");
+    const currentType = (existing as { account_type: string | null } | null)?.account_type;
+    if (currentType) return; // already set — do not overwrite
 
-  useEffect(() => {
-    let cancelled = false;
-    const sectorParam = new URL(window.location.href).searchParams.get("sector") as
-      | "homeowner"
-      | "handyman"
-      | "business"
-      | "architect"
-      | null;
+    await supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        account_type: accountType,
+        display_name:
+          (existing as { display_name?: string | null } | null)?.display_name ??
+          displayNameFallback ??
+          user.email ??
+          null,
+      },
+      { onConflict: "id" },
+    );
+  } catch {
+    /* non-fatal — a later save will backfill the row */
+  }
+}
 
-    async function routeToDashboard() {
-      try {
-        const { data: userResponse } = await supabase.auth.getUser();
-        const userId = userResponse.user?.id;
+const PENDING_PROFILE_FIELDS_KEY = "hw.pendingProfileFields.v1";
 
-        if (!userId) {
-          await navigate({ to: "/homeowner" });
-          return;
-        }
+/**
+ * The homeowner "secure your account" dialog collects full_name/phone
+ * client-side before the account exists. The password path can upsert
+ * them right after signUp(). The OAuth (Google/Apple) path can't — the
+ * browser navigates away to the provider and back, unmounting the
+ * dialog before any session exists. Stash the values here right before
+ * the OAuth redirect; /auth/callback picks them up once a session lands
+ * and clears them afterward. Safe no-op if nothing was stashed.
+ */
+export function stashPendingProfileFields(fields: {
+  fullName?: string | null;
+  phone?: string | null;
+}): void {
+  try {
+    if (!fields.fullName && !fields.phone) return;
+    window.localStorage.setItem(PENDING_PROFILE_FIELDS_KEY, JSON.stringify(fields));
+  } catch {
+    /* storage unavailable — the profile can still be edited later */
+  }
+}
 
-        if (sectorParam) {
-          try {
-            await stampAccountTypeIfMissing(sectorParam);
-          } catch {
-            // non-fatal
-          }
-        }
+export async function applyPendingProfileFieldsIfAny(): Promise<void> {
+  try {
+    const raw = window.localStorage.getItem(PENDING_PROFILE_FIELDS_KEY);
+    if (!raw) return;
+    window.localStorage.removeItem(PENDING_PROFILE_FIELDS_KEY);
 
-        try {
-          await applyPendingProfileFieldsIfAny();
-        } catch {
-          // non-fatal
-        }
+    const { fullName, phone } = JSON.parse(raw) as { fullName?: string; phone?: string };
+    if (!fullName && !phone) return;
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_type")
-          .eq("id", userId)
-          .maybeSingle();
-        
-        const accountType = profile?.account_type;
-        if (accountType && accountType !== "homeowner") {
-          await navigate({ to: "/contractor" });
-          return;
-        }
-      } catch {
-        // fall through to homeowner default
-      }
-      await navigate({ to: "/homeowner" });
-    }
+    const { data: sess } = await supabase.auth.getSession();
+    const user = sess?.session?.user;
+    if (!user) return;
 
-    async function waitForSession() {
-      const startedAt = Date.now();
-
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (cancelled) return;
-        if (session?.user) {
-          sub.subscription.unsubscribe();
-          void routeToDashboard();
-        }
-      });
-
-      while (!cancelled && Date.now() - startedAt < MAX_WAIT_MS) {
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.user) {
-          sub.subscription.unsubscribe();
-          await routeToDashboard();
-          return;
-        }
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-      }
-
-      if (!cancelled) {
-        sub.subscription.unsubscribe();
-        setState("expired");
-      }
-    }
-
-    void waitForSession();
-    return () => {
-      cancelled = true;
-    };
-  }, [navigate]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0f172a] px-4 text-slate-50">
-      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center shadow-xl backdrop-blur-sm">
-        {state === "expired" ? (
-          <>
-            <h1 className="font-display text-2xl font-extrabold tracking-tight text-white">
-              Link expired
-            </h1>
-            <p className="mt-2 text-sm text-slate-300">
-              This confirmation link is no longer valid. Please request a new one and try again.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="font-display text-2xl font-extrabold tracking-tight text-white">
-              Confirming your account
-            </h1>
-            <p className="mt-2 text-sm text-slate-300">Just a moment...</p>
-            <div className="mt-6 flex justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-orange-glow border-t-transparent" />
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
+    await supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        ...(fullName ? { full_name: fullName, display_name: fullName } : {}),
+        ...(phone ? { phone } : {}),
+      },
+      { onConflict: "id" },
+    );
+  } catch {
+    /* non-fatal — a later profile edit will fill these in */
+  }
 }
