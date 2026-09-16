@@ -21,11 +21,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { GoogleIcon, AppleIcon } from "@/features/auth/route/provider-icons";
 import { scorePassword } from "./auth-helpers";
+import { stashPendingProfileFields } from "@/lib/account-type";
 
 type SecureAccountDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   email: string;
+  fullName?: string;
+  phone?: string;
   onPasswordCreated: () => void;
 };
 
@@ -33,6 +36,8 @@ export function SecureAccountDialog({
   open,
   onOpenChange,
   email,
+  fullName,
+  phone,
   onPasswordCreated,
 }: SecureAccountDialogProps) {
   const [passwordValue, setPasswordValue] = useState("");
@@ -44,6 +49,10 @@ export function SecureAccountDialog({
       toast.error("Sign-in service isn't connected yet.");
       return;
     }
+    // The browser is about to navigate away to the provider and back —
+    // this component unmounts in between, so stash full name/phone now
+    // and let /auth/callback apply them once a session exists.
+    stashPendingProfileFields({ fullName, phone });
     const redirectTo = `${window.location.origin}/auth/callback?sector=homeowner`;
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
@@ -118,13 +127,17 @@ export function SecureAccountDialog({
             }
             setPasswordSaving(true);
             try {
+              const trimmedFullName = fullName?.trim() || undefined;
+              const trimmedPhone = phone?.trim() || undefined;
+
               const { data: signUpData, error } = await supabase.auth.signUp({
                 email,
                 password: passwordValue,
                 options: {
                   emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner`,
                   data: {
-                    display_name: email.split("@")[0],
+                    display_name: trimmedFullName || email.split("@")[0],
+                    full_name: trimmedFullName,
                     account_type: "homeowner",
                   },
                 },
@@ -138,22 +151,49 @@ export function SecureAccountDialog({
               const alreadyRegistered =
                 !error && !signUpData?.session && signUpData?.user?.identities?.length === 0;
 
+              let signedInUserId: string | undefined = signUpData?.user?.id;
+
               if (alreadyRegistered) {
                 const { data: signInData, error: signInError } =
                   await supabase.auth.signInWithPassword({ email, password: passwordValue });
                 if (signInData?.session) {
-                  onPasswordCreated();
+                  signedInUserId = signInData.session.user.id;
                 } else {
                   toast.error(
                     signInError?.message ??
                       "This email already has an account. Try signing in instead.",
                   );
+                  return;
                 }
               } else if (error) {
                 toast.error(error.message);
-              } else {
-                onPasswordCreated();
+                return;
               }
+
+              // The DB trigger that seeds `profiles` from signUp() metadata
+              // doesn't write `phone` at all, and skips entirely if a row
+              // already exists (e.g. the already-registered path above).
+              // Upsert explicitly so full name, phone, and account type are
+              // guaranteed to land regardless of trigger behavior.
+              if (signedInUserId) {
+                try {
+                  await supabase.from("profiles").upsert(
+                    {
+                      id: signedInUserId,
+                      account_type: "homeowner",
+                      ...(trimmedFullName
+                        ? { full_name: trimmedFullName, display_name: trimmedFullName }
+                        : {}),
+                      ...(trimmedPhone ? { phone: trimmedPhone } : {}),
+                    },
+                    { onConflict: "id" },
+                  );
+                } catch {
+                  /* non-fatal — profile row will backfill on next save */
+                }
+              }
+
+              onPasswordCreated();
             } catch {
               toast.error("An unexpected error occurred. Please try again.");
             } finally {
