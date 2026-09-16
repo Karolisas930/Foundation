@@ -152,13 +152,15 @@ export function SecureAccountDialog({
               const alreadyRegistered =
                 !error && !signUpData?.session && signUpData?.user?.identities?.length === 0;
 
-              let signedInUserId: string | undefined = signUpData?.user?.id;
+              let signedInUserId: string | undefined;
+              let hasActiveSession = false;
 
               if (alreadyRegistered) {
                 const { data: signInData, error: signInError } =
                   await supabase.auth.signInWithPassword({ email, password: passwordValue });
                 if (signInData?.session) {
                   signedInUserId = signInData.session.user.id;
+                  hasActiveSession = true;
                 } else {
                   toast.error(
                     signInError?.message ??
@@ -169,14 +171,22 @@ export function SecureAccountDialog({
               } else if (error) {
                 toast.error(error.message);
                 return;
+              } else if (signUpData?.session) {
+                // Email confirmation is off for this project, or was
+                // already satisfied — signUp() returned a live session.
+                signedInUserId = signUpData.session.user.id;
+                hasActiveSession = true;
               }
 
               // The DB trigger that seeds `profiles` from signUp() metadata
-              // doesn't write `phone` at all, and skips entirely if a row
-              // already exists (e.g. the already-registered path above).
-              // Upsert explicitly so full name, phone, and account type are
-              // guaranteed to land regardless of trigger behavior.
-              if (signedInUserId) {
+              // now also writes phone (see the handle_new_user migration),
+              // so for a brand-new pending-confirmation signup there's no
+              // session yet and nothing left for the client to do here —
+              // an upsert without a session can't pass RLS and would only
+              // add a doomed network round-trip before this button
+              // resolves. Only backfill explicitly when a session actually
+              // exists (already-registered sign-in, or confirmation-off).
+              if (hasActiveSession && signedInUserId) {
                 try {
                   await supabase.from("profiles").upsert(
                     {
