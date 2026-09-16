@@ -138,6 +138,7 @@ export function SecureAccountDialog({
                   data: {
                     display_name: trimmedFullName || email.split("@")[0],
                     full_name: trimmedFullName,
+                    phone: trimmedPhone,
                     account_type: "homeowner",
                   },
                 },
