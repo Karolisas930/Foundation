@@ -46,3 +46,52 @@ export async function stampAccountTypeIfMissing(
     /* non-fatal — a later save will backfill the row */
   }
 }
+
+const PENDING_PROFILE_FIELDS_KEY = "hw.pendingProfileFields.v1";
+
+/**
+ * The homeowner "secure your account" dialog collects full_name/phone
+ * client-side before the account exists. The password path can upsert
+ * them right after signUp(). The OAuth (Google/Apple) path can't — the
+ * browser navigates away to the provider and back, unmounting the
+ * dialog before any session exists. Stash the values here right before
+ * the OAuth redirect; /auth/callback picks them up once a session lands
+ * and clears them afterward. Safe no-op if nothing was stashed.
+ */
+export function stashPendingProfileFields(fields: {
+  fullName?: string | null;
+  phone?: string | null;
+}): void {
+  try {
+    if (!fields.fullName && !fields.phone) return;
+    window.localStorage.setItem(PENDING_PROFILE_FIELDS_KEY, JSON.stringify(fields));
+  } catch {
+    /* storage unavailable — the profile can still be edited later */
+  }
+}
+
+export async function applyPendingProfileFieldsIfAny(): Promise<void> {
+  try {
+    const raw = window.localStorage.getItem(PENDING_PROFILE_FIELDS_KEY);
+    if (!raw) return;
+    window.localStorage.removeItem(PENDING_PROFILE_FIELDS_KEY);
+
+    const { fullName, phone } = JSON.parse(raw) as { fullName?: string; phone?: string };
+    if (!fullName && !phone) return;
+
+    const { data: sess } = await supabase.auth.getSession();
+    const user = sess?.session?.user;
+    if (!user) return;
+
+    await supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        ...(fullName ? { full_name: fullName, display_name: fullName } : {}),
+        ...(phone ? { phone } : {}),
+      },
+      { onConflict: "id" },
+    );
+  } catch {
+    /* non-fatal — a later profile edit will fill these in */
+  }
+}
