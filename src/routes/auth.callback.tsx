@@ -17,7 +17,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { stampAccountTypeIfMissing } from "@/lib/account-type";
+import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny } from "@/lib/account-type";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
@@ -55,6 +55,12 @@ function AuthCallbackPage() {
           } catch {
             // non-fatal
           }
+        }
+
+        try {
+          await applyPendingProfileFieldsIfAny();
+        } catch {
+          // non-fatal
         }
 
         const { data: profile } = await supabase
