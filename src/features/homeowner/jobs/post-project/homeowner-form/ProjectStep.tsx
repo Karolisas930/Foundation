@@ -120,7 +120,7 @@ export function ProjectStep(props: ProjectStepProps) {
         subtitle="Tap the closest match — you can refine details next."
       >
         <TradeAccordion
-          categories={TRADE_CATEGORIES}
+          categories={TRADE_CATEGORIES as unknown as { id: string; label: string; trades: string[] }[]}
           customTrades={[]}
           selected={trade ? [trade] : []}
           search=""
