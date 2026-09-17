@@ -39,8 +39,8 @@ import type { SectionHandlers } from "./useMenuSections";
 type NavigateFn = ReturnType<typeof useNavigate>;
 
 type BsStatus = {
-  payout: boolean;
-  handwerkskarte: { status: "verified" | "pending" | "rejected" } | null;
+  payout: unknown;
+  handwerkskarte: { status: "verified" | "pending" | "rejected" | "missing" } | null;
 };
 
 /**
