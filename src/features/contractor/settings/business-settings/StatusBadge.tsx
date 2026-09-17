@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock } from "lucide-react";
 
-export function StatusBadge({ status }: { status: "pending" | "verified" | "missing" }) {
+export function StatusBadge({ status }: { status: "pending" | "verified" | "missing" | "rejected" }) {
   if (status === "verified") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
