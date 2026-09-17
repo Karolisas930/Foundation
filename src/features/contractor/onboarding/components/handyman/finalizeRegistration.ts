@@ -66,7 +66,7 @@ export async function finalizeHandymanRegistration(
         email: profile.businessEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/contractor`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?sector=handyman`,
           data: {
             full_name: `${profile.firstName} ${profile.lastName}`.trim(),
             sector: "handyman",
