@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { useSearch } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +17,11 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Read the 'account_type' from the URL (e.g., ?account_type=homeowner)
-  // This allows linking directly to a specific signup flow.
-  const { account_type = "homeowner" } = useSearch({
-    // NOTE: This `from` path must match the route where SignupForm is rendered.
-    // Based on the project structure, this is likely '/auth'.
-    from: "/auth",
-  });
+  // Read 'account_type' straight from the URL (e.g. ?account_type=handyman).
+  // Router-typed useSearch is not usable here: this form renders on several
+  // routes, so no single `from` path is valid.
+  const search = useRouterState({ select: (s) => s.location.searchStr });
+  const account_type = new URLSearchParams(search ?? "").get("account_type") ?? "homeowner";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -36,7 +33,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/auth/callback?sector=${account_type}`,
         data: {
           full_name: fullName,
           display_name: fullName,
@@ -55,15 +52,20 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   }
 
   async function handleGoogle() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      toast.error(result.error.message ?? "Google sign-up failed");
-      return;
+    const redirectTo = `${window.location.origin}/auth/callback?sector=${account_type}`;
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+      if (error) {
+        toast.error(error.message ?? "Google sign-up failed");
+        return;
+      }
+      onSuccess?.();
+    } catch {
+      toast.error("Couldn't reach Google sign-in. Try again in a moment.");
     }
-    if (result.redirected) return;
-    onSuccess?.();
   }
 
   // If the form has been submitted successfully, show the confirmation message.
