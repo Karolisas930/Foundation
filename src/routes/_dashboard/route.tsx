@@ -16,6 +16,7 @@
  */
 import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
 import { stampAccountTypeIfMissing } from "@/lib/account-type";
@@ -31,10 +32,17 @@ const DashboardContext = createContext<DashboardContextType | null>(null);
 /** Hook to access the current user's account type within the dashboard. */
 export function useDashboard() {
   const context = useContext(DashboardContext);
-  if (!context) {
-    throw new Error("useDashboard must be used within a component wrapped by DashboardGate");
-  }
-  return context;
+  // Shared chrome (TopBar -> AppSideMenu, BottomBar) can render outside the
+  // /_dashboard tree — e.g. on the home page the instant a session appears
+  // after email confirmation, or on public profile pages. Throwing there
+  // white-screens the whole app, so fall back to a neutral, safe default.
+  return (
+    context ?? {
+      accountType: null,
+      displayName: null,
+      isContractor: false,
+    }
+  );
 }
 
 /**
@@ -74,6 +82,7 @@ export const Route = createFileRoute("/_dashboard")({
 function DashboardGate() {
   const navigate = useNavigate();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<"pending" | "authed" | "redirecting">("pending");
   const [accountType, setAccountType] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -118,7 +127,7 @@ function DashboardGate() {
           // Role mismatch: A contractor is trying to access homeowner-only routes.
           if (isContractor && wantsHomeownerRoute) {
             setStatus("redirecting");
-            router.queryClient.clear(); // Wipe cache to prevent data leaks.
+            queryClient.clear(); // Wipe cache to prevent data leaks.
             navigate({ to: "/contractor", replace: true });
             return;
           }
@@ -126,7 +135,7 @@ function DashboardGate() {
           // Role mismatch: A homeowner is trying to access contractor-only routes.
           if (isHomeowner && wantsContractorRoute) {
             setStatus("redirecting");
-            router.queryClient.clear(); // Wipe cache to prevent data leaks.
+            queryClient.clear(); // Wipe cache to prevent data leaks.
             navigate({ to: "/homeowner", replace: true });
             return;
           }
@@ -168,7 +177,7 @@ function DashboardGate() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, router.queryClient]);
+  }, [navigate, queryClient]);
 
   // Render nothing until the auth check is complete and successful.
   // This prevents any child components from rendering with the wrong data.
