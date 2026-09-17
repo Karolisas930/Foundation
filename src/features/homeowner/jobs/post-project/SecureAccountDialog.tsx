@@ -242,7 +242,7 @@ export function SecureAccountDialog({
             />
             <div className="mt-2" aria-live="polite">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                <div className={`h-full transition-all duration-300 ${getStrengthColor(strength)} ${getStrengthWidth(strength)}`} />
+                <div className={`h-full transition-all duration-300 ${getStrengthColor(strength.score)} ${getStrengthWidth(strength.score)}`} />
               </div>
             </div>
           </div>
