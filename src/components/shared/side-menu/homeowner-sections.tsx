@@ -2,6 +2,7 @@ import type { useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
   Bell,
+  Building2,
   Compass,
   FileText,
   HelpCircle,
@@ -41,6 +42,14 @@ export function getHomeownerSections(navigate: NavigateFn, soon: (label: string)
           icon: Compass,
           action: () => {
             void navigate({ to: "/homeowner/browse" });
+          },
+        },
+        {
+          key: "my-properties",
+          label: "My Properties",
+          icon: Building2,
+          action: () => {
+            void navigate({ to: "/homeowner/properties" });
           },
         },
         {

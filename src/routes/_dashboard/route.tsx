@@ -14,7 +14,7 @@
  * the "automatic logout" bug. We only redirect when there is genuinely no
  * session and no preview/demo session.
  */
-import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,8 +81,12 @@ export const Route = createFileRoute("/_dashboard")({
 
 function DashboardGate() {
   const navigate = useNavigate();
-  const router = useRouter();
   const queryClient = useQueryClient();
+  // The gate must re-evaluate after its own role-mismatch redirect: the
+  // layout stays mounted across /homeowner <-> /contractor, so without the
+  // pathname in the dependency list `status` would stay "redirecting"
+  // forever and the user is left staring at a blank screen.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [status, setStatus] = useState<"pending" | "authed" | "redirecting">("pending");
   const [accountType, setAccountType] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -113,7 +117,11 @@ function DashboardGate() {
               await readProfileData(session.user.id));
           }
 
-          setAccountType(userAccountType);
+          // Last-resort fallback: if the profile row is still unreadable
+          // (missing row, RLS block, transient error) we must NOT leave the
+          // user on a permanently blank screen. Assume "homeowner" — the
+          // same default every signup path uses — so the dashboard renders.
+          setAccountType(userAccountType ?? "homeowner");
           setDisplayName(userDisplayName);
           if (cancelled) return;
 
@@ -177,15 +185,19 @@ function DashboardGate() {
     return () => {
       cancelled = true;
     };
-  }, [navigate, queryClient]);
+  }, [navigate, queryClient, pathname]);
 
   // Render nothing until the auth check is complete and successful.
   // This prevents any child components from rendering with the wrong data.
-  if (status !== "authed" || !accountType) {
-    return <div className="min-h-screen bg-background" />;
+  if (status !== "authed") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading your dashboard…
+      </div>
+    );
   }
 
-  const isContractor = accountType !== "homeowner";
+  const isContractor = accountType !== null && accountType !== "homeowner";
 
   return (
     <DashboardContext.Provider value={{ accountType, displayName, isContractor }}>

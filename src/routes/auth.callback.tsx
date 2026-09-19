@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny } from "@/lib/account-type";
+import { claimPendingProjects } from "@/lib/pending-projects.functions";
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
@@ -63,6 +64,13 @@ function AuthCallbackPage() {
           // non-fatal
         }
 
+        try {
+          // Move any project posted before sign-up into the new account.
+          await claimPendingProjects();
+        } catch {
+          // non-fatal - the dashboard claims it again on load
+        }
+
         const { data: profile } = await supabase
           .from("profiles")
           .select("account_type")
@@ -83,7 +91,7 @@ function AuthCallbackPage() {
     async function waitForSession() {
       const startedAt = Date.now();
 
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: sub } = supabase.auth.onAuthStateChange((_event: string, session: { user?: unknown } | null) => {
         if (cancelled) return;
         if (session?.user) {
           sub.subscription.unsubscribe();

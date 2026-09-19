@@ -4,7 +4,7 @@
  * chat/accept CTAs, and a link to the contractor's public profile.
  */
 import { Link } from "@tanstack/react-router";
-import { Building2, Handshake, MapPin, MessageSquare, Star } from "lucide-react";
+import { Building2, Handshake, MapPin, MessageSquare, Star, XCircle } from "lucide-react";
 import type { EcosystemProject, EcosystemProposal } from "@/core/demo-session";
 import { Button } from "@/components/ui/button";
 import { getMatchScore } from "../../dashboard/components/parts/helpers";
@@ -16,14 +16,19 @@ import { MatchScoreBadge } from "../../dashboard/components/parts/MatchScoreBadg
 export function ProposalsPanel({
   project,
   proposals,
+  busyBidId = null,
   onChat,
   onAccept,
+  onDecline,
   onOpenProfile,
 }: {
   project: EcosystemProject;
   proposals: EcosystemProposal[];
+  /** Bid currently being accepted/declined (disables its buttons). */
+  busyBidId?: string | null;
   onChat: (bid: EcosystemProposal) => void;
   onAccept: (bid: EcosystemProposal) => void;
+  onDecline?: (bid: EcosystemProposal) => void;
   onOpenProfile: (bid: EcosystemProposal) => void;
 }) {
   const isAccepted = project.status === "awarded";
@@ -93,10 +98,12 @@ export function ProposalsPanel({
                             {bid.company}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                            <span className="inline-flex items-center gap-1 text-amber-400">
-                              <Star className="size-3 fill-amber-400 stroke-amber-400" />
-                              {bid.rating.toFixed(1)}
-                            </span>
+                            {bid.rating > 0 && (
+                              <span className="inline-flex items-center gap-1 text-amber-400">
+                                <Star className="size-3 fill-amber-400 stroke-amber-400" />
+                                {bid.rating.toFixed(1)}
+                              </span>
+                            )}
                             {bid.city && (
                               <>
                                 <span className="text-slate-600">·</span>
@@ -128,10 +135,12 @@ export function ProposalsPanel({
                             {bid.company}
                           </button>
                           <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                            <span className="inline-flex items-center gap-1 text-amber-400">
-                              <Star className="size-3 fill-amber-400 stroke-amber-400" />
-                              {bid.rating.toFixed(1)}
-                            </span>
+                            {bid.rating > 0 && (
+                              <span className="inline-flex items-center gap-1 text-amber-400">
+                                <Star className="size-3 fill-amber-400 stroke-amber-400" />
+                                {bid.rating.toFixed(1)}
+                              </span>
+                            )}
                             {bid.city && (
                               <>
                                 <span className="text-slate-600">·</span>
@@ -177,13 +186,23 @@ export function ProposalsPanel({
                     >
                       <MessageSquare className="size-4" /> Chat
                     </Button>
+                    {!isAccepted && onDecline && (
+                      <Button
+                        variant="ghost"
+                        onClick={() => onDecline(bid)}
+                        disabled={busyBidId === bid.id}
+                        className="h-10 gap-1.5 rounded-full text-slate-300 hover:bg-white/10 hover:text-white"
+                      >
+                        <XCircle className="size-4" /> Decline
+                      </Button>
+                    )}
                     <Button
                       onClick={() => onAccept(bid)}
-                      disabled={isAccepted}
+                      disabled={isAccepted || busyBidId === bid.id}
                       className="h-10 gap-1.5 rounded-full bg-orange text-white hover:bg-orange/90 disabled:opacity-50"
                     >
                       <Handshake className="size-4" />
-                      {isAccepted ? "Accepted" : "Accept bid"}
+                      {isAccepted ? "Accepted" : busyBidId === bid.id ? "Working…" : "Accept bid"}
                     </Button>
                   </div>
                 </div>

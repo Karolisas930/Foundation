@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -25,18 +26,26 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       return;
     }
     toast.success("Welcome back");
-    onSuccess?.();
+    // Route through /auth/callback so the shared callback page reads the
+    // profile's account_type and sends the user to the right dashboard —
+    // same pattern used by SecureAccountDialog and the OAuth flows. The
+    // session is already established here, so the callback resolves fast.
+    navigate({ to: "/auth/callback" });
   }
 
   async function handleGoogle() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    // Always return through /auth/callback so the session is confirmed
+    // before we route the user to their role's dashboard. This app uses
+    // its own external Supabase project, so call the real Supabase client
+    // directly instead of the (stubbed) Lovable Cloud OAuth helper.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (result.error) {
-      toast.error(result.error.message ?? "Google sign-in failed");
+    if (error) {
+      toast.error(error.message ?? "Google sign-in failed");
       return;
     }
-    if (result.redirected) return;
     onSuccess?.();
   }
 

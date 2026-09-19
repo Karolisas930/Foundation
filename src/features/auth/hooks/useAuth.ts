@@ -53,40 +53,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Register the listener FIRST so we never miss an event during bootstrap.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      const nextUser = session?.user ?? null;
-      setUser(nextUser);
-      setAccessToken(session?.access_token ?? null);
-      setIsLoading(false);
-      if (nextUser) {
-        void loadProfile(nextUser.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    void supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
+    // Accessing `supabase` throws when the backend isn't configured yet
+    // (missing env vars). That must never take the whole app down — the
+    // provider wraps every page, so an uncaught throw here white-screens
+    // the site. Degrade to "signed out" instead.
+    let unsubscribe: (() => void) | null = null;
+    try {
+      // Register the listener FIRST so we never miss an event during bootstrap.
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
         if (!mounted) return;
-        const sessUser = session?.user ?? null;
-        setUser(sessUser);
+        const nextUser = session?.user ?? null;
+        setUser(nextUser);
         setAccessToken(session?.access_token ?? null);
         setIsLoading(false);
-        if (sessUser) void loadProfile(sessUser.id);
-      })
-      .catch((err) => {
-        console.warn("useAuth getSession failed:", err);
-        if (mounted) setIsLoading(false);
+        if (nextUser) {
+          void loadProfile(nextUser.id);
+        } else {
+          setProfile(null);
+        }
       });
+      unsubscribe = () => subscription.unsubscribe();
+
+      void supabase.auth
+        .getSession()
+        .then(({ data: { session } }) => {
+          if (!mounted) return;
+          const sessUser = session?.user ?? null;
+          setUser(sessUser);
+          setAccessToken(session?.access_token ?? null);
+          setIsLoading(false);
+          if (sessUser) void loadProfile(sessUser.id);
+        })
+        .catch((err) => {
+          console.warn("useAuth getSession failed:", err);
+          if (mounted) setIsLoading(false);
+        });
+    } catch (err) {
+      console.warn("useAuth: auth unavailable:", err);
+      setIsLoading(false);
+    }
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      unsubscribe?.();
     };
   }, []);
 

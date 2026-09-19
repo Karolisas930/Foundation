@@ -6,6 +6,7 @@
  * changes at all.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { EcosystemProject } from "@/core/demo-session";
 
@@ -65,4 +66,41 @@ export const listMyProjects = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     return { projects: ((data ?? []) as JobRow[]).map(toEcosystemProject) };
+  });
+
+const updateInput = z.object({
+  id: z.string().uuid(),
+  title: z.string().trim().min(4).max(120),
+  description: z.string().trim().max(2000).optional().nullable(),
+  estimatedBudget: z.number().int().min(0).max(100_000_000),
+  city: z.string().trim().max(120).optional().nullable(),
+  locationZip: z.string().trim().max(20).optional().nullable(),
+});
+
+/** Update one of my own job postings. */
+export const updateMyProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => updateInput.parse(data))
+  .handler(async ({ context, data }): Promise<{ project: EcosystemProject }> => {
+    const { supabase, userId } = context;
+
+    const { data: row, error } = await supabase
+      .from("jobs")
+      .update({
+        title: data.title,
+        description: data.description ?? null,
+        estimated_budget: data.estimatedBudget,
+        city: data.city || null,
+        location_zip: data.locationZip || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.id)
+      .eq("owner_id", userId)
+      .select(
+        "id, owner_id, title, description, trade, estimated_budget, location_zip, city, language, urgency, status, created_at, updated_at",
+      )
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { project: toEcosystemProject(row as JobRow) };
   });

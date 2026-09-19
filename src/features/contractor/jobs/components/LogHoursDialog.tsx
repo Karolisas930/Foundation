@@ -19,8 +19,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import type { EcosystemProject } from "@/core/demo-session";
-import { useCrewOverride, useHoursForJob, logHours, derive } from "./ActiveJobsPage";
+import type { ActiveJob } from "@/lib/active-jobs.functions";
+import { useCrewOverride, useHoursForJob, logHours, derive } from "./active-jobs-store";
 
 export function LogHoursDialog({
   jobId,
@@ -28,7 +28,7 @@ export function LogHoursDialog({
   onClose,
 }: {
   jobId: string | null;
-  job: EcosystemProject | null;
+  job: ActiveJob | null;
   onClose: () => void;
 }) {
   const override = useCrewOverride(jobId);

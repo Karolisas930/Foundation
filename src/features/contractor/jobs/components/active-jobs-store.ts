@@ -1,13 +1,11 @@
 /**
- * Local storage + derived data for Active Jobs.
- * Extracted from ActiveJobsPage.tsx.
+ * Derived data + local-only crew/hours notes for Active Jobs.
+ *
+ * Job data itself comes from Supabase via `@/lib/active-jobs.functions`.
+ * Crew assignment and hour logs are still device-local helpers.
  */
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import {
-  getEcosystemLedger,
-  updateEcosystemLedger,
-  type EcosystemProject,
-} from "@/core/demo-session";
+import { useMemo, useSyncExternalStore } from "react";
+import type { ActiveJob } from "@/lib/active-jobs.functions";
 
 export type FilterKey = "today" | "week" | "all" | "overdue";
 export type SortKey = "date" | "progress" | "client" | "urgency";
@@ -151,59 +149,59 @@ export type Derived = {
   daysFromToday: number;
   isToday: boolean;
   isOverdue: boolean;
+  hasSchedule: boolean;
   urgency: "low" | "normal" | "high";
   staff: string[];
   defaultStaff: string[];
-  phone: string;
 };
 
-export function derive(p: EcosystemProject): Derived {
-  const h = hash(p.id);
-  const offset = (h % 15) - 4;
-  const scheduled = new Date();
-  scheduled.setHours(0, 0, 0, 0);
-  scheduled.setDate(scheduled.getDate() + offset);
-  const slot = TIME_SLOTS[h % TIME_SLOTS.length];
-  const [hh, mm] = slot.split(":").map(Number);
-  scheduled.setHours(hh, mm, 0, 0);
+/** Schedule/urgency/crew info for one booking. */
+export function derive(job: ActiveJob): Derived {
+  const h = hash(job.bookingId);
+  const hasSchedule = Boolean(job.scheduledStart);
+
+  let scheduled: Date;
+  if (job.scheduledStart) {
+    scheduled = new Date(job.scheduledStart);
+  } else {
+    // No date agreed yet — fall back to the booking date so sorting stays stable.
+    scheduled = new Date(job.createdAt);
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const daysFromToday = Math.round((scheduled.getTime() - today.getTime()) / 86_400_000);
+  const startOfScheduled = new Date(scheduled);
+  startOfScheduled.setHours(0, 0, 0, 0);
+  const daysFromToday = Math.round((startOfScheduled.getTime() - today.getTime()) / 86_400_000);
 
-  const isOverdue = daysFromToday < 0 && p.status !== "completed";
-  const isToday = daysFromToday === 0;
+  const done = job.status === "completed" || job.status === "cancelled";
+  const isOverdue = hasSchedule && daysFromToday < 0 && !done;
+  const isToday = hasSchedule && daysFromToday === 0;
 
-  const usedPct = p.budgetTotal > 0 ? p.budgetUsed / p.budgetTotal : 0;
   const urgency: Derived["urgency"] = isOverdue
     ? "high"
-    : isToday || usedPct > 0.85
+    : isToday
       ? "high"
-      : daysFromToday <= 2
+      : hasSchedule && daysFromToday <= 2
         ? "normal"
         : "low";
 
-  const staffCount = h % 3;
-  const defaultStaff = Array.from(
-    { length: staffCount },
-    (_, i) => STAFF_POOL[(h + i * 7) % STAFF_POOL.length],
-  );
-  const override = readCrewMap()[p.id];
+  const defaultStaff: string[] = [];
+  const override = readCrewMap()[job.bookingId];
   const staff = override ?? defaultStaff;
 
-  const phoneNum = 1_500_000 + (h % 8_499_999);
-  const phone = `+49 170 ${String(phoneNum).slice(0, 3)} ${String(phoneNum).slice(3)}`;
-
-  const label = isOverdue
-    ? `${Math.abs(daysFromToday)}d overdue · ${slot}`
-    : isToday
-      ? `Today · ${slot}`
-      : daysFromToday === 1
-        ? `Tomorrow · ${slot}`
-        : daysFromToday <= 7
-          ? scheduled.toLocaleDateString(undefined, { weekday: "short" }) + ` · ${slot}`
-          : scheduled.toLocaleDateString(undefined, { day: "2-digit", month: "short" }) +
-            ` · ${slot}`;
+  const time = scheduled.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  const label = !hasSchedule
+    ? "Not scheduled yet"
+    : isOverdue
+      ? `${Math.abs(daysFromToday)}d overdue · ${time}`
+      : isToday
+        ? `Today · ${time}`
+        : daysFromToday === 1
+          ? `Tomorrow · ${time}`
+          : daysFromToday > 1 && daysFromToday <= 7
+            ? `${scheduled.toLocaleDateString(undefined, { weekday: "short" })} · ${time}`
+            : `${scheduled.toLocaleDateString(undefined, { day: "2-digit", month: "short" })} · ${time}`;
 
   return {
     scheduledAt: scheduled,
@@ -211,71 +209,43 @@ export function derive(p: EcosystemProject): Derived {
     daysFromToday,
     isToday,
     isOverdue,
+    hasSchedule,
     urgency,
     staff,
     defaultStaff,
-    phone,
   };
 }
 
-export function progressOf(p: EcosystemProject): number {
-  if (p.status === "completed") return 100;
-  const pct =
-    p.budgetTotal > 0 ? Math.min(100, Math.round((p.budgetUsed / p.budgetTotal) * 100)) : 0;
-  if (p.status === "awarded") return Math.max(pct, 15);
-  if (p.status === "clarifying") return Math.max(pct, 5);
-  return pct;
+export function progressOf(job: ActiveJob): number {
+  switch (job.status) {
+    case "completed":
+      return 100;
+    case "in_progress":
+      return 55;
+    case "confirmed":
+      return 20;
+    case "cancelled":
+      return 0;
+    default:
+      return 5;
+  }
 }
 
-export function statusMeta(p: EcosystemProject): { label: string; tone: string } {
-  if (p.status === "completed")
-    return { label: "Completed", tone: "bg-emerald-500/20 text-emerald-300" };
-  if (p.status === "awarded")
-    return { label: "In Progress", tone: "bg-orange/20 text-orange-glow" };
-  if (p.status === "clarifying") return { label: "Clarifying", tone: "bg-sky-500/20 text-sky-300" };
-  return { label: "Open", tone: "bg-white/10 text-slate-200" };
+export function statusMeta(job: Pick<ActiveJob, "status">): { label: string; tone: string } {
+  switch (job.status) {
+    case "completed":
+      return { label: "Completed", tone: "bg-emerald-500/20 text-emerald-300" };
+    case "in_progress":
+      return { label: "In Progress", tone: "bg-orange/20 text-orange-glow" };
+    case "confirmed":
+      return { label: "Confirmed", tone: "bg-sky-500/20 text-sky-300" };
+    case "cancelled":
+      return { label: "Cancelled", tone: "bg-rose-500/20 text-rose-200" };
+    default:
+      return { label: "Pending", tone: "bg-white/10 text-slate-200" };
+  }
 }
 
-export function useLedgerTick() {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const h = () => setTick((n) => n + 1);
-    window.addEventListener("chameleon_ledger_update", h);
-    const unsub = subscribe(h);
-    return () => {
-      window.removeEventListener("chameleon_ledger_update", h);
-      unsub();
-    };
-  }, []);
-}
-
-export function setProjectStatus(id: string, status: EcosystemProject["status"]) {
-  const ledger = getEcosystemLedger();
-  ledger.projects = ledger.projects.map((p) => (p.id === id ? { ...p, status } : p));
-  updateEcosystemLedger(ledger);
-}
-
-export function createProject(input: {
-  title: string;
-  city: string;
-  zip: string;
-  trade: string;
-  budget: number;
-}) {
-  const ledger = getEcosystemLedger();
-  const p: EcosystemProject = {
-    id: `job_${Date.now()}`,
-    title: input.title.trim(),
-    description: "Added from Active Jobs.",
-    locationZip: input.zip.trim() || "00000",
-    city: input.city.trim(),
-    phase: "Ausbau",
-    status: "awarded",
-    budgetTotal: input.budget,
-    budgetUsed: 0,
-    trade: input.trade.trim() || undefined,
-  };
-  ledger.projects = [p, ...ledger.projects];
-  updateEcosystemLedger(ledger);
-  return p;
+export function formatEuro(cents: number): string {
+  return `€ ${(cents / 100).toLocaleString("de-DE", { maximumFractionDigits: 0 })}`;
 }

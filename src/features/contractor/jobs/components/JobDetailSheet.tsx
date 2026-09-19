@@ -1,13 +1,9 @@
-import {
-  AlertTriangle,
-  BookOpen,
-  CheckCircle2,
-  ClipboardList,
-  Phone,
-  Receipt,
-  Timer,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, BookOpen, CheckCircle2, ClipboardList, Receipt, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import {
   Select,
@@ -16,30 +12,63 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { EcosystemProject } from "@/core/demo-session";
-import { progressOf, statusMeta, sumHoursForJob, type Derived } from "./active-jobs-store";
+import type { ActiveJob } from "@/lib/active-jobs.functions";
+import {
+  formatEuro,
+  progressOf,
+  statusMeta,
+  sumHoursForJob,
+  type Derived,
+} from "./active-jobs-store";
 import { ActionBtn, InfoTile } from "./atoms";
 import { CrewTile } from "./CrewTile";
+
+/** `2026-09-18T07:30:00Z` -> `2026-09-18T07:30` for datetime-local inputs. */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export function JobDetailSheet({
   detail,
   detailDerived,
+  saving,
   onClose,
   onOpenDiary,
   onLogHours,
   onAddReceipt,
   onComplete,
   onChangeStatus,
+  onSaveSchedule,
 }: {
-  detail: EcosystemProject | null;
+  detail: ActiveJob | null;
   detailDerived: Derived | null;
+  saving?: boolean;
   onClose: () => void;
   onOpenDiary: (id: string) => void;
   onLogHours: (id: string) => void;
   onAddReceipt: (id: string) => void;
   onComplete: (id: string) => void;
-  onChangeStatus: (id: string, status: EcosystemProject["status"]) => void;
+  onChangeStatus: (id: string, status: ActiveJob["status"]) => void;
+  onSaveSchedule: (
+    id: string,
+    patch: { scheduledStart: string | null; scheduledEnd: string | null; notes: string },
+  ) => void;
 }) {
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!detail) return;
+    setStart(toLocalInput(detail.scheduledStart));
+    setEnd(toLocalInput(detail.scheduledEnd));
+    setNotes(detail.notes ?? "");
+  }, [detail]);
+
   return (
     <Sheet open={detail !== null} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
@@ -67,7 +96,7 @@ export function JobDetailSheet({
               <h2 className="mt-1 font-display text-xl font-extrabold text-white">
                 {detail.title}
               </h2>
-              <p className="mt-2 text-sm text-slate-300">{detail.description}</p>
+              <p className="mt-2 text-sm text-slate-300">Client · {detail.clientName}</p>
             </div>
 
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -82,17 +111,24 @@ export function JobDetailSheet({
                       : undefined
                 }
               />
-              <InfoTile label="Location" value={`${detail.city ?? "—"} · ${detail.locationZip}`} />
+              <InfoTile label="Location" value={`${detail.city ?? "—"} · ${detail.zip ?? "—"}`} />
               <InfoTile label="Trade" value={detail.trade ?? "—"} />
-              <InfoTile label="Phase" value={detail.phase ?? "—"} />
+              <InfoTile label="Agreed price" value={formatEuro(detail.agreedPriceCents)} />
               <InfoTile
-                label="Budget"
-                value={`€ ${detail.budgetUsed.toLocaleString("de-DE")} / ${detail.budgetTotal.toLocaleString("de-DE")}`}
+                label="Logged Hours"
+                value={`${sumHoursForJob(detail.bookingId).toFixed(1)} h`}
               />
-              <InfoTile label="Logged Hours" value={`${sumHoursForJob(detail.id).toFixed(1)} h`} />
+              <InfoTile
+                label="Booked"
+                value={new Date(detail.createdAt).toLocaleDateString(undefined, {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              />
             </dl>
 
-            <CrewTile jobId={detail.id} defaultCrew={detailDerived.defaultStaff} />
+            <CrewTile jobId={detail.bookingId} defaultCrew={detailDerived.defaultStaff} />
 
             <div>
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
@@ -113,55 +149,89 @@ export function JobDetailSheet({
               </p>
               <Select
                 value={detail.status}
-                onValueChange={(v) => onChangeStatus(detail.id, v as EcosystemProject["status"])}
+                onValueChange={(v) => onChangeStatus(detail.bookingId, v as ActiveJob["status"])}
               >
                 <SelectTrigger className="h-11 rounded-full border-white/10 bg-white/[0.04] text-sm text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="clarifying">Clarifying</SelectItem>
-                  <SelectItem value="awarded">In Progress</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Client phone
-                </p>
-                <p className="mt-0.5 truncate font-semibold text-white">{detailDerived.phone}</p>
+            <div className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Schedule & notes
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs text-slate-400">Start</Label>
+                  <Input
+                    type="datetime-local"
+                    value={start}
+                    onChange={(e) => setStart(e.target.value)}
+                    className="h-11 border-white/10 bg-white/[0.04] text-white"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs text-slate-400">End</Label>
+                  <Input
+                    type="datetime-local"
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                    className="h-11 border-white/10 bg-white/[0.04] text-white"
+                  />
+                </div>
               </div>
-              <a
-                href={`tel:${detailDerived.phone.replace(/\s+/g, "")}`}
-                className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-bold text-emerald-950 hover:bg-emerald-400"
+              <div className="grid gap-1.5">
+                <Label className="text-xs text-slate-400">Notes</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Access details, materials, anything the crew needs."
+                  className="min-h-[70px] border-white/10 bg-white/[0.04] text-white"
+                />
+              </div>
+              <Button
+                type="button"
+                disabled={saving}
+                onClick={() =>
+                  onSaveSchedule(detail.bookingId, {
+                    scheduledStart: start ? new Date(start).toISOString() : null,
+                    scheduledEnd: end ? new Date(end).toISOString() : null,
+                    notes,
+                  })
+                }
+                className="h-11 rounded-full bg-orange text-sm font-bold text-slate-900 hover:bg-orange-glow"
               >
-                <Phone className="size-4" />
-                Call
-              </a>
+                {saving ? "Saving…" : "Save schedule"}
+              </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <ActionBtn
-                onClick={() => onOpenDiary(detail.id)}
+                onClick={() => onOpenDiary(detail.bookingId)}
                 icon={<BookOpen className="size-4" />}
                 label="Open Site Diary"
                 primary
               />
               <ActionBtn
-                onClick={() => onLogHours(detail.id)}
+                onClick={() => onLogHours(detail.bookingId)}
                 icon={<Timer className="size-4" />}
                 label="Log Hours"
               />
               <ActionBtn
-                onClick={() => onAddReceipt(detail.id)}
+                onClick={() => onAddReceipt(detail.bookingId)}
                 icon={<Receipt className="size-4" />}
                 label="Add Receipt"
               />
               <ActionBtn
-                onClick={() => onComplete(detail.id)}
+                onClick={() => onComplete(detail.bookingId)}
                 icon={<CheckCircle2 className="size-4" />}
                 label="Mark Completed"
               />

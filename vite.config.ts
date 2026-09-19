@@ -19,9 +19,5 @@ export default defineConfig({
         'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co;"
       }
     },
-    // Safely override Nitro's deployment preset to target Vercel instead of Cloudflare
-    nitro: {
-      preset: 'vercel'
-    }
   }
 });

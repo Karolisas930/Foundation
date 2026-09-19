@@ -1,11 +1,12 @@
 /**
  * EditProjectDialog — form for updating the currently selected project's
- * brief. Writes back into the ecosystem ledger on save.
+ * brief. Saves to the database via the `updateMyProject` server function.
  */
 import { useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import type { EcosystemProject } from "@/core/demo-session";
-import { getEcosystemLedger, updateEcosystemLedger } from "@/core/demo-session";
+import { updateMyProject } from "@/lib/homeowner-projects.functions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,9 +40,10 @@ export function EditProjectDialog({
   draft: EditDraft;
   onDraftChange: (d: EditDraft) => void;
   onClose: () => void;
-  onSaved: (nextLedger: ReturnType<typeof getEcosystemLedger>) => void;
+  onSaved: () => void;
 }) {
   const [saving, setSaving] = useState(false);
+  const save = useServerFn(updateMyProject);
 
   return (
     <Dialog open={Boolean(project)} onOpenChange={(open) => !open && onClose()}>
@@ -55,7 +57,7 @@ export function EditProjectDialog({
           </DialogDescription>
         </DialogHeader>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             if (!project) return;
             const title = draft.title.trim();
@@ -70,30 +72,28 @@ export function EditProjectDialog({
             }
             setSaving(true);
             try {
-              const next = getEcosystemLedger();
-              next.projects = (next.projects ?? []).map((p) =>
-                p.id === project.id
-                  ? {
-                      ...p,
-                      title,
-                      description: draft.description.trim() || p.description,
-                      budgetTotal: budgetNum,
-                      desiredStart: draft.desiredStart.trim() || undefined,
-                      city: draft.city.trim() || p.city,
-                      locationZip: draft.locationZip.trim() || p.locationZip,
-                    }
-                  : p,
-              );
-              updateEcosystemLedger(next);
-              onSaved(next);
+              await save({
+                data: {
+                  id: project.id,
+                  title,
+                  description: draft.description.trim() || null,
+                  estimatedBudget: Math.round(budgetNum),
+                  city: draft.city.trim() || null,
+                  locationZip: draft.locationZip.trim() || null,
+                },
+              });
+              onSaved();
               toast.success("Project updated.");
               onClose();
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Could not save changes.");
             } finally {
               setSaving(false);
             }
           }}
           className="space-y-4"
         >
+
           <div>
             <Label htmlFor="edit-title" className="text-slate-200">
               Project title

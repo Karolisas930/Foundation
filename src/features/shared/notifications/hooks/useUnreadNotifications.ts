@@ -48,8 +48,11 @@ export function useUnreadNotifications(): { count: number; loading: boolean } {
 
     void refresh();
 
+    // Unique topic per effect run: React StrictMode mounts effects twice and
+    // reusing a topic that is still subscribed throws "cannot add
+    // postgres_changes callbacks ... after subscribe()".
     const channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel(`notifications:${userId}:${Math.random().toString(36).slice(2)}`)
       .on(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         "postgres_changes" as any,

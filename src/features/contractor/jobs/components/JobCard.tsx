@@ -4,13 +4,12 @@ import {
   ChevronRight,
   Clock,
   MapPin,
-  Phone,
   Receipt,
   Timer,
   User as UserIcon,
   Users,
 } from "lucide-react";
-import type { EcosystemProject } from "@/core/demo-session";
+import type { ActiveJob } from "@/lib/active-jobs.functions";
 import { UrgencyDot, QuickBtn } from "./atoms";
 import { statusMeta, type Derived } from "./active-jobs-store";
 
@@ -24,7 +23,7 @@ export function JobCard({
   onAddReceipt,
   onComplete,
 }: {
-  job: EcosystemProject;
+  job: ActiveJob;
   d: Derived;
   progress: number;
   onOpenDetail: () => void;
@@ -57,11 +56,11 @@ export function JobCard({
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-300">
               <span className="inline-flex items-center gap-1">
                 <UserIcon className="size-3.5" />
-                {job.seekerId ? `Client · ${job.seekerId.slice(0, 6)}` : "Homeowner"}
+                {job.clientName}
               </span>
               <span className="inline-flex items-center gap-1">
                 <MapPin className="size-3.5" />
-                {job.city ?? job.locationZip}
+                {job.city ?? job.zip ?? "—"}
               </span>
               <span
                 className={`inline-flex items-center gap-1 ${
@@ -113,19 +112,13 @@ export function JobCard({
         />
         <QuickBtn onClick={onLogHours} icon={<Timer className="size-3.5" />} label="Log Hours" />
         <QuickBtn onClick={onAddReceipt} icon={<Receipt className="size-3.5" />} label="Receipt" />
-        <a
-          href={`tel:${d.phone.replace(/\s+/g, "")}`}
-          className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Phone className="size-3.5" />
-          Call
-        </a>
-        <QuickBtn
-          onClick={onComplete}
-          icon={<CheckCircle2 className="size-3.5" />}
-          label="Complete"
-        />
+        {job.status !== "completed" && (
+          <QuickBtn
+            onClick={onComplete}
+            icon={<CheckCircle2 className="size-3.5" />}
+            label="Complete"
+          />
+        )}
         <button
           type="button"
           onClick={onOpenDetail}

@@ -1,5 +1,5 @@
 import { Briefcase, Plus } from "lucide-react";
-import type { FilterKey } from "./ActiveJobsPage";
+import type { FilterKey } from "./active-jobs-store";
 
 export function EmptyState({ hasQuery, filter }: { hasQuery: boolean; filter: FilterKey }) {
   const message = hasQuery

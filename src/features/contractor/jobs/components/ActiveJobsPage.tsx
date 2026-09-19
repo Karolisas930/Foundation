@@ -1,15 +1,17 @@
 /**
- * ActiveJobsPage — practical daily command center for a tradesperson/manager.
- * Storage / derived helpers live in ./components/active-jobs-store.
- * List item lives in ./components/JobCard. Detail sheet in ./components/JobDetailSheet.
+ * ActiveJobsPage — the tradesperson's daily command center.
+ *
+ * Jobs come from Supabase (bookings awarded to the signed-in contractor) via
+ * `@/lib/active-jobs.functions`. Crew and hour logs stay device-local.
  */
 import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   ArrowUpDown,
   Briefcase,
   CalendarDays,
-  Plus,
   Search,
   Timer,
 } from "lucide-react";
@@ -22,39 +24,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { getEcosystemLedger, type EcosystemProject } from "@/core/demo-session";
+import {
+  listMyActiveJobs,
+  updateMyActiveJob,
+  type ActiveJob,
+} from "@/lib/active-jobs.functions";
 import { SiteDiarySheet } from "@/features/contractor/team/components/SiteDiarySheet";
 import { setActiveJobId } from "@/features/contractor/team/site-diary-store";
 import { LogHoursDialog } from "./LogHoursDialog";
 import { AddReceiptDialog } from "./AddReceiptDialog";
-import { NewJobDialog } from "./NewJobDialog";
 import { EmptyState } from "./EmptyState";
-import {
-  FILTERS,
-  derive,
-  progressOf,
-  setProjectStatus,
-  statusMeta,
-  useLedgerTick,
-  type FilterKey,
-  type SortKey,
-} from "./active-jobs-store";
+import { FILTERS, derive, progressOf, statusMeta, type FilterKey, type SortKey } from "./active-jobs-store";
 import { SummaryCard } from "./atoms";
 import { JobCard } from "./JobCard";
 import { JobDetailSheet } from "./JobDetailSheet";
 
-// Backwards-compat re-exports (external imports rely on these).
-export {
-  createProject,
-  derive,
-  logHours,
-  useCrewOverride,
-  useHoursForJob,
-} from "./active-jobs-store";
-export type { FilterKey } from "./active-jobs-store";
+export const ACTIVE_JOBS_QUERY_KEY = ["contractor", "active-jobs"] as const;
 
 export function ActiveJobsPage() {
-  useLedgerTick();
+  const queryClient = useQueryClient();
+  const fetchJobs = useServerFn(listMyActiveJobs);
+  const saveJob = useServerFn(updateMyActiveJob);
+
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("date");
@@ -62,21 +53,31 @@ export function ActiveJobsPage() {
   const [diaryOpen, setDiaryOpen] = useState(false);
   const [hoursJobId, setHoursJobId] = useState<string | null>(null);
   const [receiptJobId, setReceiptJobId] = useState<string | null>(null);
-  const [newJobOpen, setNewJobOpen] = useState(false);
 
-  const ledger = getEcosystemLedger();
-  const jobs = useMemo(
-    () => ledger.projects.filter((p) => p.status === "awarded" || p.status === "clarifying"),
-    [ledger.projects],
+  const jobsQuery = useQuery({
+    queryKey: ACTIVE_JOBS_QUERY_KEY,
+    queryFn: () => fetchJobs(),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: Parameters<typeof updateMyActiveJob>[0] extends never ? never : {
+      bookingId: string;
+      status?: ActiveJob["status"];
+      scheduledStart?: string | null;
+      scheduledEnd?: string | null;
+      notes?: string | null;
+    }) => saveJob({ data }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ACTIVE_JOBS_QUERY_KEY }),
+    onError: (err: Error) => toast.error("Could not save", { description: err.message }),
+  });
+
+  const jobs = useMemo<ActiveJob[]>(
+    () => (jobsQuery.data?.jobs ?? []).filter((j) => j.status !== "cancelled"),
+    [jobsQuery.data],
   );
 
   const enriched = useMemo(
-    () =>
-      jobs.map((j) => ({
-        job: j,
-        d: derive(j),
-        progress: progressOf(j),
-      })),
+    () => jobs.map((job) => ({ job, d: derive(job), progress: progressOf(job) })),
     [jobs],
   );
 
@@ -92,14 +93,15 @@ export function ActiveJobsPage() {
     const q = query.trim().toLowerCase();
     let list = enriched.filter(({ job, d }) => {
       if (filter === "today" && !d.isToday) return false;
-      if (filter === "week" && (d.daysFromToday < 0 || d.daysFromToday > 7)) return false;
+      if (filter === "week" && (!d.hasSchedule || d.daysFromToday < 0 || d.daysFromToday > 7))
+        return false;
       if (filter === "overdue" && !d.isOverdue) return false;
       if (!q) return true;
       return (
         job.title.toLowerCase().includes(q) ||
         (job.city ?? "").toLowerCase().includes(q) ||
         (job.trade ?? "").toLowerCase().includes(q) ||
-        (job.seekerId ?? "").toLowerCase().includes(q)
+        job.clientName.toLowerCase().includes(q)
       );
     });
     const urgencyRank = { high: 0, normal: 1, low: 2 } as const;
@@ -108,7 +110,7 @@ export function ActiveJobsPage() {
         case "progress":
           return b.progress - a.progress;
         case "client":
-          return (a.job.seekerId ?? "").localeCompare(b.job.seekerId ?? "");
+          return a.job.clientName.localeCompare(b.job.clientName);
         case "urgency":
           return urgencyRank[a.d.urgency] - urgencyRank[b.d.urgency];
         case "date":
@@ -119,7 +121,7 @@ export function ActiveJobsPage() {
     return list;
   }, [enriched, filter, query, sort]);
 
-  const detail = jobs.find((j) => j.id === detailId) ?? null;
+  const detail = jobs.find((j) => j.bookingId === detailId) ?? null;
   const detailDerived = detail ? derive(detail) : null;
 
   function openDiary(id: string) {
@@ -129,19 +131,34 @@ export function ActiveJobsPage() {
   }
 
   function markCompleted(id: string) {
-    setProjectStatus(id, "completed");
-    setDetailId(null);
-    toast.success("Job marked as completed", {
-      description: "Moved to completed jobs.",
-      duration: 2500,
-    });
+    mutation.mutate(
+      { bookingId: id, status: "completed" },
+      {
+        onSuccess: () => {
+          setDetailId(null);
+          toast.success("Job marked as completed", { duration: 2500 });
+        },
+      },
+    );
   }
 
-  function changeStatus(id: string, status: EcosystemProject["status"]) {
-    setProjectStatus(id, status);
-    toast.success(
-      `Status updated to ${statusMeta({ ...detail!, status } as EcosystemProject).label}`,
-      { duration: 2000 },
+  function changeStatus(id: string, status: ActiveJob["status"]) {
+    mutation.mutate(
+      { bookingId: id, status },
+      {
+        onSuccess: () =>
+          toast.success(`Status updated to ${statusMeta({ status }).label}`, { duration: 2000 }),
+      },
+    );
+  }
+
+  function saveSchedule(
+    id: string,
+    patch: { scheduledStart: string | null; scheduledEnd: string | null; notes: string },
+  ) {
+    mutation.mutate(
+      { bookingId: id, ...patch },
+      { onSuccess: () => toast.success("Schedule saved", { duration: 2000 }) },
     );
   }
 
@@ -223,7 +240,9 @@ export function ActiveJobsPage() {
                 ? summary.today
                 : f.id === "all"
                   ? summary.total
-                  : enriched.filter((e) => e.d.daysFromToday >= 0 && e.d.daysFromToday <= 7).length;
+                  : enriched.filter(
+                      (e) => e.d.hasSchedule && e.d.daysFromToday >= 0 && e.d.daysFromToday <= 7,
+                    ).length;
           return (
             <button
               key={f.id}
@@ -257,40 +276,44 @@ export function ActiveJobsPage() {
         })}
       </div>
 
-      {visible.length === 0 ? (
+      {jobsQuery.isPending ? (
+        <ul className="space-y-3" aria-busy>
+          {[0, 1, 2].map((i) => (
+            <li
+              key={i}
+              className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/[0.04]"
+            />
+          ))}
+        </ul>
+      ) : jobsQuery.isError ? (
+        <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-6 text-center text-sm text-rose-200">
+          Could not load your jobs. {(jobsQuery.error as Error).message}
+        </div>
+      ) : visible.length === 0 ? (
         <EmptyState hasQuery={query.length > 0} filter={filter} />
       ) : (
         <ul className="space-y-3">
           {visible.map(({ job, d, progress }) => (
-            <li key={job.id}>
+            <li key={job.bookingId}>
               <JobCard
                 job={job}
                 d={d}
                 progress={progress}
-                onOpenDetail={() => setDetailId(job.id)}
-                onOpenDiary={() => openDiary(job.id)}
-                onLogHours={() => setHoursJobId(job.id)}
-                onAddReceipt={() => setReceiptJobId(job.id)}
-                onComplete={() => markCompleted(job.id)}
+                onOpenDetail={() => setDetailId(job.bookingId)}
+                onOpenDiary={() => openDiary(job.bookingId)}
+                onLogHours={() => setHoursJobId(job.bookingId)}
+                onAddReceipt={() => setReceiptJobId(job.bookingId)}
+                onComplete={() => markCompleted(job.bookingId)}
               />
             </li>
           ))}
         </ul>
       )}
 
-      <button
-        type="button"
-        onClick={() => setNewJobOpen(true)}
-        aria-label="Add new job"
-        className="fixed bottom-24 right-5 z-40 inline-flex h-14 items-center gap-2 rounded-full bg-orange px-5 text-sm font-bold text-slate-900 shadow-2xl shadow-orange/30 transition hover:bg-orange-glow active:scale-95"
-      >
-        <Plus className="size-5" />
-        New Job
-      </button>
-
       <JobDetailSheet
         detail={detail}
         detailDerived={detailDerived}
+        saving={mutation.isPending}
         onClose={() => setDetailId(null)}
         onOpenDiary={openDiary}
         onLogHours={(id) => {
@@ -303,27 +326,20 @@ export function ActiveJobsPage() {
         }}
         onComplete={markCompleted}
         onChangeStatus={changeStatus}
+        onSaveSchedule={saveSchedule}
       />
 
       <SiteDiarySheet open={diaryOpen} onOpenChange={setDiaryOpen} />
 
       <LogHoursDialog
         jobId={hoursJobId}
-        job={jobs.find((j) => j.id === hoursJobId) ?? null}
+        job={jobs.find((j) => j.bookingId === hoursJobId) ?? null}
         onClose={() => setHoursJobId(null)}
       />
       <AddReceiptDialog
         jobId={receiptJobId}
-        job={jobs.find((j) => j.id === receiptJobId) ?? null}
+        job={jobs.find((j) => j.bookingId === receiptJobId) ?? null}
         onClose={() => setReceiptJobId(null)}
-      />
-      <NewJobDialog
-        open={newJobOpen}
-        onClose={() => setNewJobOpen(false)}
-        onCreated={(id) => {
-          setNewJobOpen(false);
-          openDiary(id);
-        }}
       />
     </section>
   );

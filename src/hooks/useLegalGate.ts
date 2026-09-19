@@ -28,7 +28,12 @@ function readStatus(): UserOnboardingVerificationStatus {
   } catch {
     /* ignore */
   }
-  return UserOnboardingVerificationStatus.PENDING_DOCUMENTATION;
+  // No stored status yet: treat the user as cleared. The gate is still a
+  // local mock (no `verifications` table read), so defaulting to "pending"
+  // silently replaced EVERY dashboard page with the document-upload screen
+  // and made the homeowner/contractor dashboards unreachable. Until this is
+  // backed by real verification data, onboarding must be opt-in.
+  return UserOnboardingVerificationStatus.APPROVED_REAL_DB_RECORD;
 }
 
 export function setLegalGateStatus(next: UserOnboardingVerificationStatus): void {

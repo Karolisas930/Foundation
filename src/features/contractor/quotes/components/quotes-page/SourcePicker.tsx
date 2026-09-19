@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Search, Sparkles, Users, PencilLine, MapPin, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { dispatchLeadsForCurrentUser } from "@/features/contractor/leads/lead-dispatch";
 import {
   MARKETPLACE_CLIENTS,
   type MarketplaceClient,
 } from "@/features/contractor/profile/components/toolbelt/marketplace-clients";
-import type { EcosystemProject } from "@/core/demo-session";
+import { listContractorJobFeed, type FeedJob } from "@/lib/job-feed.functions";
 import type { QuoteSource, Prefill } from "./constants";
 
 function SourceTile({
@@ -66,14 +67,21 @@ function PickerEmpty({
 }
 
 export function SourcePicker({ onPick }: { onPick: (s: QuoteSource, p?: Prefill) => void }) {
-  const dispatch = useMemo(() => dispatchLeadsForCurrentUser(), []);
-  const leads: EcosystemProject[] = useMemo(() => {
-    const uniq = new Map<string, EcosystemProject>();
-    [...dispatch.priority, ...dispatch.alerts].forEach((l) => uniq.set(l.project.id, l.project));
-    return Array.from(uniq.values()).slice(0, 12);
-  }, [dispatch]);
+  const fetchFeed = useServerFn(listContractorJobFeed);
+  const feedQuery = useQuery({
+    queryKey: ["contractor-job-feed"],
+    queryFn: () => fetchFeed(),
+  });
 
-  const [tab, setTab] = useState<QuoteSource>(leads.length > 0 ? "lead" : "client");
+  const leads: FeedJob[] = useMemo(() => {
+    const data = feedQuery.data;
+    if (!data) return [];
+    const uniq = new Map<string, FeedJob>();
+    [...data.priority, ...data.alerts].forEach((l) => uniq.set(l.job.id, l.job));
+    return Array.from(uniq.values()).slice(0, 12);
+  }, [feedQuery.data]);
+
+  const [tab, setTab] = useState<QuoteSource>("lead");
   const [q, setQ] = useState("");
 
   const filteredLeads = useMemo(() => {
@@ -95,20 +103,20 @@ export function SourcePicker({ onPick }: { onPick: (s: QuoteSource, p?: Prefill)
     );
   }, [q]);
 
-  const pickLead = (p: EcosystemProject) =>
+  const pickLead = (p: FeedJob) =>
     onPick("lead", {
       clientName:
-        (p.city ? `Homeowner · ${p.city}` : `Homeowner · ${p.locationZip}`) || "Homeowner",
+        (p.city ? `Homeowner · ${p.city}` : `Homeowner · ${p.locationZip ?? ""}`) || "Homeowner",
       jobTitle: p.title,
       description: [
         p.description,
-        p.desiredStart ? `Desired start: ${p.desiredStart}` : null,
         p.trade ? `Trade: ${p.trade}` : null,
+        p.urgency ? `Urgency: ${p.urgency}` : null,
         p.budgetTotal ? `Budget: €${p.budgetTotal.toLocaleString("de-DE")}` : null,
       ]
         .filter(Boolean)
         .join("\n"),
-      sourceLabel: `Marketplace lead · ${p.locationZip}${p.city ? ` ${p.city}` : ""}`,
+      sourceLabel: `Marketplace lead · ${p.locationZip ?? ""}${p.city ? ` ${p.city}` : ""}`.trim(),
     });
 
   const pickClient = (c: MarketplaceClient) =>
@@ -125,7 +133,7 @@ export function SourcePicker({ onPick }: { onPick: (s: QuoteSource, p?: Prefill)
           active={tab === "lead"}
           icon={Sparkles}
           label="Marketplace lead"
-          hint={`${leads.length} open`}
+          hint={feedQuery.isPending ? "loading…" : `${leads.length} open`}
           onClick={() => setTab("lead")}
         />
         <SourceTile
@@ -165,7 +173,24 @@ export function SourcePicker({ onPick }: { onPick: (s: QuoteSource, p?: Prefill)
 
       {tab === "lead" && (
         <div className="space-y-2">
-          {filteredLeads.length === 0 ? (
+          {feedQuery.isPending ? (
+            <ul className="space-y-2" aria-busy>
+              {[0, 1, 2].map((i) => (
+                <li
+                  key={i}
+                  className="h-20 animate-pulse rounded-xl border border-white/10 bg-white/[0.04]"
+                />
+              ))}
+            </ul>
+          ) : feedQuery.isError ? (
+            <PickerEmpty
+              icon={Sparkles}
+              title="Could not load leads"
+              hint={(feedQuery.error as Error).message}
+              cta="Start manual quote"
+              onCta={() => onPick("manual")}
+            />
+          ) : filteredLeads.length === 0 ? (
             <PickerEmpty
               icon={Sparkles}
               title="No matched leads right now"

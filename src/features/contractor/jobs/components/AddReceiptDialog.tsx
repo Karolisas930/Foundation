@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import type { EcosystemProject } from "@/core/demo-session";
+import type { ActiveJob } from "@/lib/active-jobs.functions";
 import { addSiteDiaryEntry, fileToDataUrl } from "@/features/contractor/team/site-diary-store";
 
 export function AddReceiptDialog({
@@ -21,7 +21,7 @@ export function AddReceiptDialog({
   onClose,
 }: {
   jobId: string | null;
-  job: EcosystemProject | null;
+  job: ActiveJob | null;
   onClose: () => void;
 }) {
   const [label, setLabel] = useState("");

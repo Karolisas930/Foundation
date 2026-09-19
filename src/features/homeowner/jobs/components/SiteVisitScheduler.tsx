@@ -1,12 +1,17 @@
 /**
  * SiteVisitScheduler — awarded-project banner that lets the homeowner
  * offer up to 7 available days and a preferred time slot for the contractor.
+ *
+ * Dates + slot are stored in Supabase (`public.site_visits`) and the
+ * confirmation is sent to the contractor as a real project message.
  */
+import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { CalendarCheck2, CheckCircle2, Clock, Moon, Sun, Sunrise, X } from "lucide-react";
 import type { EcosystemProject, EcosystemProposal } from "@/core/demo-session";
-import { getEcosystemLedger, updateEcosystemLedger } from "@/core/demo-session";
+import { sendProjectMessage } from "@/lib/project-chat.functions";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,7 +28,7 @@ export function SiteVisitScheduler({
   project,
   topProposal,
   siteVisits,
-  persistSiteVisits,
+  saveVisit,
   calendarOpen,
   setCalendarOpen,
   draftSlot,
@@ -33,53 +38,68 @@ export function SiteVisitScheduler({
   project: EcosystemProject;
   topProposal: EcosystemProposal;
   siteVisits: Record<string, SiteVisit>;
-  persistSiteVisits: (next: Record<string, SiteVisit>) => void;
+  saveVisit: (jobId: string, visit: SiteVisit, contractorId?: string | null) => Promise<void>;
   calendarOpen: boolean;
   setCalendarOpen: (open: boolean) => void;
   draftSlot: TimeSlot;
   setDraftSlot: (slot: TimeSlot) => void;
   onCancelRequest: () => void;
 }) {
+  const [sending, setSending] = useState(false);
+  const sendMessage = useServerFn(sendProjectMessage);
+
   const visit = siteVisits[project.id];
   const selectedDates = (visit?.dates ?? [])
     .map((d) => safeParseISO(d))
     .filter((d): d is Date => d !== null);
   const activeSlot = visit?.slot ?? draftSlot;
 
-  function setVisitSlot(slot: TimeSlot) {
-    setDraftSlot(slot);
-    const existing = siteVisits[project.id];
-    if (!existing) return;
-    persistSiteVisits({ ...siteVisits, [project.id]: { ...existing, slot } });
+  function persist(next: SiteVisit) {
+    void saveVisit(project.id, next, topProposal.profileId ?? null).catch((err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Could not save your availability.");
+    });
   }
 
-  function confirmSiteVisit() {
+  function setVisitSlot(slot: TimeSlot) {
+    setDraftSlot(slot);
+    persist({ dates: visit?.dates ?? [], slot });
+  }
+
+  async function confirmSiteVisit() {
     const v = siteVisits[project.id];
     if (!v || v.dates.length === 0) {
       toast.error("Pick at least one date.");
       return;
     }
-    setCalendarOpen(false);
+    if (!topProposal.profileId) {
+      toast.error("This contractor cannot be messaged yet.");
+      return;
+    }
     const stamps = v.dates
       .map((d) => safeParseISO(d))
       .filter((d): d is Date => d !== null)
       .map((d) => format(d, "EEE d MMM"))
       .join(", ");
-    const ledgerNext = getEcosystemLedger();
-    ledgerNext.messages = [
-      ...ledgerNext.messages,
-      {
-        id: `MSG-${Date.now()}`,
-        projectId: project.id,
-        senderRole: "homeowner",
-        text: `Available for site visit: ${stamps} · ${SLOT_LABEL[v.slot]}.`,
-        timestamp: "just now",
-      },
-    ];
-    updateEcosystemLedger(ledgerNext);
-    toast.success(`Sent ${v.dates.length} option${v.dates.length === 1 ? "" : "s"} to contractor`, {
-      description: SLOT_LABEL[v.slot],
-    });
+
+    setSending(true);
+    try {
+      await sendMessage({
+        data: {
+          jobId: project.id,
+          peerId: topProposal.profileId,
+          body: `Available for site visit: ${stamps} · ${SLOT_LABEL[v.slot]}.`,
+        },
+      });
+      setCalendarOpen(false);
+      toast.success(
+        `Sent ${v.dates.length} option${v.dates.length === 1 ? "" : "s"} to contractor`,
+        { description: SLOT_LABEL[v.slot] },
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not notify the contractor.");
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -132,10 +152,7 @@ export function SiteVisitScheduler({
                         return x.toISOString();
                       })
                       .sort();
-                    persistSiteVisits({
-                      ...siteVisits,
-                      [project.id]: { dates: isoArr, slot: activeSlot },
-                    });
+                    persist({ dates: isoArr, slot: activeSlot });
                   }}
                   disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
                   initialFocus
@@ -168,12 +185,14 @@ export function SiteVisitScheduler({
                     })}
                   </div>
                   <Button
-                    onClick={confirmSiteVisit}
-                    disabled={selectedDates.length === 0}
+                    onClick={() => void confirmSiteVisit()}
+                    disabled={selectedDates.length === 0 || sending}
                     className="mt-3 h-9 w-full rounded-md bg-emerald-500 text-xs font-semibold text-white hover:bg-emerald-400"
                   >
                     <CheckCircle2 className="mr-1.5 size-3.5" />
-                    Send {selectedDates.length || ""} option{selectedDates.length === 1 ? "" : "s"}
+                    {sending
+                      ? "Sending…"
+                      : `Send ${selectedDates.length || ""} option${selectedDates.length === 1 ? "" : "s"}`}
                   </Button>
                 </div>
               </PopoverContent>

@@ -19,6 +19,8 @@ export function ChatView({
   bid,
   messages,
   draft,
+  sending = false,
+  loading = false,
   onDraftChange,
   onClose,
   onSend,
@@ -26,6 +28,8 @@ export function ChatView({
   bid: EcosystemProposal | null;
   messages: { id: string; senderRole: string; text: string; timestamp: string }[];
   draft: string;
+  sending?: boolean;
+  loading?: boolean;
   onDraftChange: (v: string) => void;
   onClose: () => void;
   onSend: () => void;
@@ -43,7 +47,9 @@ export function ChatView({
           </DialogDescription>
         </DialogHeader>
         <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border bg-muted/30 p-3">
-          {messages.length === 0 ? (
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading conversation…</p>
+          ) : messages.length === 0 ? (
             <p className="text-sm text-muted-foreground">No messages yet — say hello.</p>
           ) : (
             messages.slice(-10).map((m) => (
@@ -71,10 +77,10 @@ export function ChatView({
           </Button>
           <Button
             onClick={onSend}
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || sending}
             className="bg-orange hover:bg-orange/90"
           >
-            <Send className="mr-1.5 size-4" /> Send
+            <Send className="mr-1.5 size-4" /> {sending ? "Sending…" : "Send"}
           </Button>
         </DialogFooter>
       </DialogContent>

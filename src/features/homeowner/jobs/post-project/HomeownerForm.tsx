@@ -16,7 +16,6 @@ import { FormShell } from "@/components/shared/FormShell";
 import { TopBar } from "@/components/shared/TopBar";
 
 import {
-  DEMO_CONTRACTOR_PROFILE_IDS,
   getEcosystemLedger,
   startDemoSession,
   updateEcosystemLedger,
@@ -200,34 +199,8 @@ export function HomeownerForm() {
     };
     ledger.projects = [...(ledger.projects ?? []), newProject];
 
-    const demoBidBase = Math.max(800, Math.round(budget * 0.7));
-    ledger.proposals = [
-      ...(ledger.proposals ?? []),
-      {
-        id: `BID-${Date.now()}-A`,
-        projectId: newProject.id,
-        company: "Müller Trockenbau GmbH",
-        city: profile.city || "Mannheim",
-        rating: 4.9,
-        labor: Math.round(demoBidBase * 0.55),
-        materials: Math.round(demoBidBase * 0.35),
-        travel: Math.round(demoBidBase * 0.05),
-        postedAt: "just now",
-        profileId: DEMO_CONTRACTOR_PROFILE_IDS.mueller,
-      },
-      {
-        id: `BID-${Date.now()}-B`,
-        projectId: newProject.id,
-        company: "Aras Statyba",
-        city: "Ludwigshafen",
-        rating: 4.6,
-        labor: Math.round(demoBidBase * 0.5),
-        materials: Math.round(demoBidBase * 0.4),
-        travel: Math.round(demoBidBase * 0.08),
-        postedAt: "just now",
-        profileId: DEMO_CONTRACTOR_PROFILE_IDS.aras,
-      },
-    ];
+    // No fabricated bids here any more: real bids come from the database
+    // (see src/lib/job-bids.functions.ts) once contractors actually quote.
 
     updateEcosystemLedger(ledger);
     startDemoSession("homeowner");
