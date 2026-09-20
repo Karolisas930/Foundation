@@ -1,28 +1,26 @@
-import { Send, Trash2, CheckCircle2, XCircle, ArrowRight, Copy, Mail, Euro } from "lucide-react";
+import { Send, Trash2, Undo2, Mail, Euro, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { quoteTotal, type Quote } from "@/features/contractor/quotes/quotes-store";
+import { quoteTotal, type Quote } from "@/features/contractor/quotes/quote-model";
 import { STATUS_META, eur } from "./constants";
 
 export function QuoteCard({
   quote,
+  busy,
   onOpen,
   onSend,
-  onAccept,
-  onDecline,
-  onConvertJob,
+  onWithdraw,
+  onOpenJob,
   onConvertInvoice,
-  onDuplicate,
   onDelete,
 }: {
   quote: Quote;
+  busy: boolean;
   onOpen: () => void;
   onSend: () => void;
-  onAccept: () => void;
-  onDecline: () => void;
-  onConvertJob: () => void;
+  onWithdraw: () => void;
+  onOpenJob: () => void;
   onConvertInvoice: () => void;
-  onDuplicate: () => void;
   onDelete: () => void;
 }) {
   const total = quoteTotal(quote);
@@ -60,31 +58,24 @@ export function QuoteCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {quote.status === "draft" && (
-          <Button size="sm" variant="secondary" onClick={onSend}>
-            <Send className="mr-1 h-3.5 w-3.5" /> Send
+        {(quote.status === "draft" || quote.status === "withdrawn") && (
+          <Button size="sm" variant="secondary" disabled={busy} onClick={onSend}>
+            <Send className="mr-1 h-3.5 w-3.5" /> Send to client
           </Button>
         )}
         {quote.status === "sent" && (
           <>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30"
-              onClick={onAccept}
-            >
-              <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Accepted
+            <Button size="sm" variant="ghost" disabled={busy} onClick={onSend}>
+              <Mail className="mr-1 h-3.5 w-3.5" /> Resend
             </Button>
             <Button
               size="sm"
               variant="ghost"
+              disabled={busy}
               className="text-rose-200 hover:bg-rose-500/10 hover:text-rose-100"
-              onClick={onDecline}
+              onClick={onWithdraw}
             >
-              <XCircle className="mr-1 h-3.5 w-3.5" /> Declined
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onSend}>
-              <Mail className="mr-1 h-3.5 w-3.5" /> Resend
+              <Undo2 className="mr-1 h-3.5 w-3.5" /> Withdraw
             </Button>
           </>
         )}
@@ -92,32 +83,33 @@ export function QuoteCard({
           <>
             <Button
               size="sm"
-              onClick={onConvertJob}
+              onClick={onOpenJob}
               className="bg-gradient-to-b from-orange-500 to-orange-600 text-white"
             >
-              <ArrowRight className="mr-1 h-3.5 w-3.5" /> Convert to Job
+              <Briefcase className="mr-1 h-3.5 w-3.5" /> Open job
             </Button>
             <Button size="sm" variant="secondary" onClick={onConvertInvoice}>
               <Euro className="mr-1 h-3.5 w-3.5" /> To Invoice
             </Button>
           </>
         )}
-        {quote.status !== "converted" && (
+        {quote.status !== "accepted" && (
           <Button size="sm" variant="ghost" onClick={onOpen}>
             Edit
           </Button>
         )}
-        <Button size="sm" variant="ghost" onClick={onDuplicate}>
-          <Copy className="mr-1 h-3.5 w-3.5" /> Duplicate
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-rose-200 hover:bg-rose-500/10 hover:text-rose-100"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        {quote.status !== "accepted" && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            className="text-rose-200 hover:bg-rose-500/10 hover:text-rose-100"
+            onClick={onDelete}
+            aria-label="Delete quote"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
     </article>
   );

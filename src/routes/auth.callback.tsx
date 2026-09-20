@@ -15,10 +15,13 @@
  * session appears, before the redirect below even finishes.
  */
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny } from "@/lib/account-type";
 import { claimPendingProjects } from "@/lib/pending-projects.functions";
+import { dashboardPathFor, readProfileRole } from "@/lib/account-role";
+import { ResendConfirmationForm } from "@/features/auth/components/ResendConfirmationForm";
+
 
 export const Route = createFileRoute("/auth/callback")({
   component: AuthCallbackPage,
@@ -27,9 +30,28 @@ export const Route = createFileRoute("/auth/callback")({
 const MAX_WAIT_MS = 15000;
 const POLL_INTERVAL_MS = 300;
 
+/**
+ * Supabase reports a dead link by bouncing back with error details in the URL
+ * hash (`#error=access_denied&error_code=otp_expired&...`) — occasionally in
+ * the query string instead. Reading both means an expired link shows the
+ * "request a new one" screen immediately instead of after a 15s spin.
+ */
+function readLinkError(): string | null {
+  if (typeof window === "undefined") return null;
+  const url = new URL(window.location.href);
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+  const code = hash.get("error_code") ?? url.searchParams.get("error_code");
+  const err = hash.get("error") ?? url.searchParams.get("error");
+  if (!code && !err) return null;
+  const described =
+    hash.get("error_description") ?? url.searchParams.get("error_description") ?? "";
+  return described.replace(/\+/g, " ") || code || err;
+}
+
 function AuthCallbackPage() {
   const navigate = useNavigate();
   const [state, setState] = useState<"waiting" | "expired">("waiting");
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,21 +93,14 @@ function AuthCallbackPage() {
           // non-fatal - the dashboard claims it again on load
         }
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_type")
-          .eq("id", userId)
-          .maybeSingle();
-        
-        const accountType = profile?.account_type;
-        if (accountType && accountType !== "homeowner") {
-          await navigate({ to: "/contractor" });
-          return;
-        }
+        const { accountType } = await readProfileRole(userId);
+        await navigate({ to: dashboardPathFor(accountType) });
+        return;
       } catch {
         // fall through to homeowner default
       }
       await navigate({ to: "/homeowner" });
+
     }
 
     async function waitForSession() {
@@ -115,11 +130,25 @@ function AuthCallbackPage() {
       }
     }
 
+    const failure = readLinkError();
+    if (failure) {
+      setLinkError(failure);
+      setState("expired");
+      return () => {
+        cancelled = true;
+      };
+    }
+
     void waitForSession();
     return () => {
       cancelled = true;
     };
   }, [navigate]);
+
+  const sectorSuffix =
+    typeof window !== "undefined"
+      ? (new URL(window.location.href).searchParams.get("sector") ?? "")
+      : "";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0f172a] px-4 text-slate-50">
@@ -127,10 +156,25 @@ function AuthCallbackPage() {
         {state === "expired" ? (
           <>
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-white">
-              Link expired
+              This link has expired
             </h1>
             <p className="mt-2 text-sm text-slate-300">
-              This confirmation link is no longer valid. Please request a new one and try again.
+              {linkError
+                ? "That confirmation link is no longer valid — they only last a short while."
+                : "We couldn't confirm your account with this link. It may have already been used or it timed out."}
+            </p>
+            <ResendConfirmationForm
+              redirectTo={
+                typeof window !== "undefined"
+                  ? `${window.location.origin}/auth/callback${sectorSuffix ? `?sector=${sectorSuffix}` : ""}`
+                  : undefined
+              }
+            />
+            <p className="mt-4 text-xs text-slate-400">
+              Already confirmed?{" "}
+              <Link to="/login" className="font-semibold text-orange-glow hover:underline">
+                Sign in instead
+              </Link>
             </p>
           </>
         ) : (
@@ -148,3 +192,4 @@ function AuthCallbackPage() {
     </div>
   );
 }
+

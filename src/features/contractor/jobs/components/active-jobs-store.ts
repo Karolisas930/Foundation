@@ -1,10 +1,10 @@
 /**
- * Derived data + local-only crew/hours notes for Active Jobs.
+ * Derived presentation data for Active Jobs.
  *
- * Job data itself comes from Supabase via `@/lib/active-jobs.functions`.
- * Crew assignment and hour logs are still device-local helpers.
+ * All job data — including crew assignments and logged hours — comes from
+ * Supabase (`@/lib/active-jobs.functions`, `@/lib/job-crew.functions`).
+ * Nothing here touches browser storage.
  */
-import { useMemo, useSyncExternalStore } from "react";
 import type { ActiveJob } from "@/lib/active-jobs.functions";
 
 export type FilterKey = "today" | "week" | "all" | "overdue";
@@ -17,125 +17,7 @@ export const FILTERS: { id: FilterKey; label: string }[] = [
   { id: "overdue", label: "Overdue" },
 ];
 
-export const STAFF_POOL = ["Ali K.", "Marek P.", "Sabine R.", "Jonas B.", "Erik L."];
 export const TIME_SLOTS = ["07:30", "08:00", "09:15", "10:00", "13:00", "14:30"];
-
-const CREW_KEY = "hw:job-crew::v1";
-const HOURS_KEY = "hw:job-hours::v1";
-
-export type HoursLog = {
-  id: string;
-  jobId: string;
-  staff: string;
-  hours: number;
-  date: string;
-  note?: string;
-  createdAt: number;
-};
-
-const listeners = new Set<() => void>();
-function emit() {
-  listeners.forEach((l) => l());
-}
-function subscribe(l: () => void) {
-  listeners.add(l);
-  const onStorage = () => l();
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(l);
-    window.removeEventListener("storage", onStorage);
-  };
-}
-
-function readCrewMap(): Record<string, string[]> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(CREW_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
-}
-function writeCrewMap(m: Record<string, string[]>) {
-  window.localStorage.setItem(CREW_KEY, JSON.stringify(m));
-  emit();
-}
-function readHours(): HoursLog[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(window.localStorage.getItem(HOURS_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
-}
-function writeHours(list: HoursLog[]) {
-  window.localStorage.setItem(HOURS_KEY, JSON.stringify(list));
-  emit();
-}
-
-export function useCrewOverride(jobId: string | null): string[] | null {
-  const snap = useSyncExternalStore(
-    subscribe,
-    () => window.localStorage.getItem(CREW_KEY) ?? "{}",
-    () => "{}",
-  );
-  return useMemo(() => {
-    if (!jobId) return null;
-    try {
-      const m = JSON.parse(snap) as Record<string, string[]>;
-      return m[jobId] ?? null;
-    } catch {
-      return null;
-    }
-  }, [snap, jobId]);
-}
-
-export function useHoursForJob(jobId: string | null): HoursLog[] {
-  const snap = useSyncExternalStore(
-    subscribe,
-    () => window.localStorage.getItem(HOURS_KEY) ?? "[]",
-    () => "[]",
-  );
-  return useMemo(() => {
-    if (!jobId) return [];
-    try {
-      return (JSON.parse(snap) as HoursLog[]).filter((h) => h.jobId === jobId);
-    } catch {
-      return [];
-    }
-  }, [snap, jobId]);
-}
-
-export function addCrewMember(jobId: string, name: string, defaultCrew: string[]) {
-  const map = readCrewMap();
-  const current = map[jobId] ?? defaultCrew;
-  const n = name.trim();
-  if (!n) return;
-  if (current.some((c) => c.toLowerCase() === n.toLowerCase())) return;
-  map[jobId] = [...current, n];
-  writeCrewMap(map);
-}
-export function removeCrewMember(jobId: string, name: string, defaultCrew: string[]) {
-  const map = readCrewMap();
-  const current = map[jobId] ?? defaultCrew;
-  map[jobId] = current.filter((c) => c !== name);
-  writeCrewMap(map);
-}
-
-export function logHours(entry: Omit<HoursLog, "id" | "createdAt">) {
-  const list = readHours();
-  list.unshift({
-    ...entry,
-    id: `h_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    createdAt: Date.now(),
-  });
-  writeHours(list);
-}
-
-export function sumHoursForJob(jobId: string): number {
-  return readHours()
-    .filter((h) => h.jobId === jobId)
-    .reduce((s, h) => s + h.hours, 0);
-}
 
 function hash(id: string): number {
   let h = 0;
@@ -156,7 +38,7 @@ export type Derived = {
 };
 
 /** Schedule/urgency/crew info for one booking. */
-export function derive(job: ActiveJob): Derived {
+export function derive(job: ActiveJob, crew: string[] = []): Derived {
   const h = hash(job.bookingId);
   const hasSchedule = Boolean(job.scheduledStart);
 
@@ -187,8 +69,7 @@ export function derive(job: ActiveJob): Derived {
         : "low";
 
   const defaultStaff: string[] = [];
-  const override = readCrewMap()[job.bookingId];
-  const staff = override ?? defaultStaff;
+  const staff = crew;
 
   const time = scheduled.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   const label = !hasSchedule

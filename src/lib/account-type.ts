@@ -21,14 +21,19 @@ export async function stampAccountTypeIfMissing(
     const user = sess?.session?.user;
     if (!user) return;
 
-    const { data: existing } = await supabase
+    const { data: existing, error: readError } = await supabase
       .from("profiles")
-      .select("id, account_type")
+      .select("id, account_type, display_name")
       .eq("id", user.id)
       .maybeSingle();
 
+    // If we could not read the row we do NOT know the role — writing a
+    // default here would overwrite a real contractor profile.
+    if (readError) return;
+
     const currentType = (existing as { account_type: string | null } | null)?.account_type;
     if (currentType) return; // already set — do not overwrite
+
 
     await supabase.from("profiles").upsert(
       {

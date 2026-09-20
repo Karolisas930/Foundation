@@ -31,6 +31,7 @@ import { TaxToolsSheet } from "@/features/contractor/profile/components/toolbelt
 import { PostHelpRequestSheet } from "@/features/contractor/onboarding/components/PostHelpRequestSheet";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useTeamPermissions } from "@/features/contractor/team/hooks/useTeamPermissions";
+import { isContractorType } from "@/lib/account-role";
 
 import { filterSectionsForRole, type RouteTarget } from "./side-menu/menu-types";
 import { useMenuSections } from "./side-menu/useMenuSections";
@@ -42,8 +43,9 @@ import { JobRadarSheet, QuickFinanceSheet } from "./side-menu/QuickSheets";
 export function AppSideMenu() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, profile, isAuthenticated, signOut } = useAuth();
   const teamPerms = useTeamPermissions();
+  const isContractor = isContractorType(profile?.account_type);
 
   const [financeOpen, setFinanceOpen] = useState(false);
   const [kmOpen, setKmOpen] = useState(false);
@@ -94,8 +96,39 @@ export function AppSideMenu() {
     void navigate({ to: "/", replace: true });
   }
 
+  // Every contractor-only destination below is gated on the real account
+  // role. Homeowners used to be sent to /contractor/* pages from the menu
+  // (Overview, Edit Profile Settings), which is how they ended up looking at
+  // a tradesperson profile.
   function go(target: RouteTarget) {
     setOpen(false);
+    if (!isContractor) {
+      switch (target) {
+        case "home":
+        case "profile":
+        case "performance":
+        case "reports":
+        case "finanz":
+        case "team":
+        case "team-locations":
+        case "staff-hours":
+        case "calendar":
+          void navigate({ to: "/homeowner" });
+          return;
+        case "settings":
+          void navigate({ to: "/settings" });
+          return;
+        case "notifications":
+          void navigate({ to: "/notifications" });
+          return;
+        case "messages":
+          void navigate({ to: "/messages" });
+          return;
+        case "security":
+          void navigate({ to: "/security" });
+          return;
+      }
+    }
     switch (target) {
       case "home":
         void navigate({ to: "/" });
@@ -183,9 +216,13 @@ export function AppSideMenu() {
 
           <div className="h-px bg-white/10" />
 
-          <SideMenuStatusToggle active={activeStatus} onChange={toggleActiveStatus} />
-
-          <div className="h-px bg-white/10" />
+          {/* Match-rotation availability is a tradesperson concept only. */}
+          {isContractor && (
+            <>
+              <SideMenuStatusToggle active={activeStatus} onChange={toggleActiveStatus} />
+              <div className="h-px bg-white/10" />
+            </>
+          )}
 
           <nav className="flex flex-1 flex-col overflow-y-auto py-2">
             <SideMenuNav sections={filterSectionsForRole(sections, teamPerms)} onRoute={go} />

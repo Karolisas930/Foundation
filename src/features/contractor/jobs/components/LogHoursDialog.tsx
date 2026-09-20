@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import type { ActiveJob } from "@/lib/active-jobs.functions";
-import { useCrewOverride, useHoursForJob, logHours, derive } from "./active-jobs-store";
+import { useHoursForJob, useJobCrew, useLogHours } from "./use-job-crew";
 
 export function LogHoursDialog({
   jobId,
@@ -31,12 +31,10 @@ export function LogHoursDialog({
   job: ActiveJob | null;
   onClose: () => void;
 }) {
-  const override = useCrewOverride(jobId);
-  const crew = useMemo(() => {
-    if (!job) return [];
-    return override ?? derive(job).defaultStaff;
-  }, [job, override]);
+  const assigned = useJobCrew(jobId);
+  const crew = useMemo(() => (job ? assigned : []), [job, assigned]);
   const recent = useHoursForJob(jobId);
+  const logHoursMutation = useLogHours();
 
   const [staff, setStaff] = useState<string>("");
   const [hours, setHours] = useState<string>("");
@@ -62,12 +60,19 @@ export function LogHoursDialog({
       toast.error("Enter a valid number of hours");
       return;
     }
-    logHours({ jobId, staff: staff || "Me", hours: h, date, note });
-    toast.success(`${h.toFixed(1)} h logged for ${staff || "Me"}`, {
-      description: job.title,
-      duration: 2500,
-    });
-    onClose();
+    logHoursMutation.mutate(
+      { bookingId: jobId, staff: staff || "Me", hours: h, date, note: note || null },
+      {
+        onSuccess: () => {
+          toast.success(`${h.toFixed(1)} h logged for ${staff || "Me"}`, {
+            description: job.title,
+            duration: 2500,
+          });
+          onClose();
+        },
+        onError: (err: Error) => toast.error("Could not log hours", { description: err.message }),
+      },
+    );
   }
 
   const options = crew.length > 0 ? crew : ["Me"];

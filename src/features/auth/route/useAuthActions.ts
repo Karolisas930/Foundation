@@ -4,38 +4,33 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { describeAuthError } from "./auth-errors";
-import type { BusyKey } from "./types";
+import { resolveDashboardPath } from "@/lib/account-role";
 
-export function useAuthActions() {
+import type { BusyKey, SignUpResult, SignupSector } from "./types";
+
+export function useAuthActions(sector: SignupSector = "homeowner") {
   const navigate = useNavigate();
   const router = useRouter();
   const [busy, setBusy] = useState<BusyKey>(null);
   const cloudReady = isSupabaseConfigured();
 
+  // Every email/OAuth return trip goes through /auth/callback, never straight
+  // at a protected dashboard: the callback page waits for Supabase to turn the
+  // token into a real session before routing. `sector` tells it which
+  // registration flow this was, so the person lands on the matching dashboard.
   const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : "/auth/callback";
+    typeof window !== "undefined"
+      ? `${window.location.origin}/auth/callback?sector=${sector}`
+      : `/auth/callback?sector=${sector}`;
   
   async function goToDashboard() {
     await router.invalidate();
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_type")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        const accountType = profile?.account_type;
-        if (accountType && accountType !== "homeowner") {
-          await navigate({ to: "/contractor" });
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to fetch user profile for dashboard redirect:", e);
-    }
-    await navigate({ to: "/homeowner" });
+    // Role resolution lives in one place now (retries the profile read and
+    // never assumes "homeowner" when the read fails).
+    const target = await resolveDashboardPath();
+    await navigate({ to: target });
   }
+
 
   function requireCloud(unavailableMsg: string): boolean {
     if (!cloudReady) {
@@ -84,32 +79,90 @@ export function useAuthActions() {
     }
   }
 
-  async function signUpWithPassword(email: string, password: string) {
+  /**
+   * Create an account with email + password.
+   *
+   * When email confirmation is switched on, Supabase returns `session: null`
+   * — the account exists but nobody is signed in yet. Navigating to
+   * /homeowner here (what this used to do) put an unauthenticated visitor on
+   * a protected route: the dashboard gate flashed and then bounced them, which
+   * is the "home page for a second, then a blank screen" report. We now stay
+   * on the auth page and hand back "confirm-email" so the UI can ask the
+   * person to open the link in their inbox.
+   */
+  async function signUpWithPassword(
+    email: string,
+    password: string,
+    fullName?: string,
+    phone?: string,
+  ): Promise<SignUpResult> {
     if (!email || !password) {
       toast.error("Enter your email and a password.");
-      return;
+      return "error";
     }
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters.");
+      return "error";
+    }
+    if (!requireCloud("Lovable Cloud isn't connected yet — sign-up is unavailable."))
+      return "error";
+    setBusy("signup");
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectTo,
+          // The DB trigger handle_new_user() copies these into public.profiles,
+          // so full_name/phone must travel with the sign-up itself.
+          data: {
+            account_type: sector,
+            ...(fullName?.trim()
+              ? { full_name: fullName.trim(), display_name: fullName.trim() }
+              : {}),
+            ...(phone?.trim() ? { phone: phone.trim() } : {}),
+          },
+        },
+      });
+      setBusy(null);
+      if (error) {
+        toast.error(describeAuthError(error, "Sign-up failed."));
+        return "error";
+      }
+      if (!data.session) {
+        toast.success("Account created — open the confirmation link in your inbox.");
+        return "confirm-email";
+      }
+      toast.success("Account created.");
+      await goToDashboard();
+      return "signed-in";
+    } catch (err) {
+      setBusy(null);
+      toast.error(describeAuthError(err, "Sign-up failed."));
+      return "error";
+    }
+  }
+
+  /** Re-send the confirmation email for an address that signed up already. */
+  async function resendConfirmation(email: string) {
+    if (!email) {
+      toast.error("Enter your email first.");
       return;
     }
     if (!requireCloud("Lovable Cloud isn't connected yet — sign-up is unavailable.")) return;
     setBusy("signup");
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.resend({
+        type: "signup",
         email,
-        password,
         options: { emailRedirectTo: redirectTo },
       });
       setBusy(null);
-      if (error) toast.error(describeAuthError(error, "Sign-up failed."));
-      else {
-        toast.success("Account created — check your inbox to confirm.");
-        await goToDashboard();
-      }
+      if (error) toast.error(describeAuthError(error, "Couldn't resend the email."));
+      else toast.success("Confirmation email sent again.");
     } catch (err) {
       setBusy(null);
-      toast.error(describeAuthError(err, "Sign-up failed."));
+      toast.error(describeAuthError(err, "Couldn't resend the email."));
     }
   }
 
@@ -237,6 +290,7 @@ export function useAuthActions() {
     signInWithProvider,
     signInWithPassword,
     signUpWithPassword,
+    resendConfirmation,
     sendMagicLink,
     sendResetEmail,
     sendResetSms,

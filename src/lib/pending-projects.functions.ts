@@ -13,23 +13,22 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-
-function getEnv(name: string): string {
-  const value = process.env[name];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error("Missing required environment variable: " + name);
-  }
-  return value;
-}
+import { createServerPublicClient } from "@/integrations/supabase/server-public-client";
 
 function createPublicClient() {
-  return createClient<Database>(getEnv("SUPABASE_URL"), getEnv("SUPABASE_PUBLISHABLE_KEY"), {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
+  return createServerPublicClient();
 }
 
 const pendingProjectSchema = z.object({
-  email: z.string().email(),
+  // Normalised here on purpose: claim_pending_projects() matches this value
+  // against auth.users.email, which Supabase stores lowercased. Saving the
+  // raw form input ("Karolis@Gmail.com") meant the project was never matched
+  // after email confirmation and silently never appeared on the dashboard.
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email(),
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().max(4000).optional(),
   trade: z.string().trim().max(200).optional(),

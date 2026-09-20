@@ -105,6 +105,8 @@ export function SourcePicker({ onPick }: { onPick: (s: QuoteSource, p?: Prefill)
 
   const pickLead = (p: FeedJob) =>
     onPick("lead", {
+      jobId: p.id,
+      jobLabel: `${p.title}${p.city ? ` · ${p.city}` : ""}`,
       clientName:
         (p.city ? `Homeowner · ${p.city}` : `Homeowner · ${p.locationZip ?? ""}`) || "Homeowner",
       jobTitle: p.title,

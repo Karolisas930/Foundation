@@ -1,26 +1,26 @@
 /**
  * QuotesPage — list + create/edit tradespeople quotes.
- * Sub-components live under ./quotes-page/.
+ *
+ * Quotes are stored in the database as bids on a job (`public.job_bids`), so a
+ * sent quote shows up for the homeowner as a real bid on their project.
  */
 import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { FileText, Plus, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { listMyBids, setMyBidStatus, deleteMyBid, type MyBid } from "@/lib/job-bids.functions";
 import {
-  useQuotes,
-  addQuote,
-  updateQuote,
-  removeQuote,
-  setQuoteStatus,
+  bidToQuote,
   quoteTotal,
   type Quote,
   type QuoteStatus,
-} from "@/features/contractor/quotes/quotes-store";
+} from "@/features/contractor/quotes/quote-model";
 import { addInvoice } from "@/features/contractor/profile/components/toolbelt/invoice-store";
-import { addLocalJob, setActiveJobId } from "@/features/contractor/team/site-diary-store";
 
 import { STATUS_META, eur, type FilterKey } from "./quotes-page/constants";
 import { StatCard } from "./quotes-page/StatCard";
@@ -28,9 +28,42 @@ import { EmptyState } from "./quotes-page/EmptyState";
 import { QuoteCard } from "./quotes-page/QuoteCard";
 import { QuoteEditorSheet } from "./quotes-page/QuoteEditorSheet";
 
+export const QUOTES_QUERY_KEY = ["my-bids"] as const;
+
 export function QuotesPage() {
   const navigate = useNavigate();
-  const quotes = useQuotes();
+  const queryClient = useQueryClient();
+  const fetchBids = useServerFn(listMyBids);
+  const changeStatus = useServerFn(setMyBidStatus);
+  const removeBid = useServerFn(deleteMyBid);
+
+  const bidsQuery = useQuery({
+    queryKey: QUOTES_QUERY_KEY,
+    queryFn: () => fetchBids(),
+  });
+
+  const quotes: Quote[] = useMemo(
+    () => ((bidsQuery.data?.bids ?? []) as MyBid[]).map(bidToQuote),
+    [bidsQuery.data],
+  );
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: QUOTES_QUERY_KEY });
+
+  const statusMutation = useMutation({
+    mutationFn: (vars: { id: string; status: "draft" | "sent" | "withdrawn" }) =>
+      changeStatus({ data: vars }),
+    onSuccess: () => void invalidate(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => removeBid({ data: { id } }),
+    onSuccess: () => void invalidate(),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const busy = statusMutation.isPending || deleteMutation.isPending;
+
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [editing, setEditing] = useState<Quote | null>(null);
@@ -76,7 +109,7 @@ export function QuotesPage() {
             Quotes
           </h1>
           <p className="mt-1 text-sm text-slate-300">
-            Draft, send, and convert quotes into active jobs or invoices.
+            Every quote is a bid on a project — send it and the homeowner sees it right away.
           </p>
         </div>
         <Button
@@ -108,7 +141,7 @@ export function QuotesPage() {
           />
         </div>
         <div className="-mx-1 flex flex-wrap gap-1.5 overflow-x-auto px-1">
-          {(["all", "draft", "sent", "accepted", "declined", "converted"] as FilterKey[]).map(
+          {(["all", "draft", "sent", "accepted", "declined", "withdrawn"] as FilterKey[]).map(
             (k) => (
               <button
                 key={k}
@@ -131,83 +164,68 @@ export function QuotesPage() {
       </div>
 
       <div className="mt-5 space-y-3">
-        {filtered.length === 0 ? (
+        {bidsQuery.isPending ? (
+          <ul className="space-y-3" aria-busy>
+            {[0, 1, 2].map((i) => (
+              <li
+                key={i}
+                className="h-28 animate-pulse rounded-2xl border border-white/10 bg-white/[0.04]"
+              />
+            ))}
+          </ul>
+        ) : bidsQuery.isError ? (
+          <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-6 text-center text-sm text-rose-100">
+            Could not load your quotes: {(bidsQuery.error as Error).message}
+            <div className="mt-3">
+              <Button size="sm" variant="secondary" onClick={() => void bidsQuery.refetch()}>
+                Try again
+              </Button>
+            </div>
+          </div>
+        ) : filtered.length === 0 ? (
           <EmptyState onCreate={() => setCreating(true)} hasAny={quotes.length > 0} />
         ) : (
           filtered.map((q) => (
             <QuoteCard
               key={q.id}
               quote={q}
+              busy={busy}
               onOpen={() => setEditing(q)}
               onSend={() => {
-                setQuoteStatus(q.id, "sent");
-                toast.success(`Quote ${q.number} sent to ${q.clientName}`, {
-                  description: "PDF prepared and email dispatched (simulated).",
-                });
-              }}
-              onAccept={() => {
-                setQuoteStatus(q.id, "accepted");
-                toast.success(`Marked ${q.number} accepted`);
-              }}
-              onDecline={() => {
-                setQuoteStatus(q.id, "declined");
-                toast(`Marked ${q.number} declined`);
-              }}
-              onConvertJob={() => {
-                const job = addLocalJob(q.jobTitle || `Job from ${q.number}`);
-                setActiveJobId(job.id);
-                updateQuote(q.id, {
-                  status: "converted",
-                  convertedAt: Date.now(),
-                  convertedTo: "job",
-                  convertedRefId: job.id,
-                });
-                toast.success("Converted to Active Job", {
-                  description: "Opening Site Diary…",
-                  action: {
-                    label: "Open",
-                    onClick: () => void navigate({ to: "/contractor/jobs/active" }),
+                statusMutation.mutate(
+                  { id: q.id, status: "sent" },
+                  {
+                    onSuccess: () =>
+                      toast.success(`Quote ${q.number} sent`, {
+                        description: `${q.clientName} can now see it as a bid on their project.`,
+                      }),
                   },
-                });
-                void navigate({ to: "/contractor/jobs/active" });
+                );
               }}
+              onWithdraw={() => {
+                statusMutation.mutate(
+                  { id: q.id, status: "withdrawn" },
+                  { onSuccess: () => toast(`Withdrew ${q.number}`) },
+                );
+              }}
+              onOpenJob={() => void navigate({ to: "/contractor/jobs/active" })}
               onConvertInvoice={() => {
                 const total = quoteTotal(q);
-                const inv = addInvoice({
+                addInvoice({
                   date: new Date().toISOString().slice(0, 10),
                   client: q.clientName,
                   description: q.jobTitle,
                   amount: total,
                   status: "draft",
                 });
-                updateQuote(q.id, {
-                  status: "converted",
-                  convertedAt: Date.now(),
-                  convertedTo: "invoice",
-                  convertedRefId: inv.id,
-                });
                 toast.success("Converted to Invoice draft", {
                   description: `${eur(total)} · ${q.clientName}`,
                 });
               }}
-              onDuplicate={() => {
-                addQuote({
-                  clientName: q.clientName,
-                  clientEmail: q.clientEmail,
-                  jobTitle: `${q.jobTitle} (copy)`,
-                  description: q.description,
-                  items: q.items.map((i) => ({
-                    ...i,
-                    id: `li_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                  })),
-                  validDays: q.validDays,
-                  notes: q.notes,
-                });
-                toast.success("Duplicated as new draft");
-              }}
               onDelete={() => {
-                removeQuote(q.id);
-                toast(`Deleted ${q.number}`);
+                deleteMutation.mutate(q.id, {
+                  onSuccess: () => toast(`Deleted ${q.number}`),
+                });
               }}
             />
           ))

@@ -7,20 +7,49 @@ import { EmailPasswordPanel } from "@/features/auth/route/EmailPasswordPanel";
 import { ForgotPasswordPanel } from "@/features/auth/route/ForgotPasswordPanel";
 import { SocialAuthPanel } from "@/features/auth/route/SocialAuthPanel";
 import { useAuthActions } from "@/features/auth/route/useAuthActions";
-import type { Mode } from "@/features/auth/route/types";
+import { CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { Mode, SignupSector } from "@/features/auth/route/types";
 
 /**
  * Shared inner body for /login, /signup, and the forgot-password screen.
  * Chrome (TopBar, dark bg) is provided by the enclosing `_auth` layout.
  * `initialMode` seeds local state; tab switching stays client-side.
  */
-export function AuthPageBody({ initialMode }: { initialMode: Mode }) {
+export function AuthPageBody({
+  initialMode,
+  sector = "homeowner",
+}: {
+  initialMode: Mode;
+  sector?: SignupSector;
+}) {
   const navigate = useNavigate();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const actions = useAuthActions();
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  // Set once sign-up succeeds but the address still needs confirming. While
+  // this is set we deliberately stay on the auth page instead of navigating
+  // to a protected dashboard the visitor cannot reach yet.
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState<string | null>(null);
+  const actions = useAuthActions(sector);
+
+  async function handleSignUp(
+    signupEmail: string,
+    signupPassword: string,
+    signupFullName: string,
+    signupPhone: string,
+  ) {
+    const result = await actions.signUpWithPassword(
+      signupEmail,
+      signupPassword,
+      signupFullName,
+      signupPhone,
+    );
+    if (result === "confirm-email") setAwaitingConfirmation(signupEmail);
+  }
 
   const headings: Record<Mode, { title: string; sub: string }> = {
     signin: {
@@ -47,6 +76,41 @@ export function AuthPageBody({ initialMode }: { initialMode: Mode }) {
     } else {
       void navigate({ to: "/" });
     }
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+        <CheckCircle2 className="mx-auto size-10 text-orange" />
+        <h1 className="mt-4 font-display text-2xl font-extrabold text-white">Check your inbox</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          We sent a confirmation link to{" "}
+          <span className="font-semibold text-white">{awaitingConfirmation}</span>. Open it and
+          you'll be taken straight to your dashboard.
+        </p>
+        <p className="mt-2 text-xs text-slate-400">
+          Nothing there? Check spam, or send the email again.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <Button
+            type="button"
+            onClick={() => void actions.resendConfirmation(awaitingConfirmation)}
+            disabled={actions.busy !== null}
+            className="h-11 w-full bg-orange text-white hover:bg-orange/90"
+          >
+            {actions.busy === "signup" ? "Sending…" : "Resend confirmation email"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setAwaitingConfirmation(null)}
+            className="h-11 w-full text-slate-200 hover:bg-white/[0.06] hover:text-white"
+          >
+            Use a different email
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -93,11 +157,15 @@ export function AuthPageBody({ initialMode }: { initialMode: Mode }) {
             busy={actions.busy}
             email={email}
             password={password}
+            fullName={fullName}
+            phone={phone}
             onEmailChange={setEmail}
             onPasswordChange={setPassword}
+            onFullNameChange={setFullName}
+            onPhoneChange={setPhone}
             onForgotPassword={() => setMode("forgot")}
             onSubmitSignIn={actions.signInWithPassword}
-            onSubmitSignUp={actions.signUpWithPassword}
+            onSubmitSignUp={handleSignUp}
             onMagicLink={actions.sendMagicLink}
           />
         </>

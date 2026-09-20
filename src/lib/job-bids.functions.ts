@@ -14,6 +14,49 @@ import { untyped } from "@/lib/untyped-db";
 export const BID_STATUSES = ["draft", "sent", "accepted", "declined", "withdrawn"] as const;
 export type BidStatus = (typeof BID_STATUSES)[number];
 
+/** One priced line of a quote. */
+export interface BidLineItem {
+  id: string;
+  service: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+/** The quote document stored on a bid (`job_bids.details`). */
+export interface BidDetails {
+  number: string;
+  clientName: string;
+  clientEmail: string | null;
+  jobTitle: string;
+  description: string | null;
+  items: BidLineItem[];
+  validDays: number;
+  notes: string | null;
+}
+
+const bidLineItem = z.object({
+  id: z.string().max(64),
+  service: z.string().trim().max(200),
+  quantity: z.number().min(0).max(1_000_000),
+  unitPrice: z.number().min(0).max(1_000_000),
+});
+
+const bidDetails = z.object({
+  number: z.string().trim().max(40),
+  clientName: z.string().trim().max(200),
+  clientEmail: z.string().trim().max(200).nullable().default(null),
+  jobTitle: z.string().trim().max(200),
+  description: z.string().trim().max(4000).nullable().default(null),
+  items: z.array(bidLineItem).max(100),
+  validDays: z.number().int().min(1).max(365),
+  notes: z.string().trim().max(4000).nullable().default(null),
+});
+
+function asDetails(value: unknown): BidDetails | null {
+  const parsed = bidDetails.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 /** A bid as the bidding contractor sees it (their Quotes list). */
 export interface MyBid {
   id: string;
@@ -36,6 +79,8 @@ export interface MyBid {
   jobBudget: number;
   ownerId: string;
   ownerName: string;
+  /** Quote document (line items, client, notes) when the bid was written as a quote. */
+  details: BidDetails | null;
 }
 
 /** A bid as the homeowner sees it on their own project. */
@@ -72,6 +117,21 @@ export const listMyBids = createServerFn({ method: "GET" })
     const { data, error } = await untyped(context.supabase).rpc("my_job_bids");
     if (error) throw new Error(error.message);
     const rows = (data ?? []) as Record<string, unknown>[];
+
+    // The RPC predates the quote document column, so pull `details` separately.
+    // Tolerates databases where the column has not been added yet.
+    const detailsById = new Map<string, BidDetails>();
+    const detailsResult = await untyped(context.supabase)
+      .from("job_bids")
+      .select("id, details")
+      .eq("contractor_id", context.userId);
+    if (!detailsResult.error) {
+      ((detailsResult.data ?? []) as Record<string, unknown>[]).forEach((r) => {
+        const parsed = asDetails(r.details);
+        if (parsed) detailsById.set(String(r.id), parsed);
+      });
+    }
+
     return {
       bids: rows.map((r) => ({
         id: String(r.id),
@@ -94,6 +154,7 @@ export const listMyBids = createServerFn({ method: "GET" })
         jobBudget: Number(r.job_budget ?? 0),
         ownerId: String(r.owner_id),
         ownerName: (r.owner_name as string | null) ?? "Client",
+        details: detailsById.get(String(r.id)) ?? null,
       })),
     };
   });
@@ -109,6 +170,8 @@ const bidInput = z.object({
   validUntil: z.string().trim().max(10).optional().nullable(),
   /** "draft" keeps it private; "sent" makes it visible to the homeowner. */
   status: z.enum(["draft", "sent"]).default("draft"),
+  /** Optional quote document kept alongside the money columns. */
+  details: bidDetails.nullish(),
 });
 
 export type BidInput = z.input<typeof bidInput>;
@@ -133,21 +196,29 @@ export const saveMyBid = createServerFn({ method: "POST" })
       sent_at: data.status === "sent" ? new Date().toISOString() : null,
     };
 
-    const query = data.id
-      ? untyped(supabase)
-          .from("job_bids")
-          .update(payload)
-          .eq("id", data.id)
-          .eq("contractor_id", userId)
-          .select("id")
-          .single()
-      : untyped(supabase)
-          .from("job_bids")
-          .upsert(payload, { onConflict: "job_id,contractor_id" })
-          .select("id")
-          .single();
+    const run = async (body: Record<string, unknown>) =>
+      data.id
+        ? await untyped(supabase)
+            .from("job_bids")
+            .update(body)
+            .eq("id", data.id)
+            .eq("contractor_id", userId)
+            .select("id")
+            .single()
+        : await untyped(supabase)
+            .from("job_bids")
+            .upsert(body, { onConflict: "job_id,contractor_id" })
+            .select("id")
+            .single();
 
-    const { data: row, error } = await query;
+    const withDetails = data.details ? { ...payload, details: data.details } : payload;
+    let { data: row, error } = await run(withDetails);
+
+    // Older databases may not have the `details` column yet — still save the bid.
+    if (error && /details/i.test(error.message)) {
+      ({ data: row, error } = await run(payload));
+    }
+
     if (error) throw new Error(error.message);
     return { id: String((row as { id: string }).id) };
   });
@@ -238,10 +309,12 @@ export const declineProjectBid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ bidId: z.string().uuid() }).parse(data))
   .handler(async ({ context, data }): Promise<{ ok: true }> => {
-    const { error } = await untyped(context.supabase)
-      .from("job_bids")
-      .update({ status: "declined", decided_at: new Date().toISOString() })
-      .eq("id", data.bidId);
+    // Goes through `decline_job_bid()`, which refuses to touch a bid that was
+    // already accepted (the award has to be cancelled first) and verifies the
+    // caller owns the project.
+    const { error } = await untyped(context.supabase).rpc("decline_job_bid", {
+      _bid_id: data.bidId,
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

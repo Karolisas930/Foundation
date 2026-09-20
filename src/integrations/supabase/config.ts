@@ -1,12 +1,12 @@
-// Small helper — Cloud is enabled, but keeps prior call sites compiling.
-// Also honors the in-app runtime override so users can bring their own
-// Supabase project via the /supabase-setup page without rebuilding.
+// Small helper — keeps prior call sites compiling.
+// Credentials resolve as: runtime override (localStorage, set on
+// /supabase-setup) > environment variables. There are no hardcoded fallbacks,
+// so this returns false until the project is actually connected.
 import { loadSupabaseRuntimeConfig } from "./runtime-config";
+import { resolveSupabaseUrl, resolveSupabasePublishableKey } from "./project-credentials";
 
 export function isSupabaseConfigured(): boolean {
   const runtime = loadSupabaseRuntimeConfig();
   if (runtime) return true;
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  return Boolean(url && key);
+  return Boolean(resolveSupabaseUrl() && resolveSupabasePublishableKey());
 }

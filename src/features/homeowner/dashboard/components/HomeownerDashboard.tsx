@@ -19,6 +19,7 @@ import { PlusCircle } from "lucide-react";
 
 import type { EcosystemMessage, EcosystemProject, EcosystemProposal } from "@/core/demo-session";
 import { Button } from "@/components/ui/button";
+import { DashboardSkeleton, EmptyState } from "@/components/shared/EmptyState";
 import {
   acceptProjectBid,
   cancelProjectAward,
@@ -253,16 +254,28 @@ export function HomeownerDashboard() {
         </header>
 
         {projectsLoading ? (
-          <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center text-slate-400">
-            Loading your projects…
+          <div className="mt-10">
+            <DashboardSkeleton rows={3} withStats />
           </div>
         ) : projectsError ? (
           <div className="mt-10 rounded-2xl border border-destructive/40 bg-destructive/10 p-10 text-center text-slate-200">
             {errorMessage(projectsError, "Your projects could not be loaded.")}
           </div>
         ) : projects.length === 0 ? (
-          <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center text-slate-400">
-            No projects yet. Post one to see live bids stream in.
+          <div className="mt-10">
+            <EmptyState
+              icon={<PlusCircle className="size-6" />}
+              title="No projects yet"
+              description="Tell us what needs doing and vetted tradespeople in your area start sending offers — usually within a day."
+              actionLabel="Post your first project"
+              actionTo="/onboarding/profile"
+              actionSearch={{ sector: "homeowner" }}
+              hints={[
+                "Describe the job — photos and a voice note help a lot.",
+                "Compare the offers that come in, side by side.",
+                "Pick your favourite and book a site visit right here.",
+              ]}
+            />
           </div>
         ) : (
           <>

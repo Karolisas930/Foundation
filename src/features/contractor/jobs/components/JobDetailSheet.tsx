@@ -13,15 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ActiveJob } from "@/lib/active-jobs.functions";
-import {
-  formatEuro,
-  progressOf,
-  statusMeta,
-  sumHoursForJob,
-  type Derived,
-} from "./active-jobs-store";
+import { formatEuro, progressOf, statusMeta, type Derived } from "./active-jobs-store";
 import { ActionBtn, InfoTile } from "./atoms";
 import { CrewTile } from "./CrewTile";
+import { useHoursTotals } from "./use-job-crew";
 
 /** `2026-09-18T07:30:00Z` -> `2026-09-18T07:30` for datetime-local inputs. */
 function toLocalInput(iso: string | null): string {
@@ -58,6 +53,7 @@ export function JobDetailSheet({
     patch: { scheduledStart: string | null; scheduledEnd: string | null; notes: string },
   ) => void;
 }) {
+  const hoursTotals = useHoursTotals();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [notes, setNotes] = useState("");
@@ -116,7 +112,7 @@ export function JobDetailSheet({
               <InfoTile label="Agreed price" value={formatEuro(detail.agreedPriceCents)} />
               <InfoTile
                 label="Logged Hours"
-                value={`${sumHoursForJob(detail.bookingId).toFixed(1)} h`}
+                value={`${(hoursTotals[detail.bookingId] ?? 0).toFixed(1)} h`}
               />
               <InfoTile
                 label="Booked"
@@ -128,7 +124,7 @@ export function JobDetailSheet({
               />
             </dl>
 
-            <CrewTile jobId={detail.bookingId} defaultCrew={detailDerived.defaultStaff} />
+            <CrewTile jobId={detail.bookingId} />
 
             <div>
               <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">

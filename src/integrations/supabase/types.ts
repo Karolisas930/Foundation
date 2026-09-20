@@ -567,6 +567,7 @@ export type Database = {
           contractor_id: string
           created_at: string
           decided_at: string | null
+          details: Json | null
           id: string
           job_id: string
           labor_cents: number
@@ -583,6 +584,7 @@ export type Database = {
           contractor_id: string
           created_at?: string
           decided_at?: string | null
+          details?: Json | null
           id?: string
           job_id: string
           labor_cents?: number
@@ -599,6 +601,7 @@ export type Database = {
           contractor_id?: string
           created_at?: string
           decided_at?: string | null
+          details?: Json | null
           id?: string
           job_id?: string
           labor_cents?: number
@@ -624,6 +627,79 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_crew: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          member_name: string
+          provider_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          member_name: string
+          provider_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          member_name?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_crew_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_hours: {
+        Row: {
+          booking_id: string
+          created_at: string
+          hours: number
+          id: string
+          note: string | null
+          provider_id: string
+          staff_name: string
+          work_date: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          hours: number
+          id?: string
+          note?: string | null
+          provider_id: string
+          staff_name?: string
+          work_date?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          hours?: number
+          id?: string
+          note?: string | null
+          provider_id?: string
+          staff_name?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_hours_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -1785,6 +1861,35 @@ export type Database = {
           job_id: string
         }[]
       }
+      decline_job_bid: { Args: { _bid_id: string }; Returns: string }
+      get_match_bank_details: {
+        Args: { _match_id: string }
+        Returns: {
+          bank_account_holder: string
+          bank_bic: string
+          bank_iban: string
+          bank_name: string
+          company_name: string
+          contractor_id: string
+          match_id: string
+        }[]
+      }
+      get_match_contact: {
+        Args: { _match_id: string }
+        Returns: {
+          address_line1: string
+          address_line2: string
+          city: string
+          counterparty_id: string
+          country: string
+          display_name: string
+          email: string
+          full_name: string
+          match_id: string
+          phone: string
+          postal_code: string
+        }[]
+      }
       get_public_profile: {
         Args: { _profile_id: string }
         Returns: {
@@ -1846,6 +1951,18 @@ export type Database = {
           created_at: string
           id: string
           trade: string
+        }[]
+      }
+      match_job_to_worker: {
+        Args: { _job_id: string; _worker_id: string }
+        Returns: {
+          breakdown: Json
+          budget_score: number
+          distance_km: number
+          distance_score: number
+          score: number
+          sector_score: number
+          urgency_score: number
         }[]
       }
       my_active_jobs: {

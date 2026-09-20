@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import type { Quote } from "@/features/contractor/quotes/quotes-store";
+import type { Quote } from "@/features/contractor/quotes/quote-model";
 import type { QuoteSource, Prefill } from "./constants";
 import { SourcePicker } from "./SourcePicker";
 import { QuoteForm } from "./QuoteForm";
@@ -69,7 +69,7 @@ export function QuoteEditorSheet({
                 ? "Start from a marketplace lead, a matched client, or from scratch."
                 : prefill?.sourceLabel
                   ? `Prefilled from ${prefill.sourceLabel}. Review and send.`
-                  : "Fast quote — pick a client, add items, send."}
+                  : "Pick the project this quote is for, add items, send."}
           </SheetDescription>
         </SheetHeader>
 

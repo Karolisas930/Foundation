@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { Plus, Send, Sparkles, Calendar, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, Send, Sparkles, Calendar, X, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +15,21 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  addQuote,
-  updateQuote,
   newLineItem,
+  makeQuoteNumber,
+  quoteToDetails,
+  validUntilDate,
+  eurToCents,
   type Quote,
   type QuoteLineItem,
-} from "@/features/contractor/quotes/quotes-store";
+} from "@/features/contractor/quotes/quote-model";
+import { saveMyBid } from "@/lib/job-bids.functions";
+import { listContractorJobFeed, type FeedJob } from "@/lib/job-feed.functions";
 import { MARKETPLACE_CLIENTS } from "@/features/contractor/profile/components/toolbelt/marketplace-clients";
 import { eur, type Prefill, type FormState } from "./constants";
+
+/** Query key shared with QuotesPage so a saved quote shows up immediately. */
+const QUOTES_QUERY_KEY = ["my-bids"] as const;
 
 export function QuoteForm({
   quote,
@@ -31,7 +40,12 @@ export function QuoteForm({
   prefill?: Prefill | null;
   onDone: () => void;
 }) {
+  const queryClient = useQueryClient();
+  const save = useServerFn(saveMyBid);
+  const fetchFeed = useServerFn(listContractorJobFeed);
+
   const [form, setForm] = useState<FormState>(() => ({
+    jobId: quote?.jobId ?? prefill?.jobId ?? "",
     clientName: quote?.clientName ?? prefill?.clientName ?? "",
     clientEmail: quote?.clientEmail ?? prefill?.clientEmail ?? "",
     clientPhone: prefill?.clientPhone ?? "",
@@ -41,6 +55,22 @@ export function QuoteForm({
     validDays: quote?.validDays ?? 14,
     notes: quote?.notes ?? "",
   }));
+
+  // Project picker: only needed when the quote is not yet tied to a project
+  // (manual / client flows). Existing quotes and lead-based quotes are fixed.
+  const needsProjectPicker = !quote && !prefill?.jobId;
+  const feedQuery = useQuery({
+    queryKey: ["contractor-job-feed"],
+    queryFn: () => fetchFeed(),
+    enabled: needsProjectPicker,
+  });
+  const projects: FeedJob[] = useMemo(() => {
+    const data = feedQuery.data;
+    if (!data) return [];
+    const uniq = new Map<string, FeedJob>();
+    [...data.priority, ...data.alerts].forEach((l) => uniq.set(l.job.id, l.job));
+    return Array.from(uniq.values());
+  }, [feedQuery.data]);
 
   const total = form.items.reduce(
     (s, i) => s + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
@@ -58,7 +88,74 @@ export function QuoteForm({
   const removeItem = (id: string) =>
     setForm((f) => ({ ...f, items: f.items.filter((i) => i.id !== id) }));
 
-  const save = (send: boolean) => {
+  const applyProject = (id: string) => {
+    const p = projects.find((j) => j.id === id);
+    if (!p) return;
+    patch({
+      jobId: p.id,
+      jobTitle: form.jobTitle.trim() ? form.jobTitle : p.title,
+      description: form.description.trim() ? form.description : p.description,
+    });
+  };
+
+  const mutation = useMutation({
+    mutationFn: (vars: { send: boolean }) => {
+      const cleanItems = form.items
+        .map((i) => ({
+          ...i,
+          service: i.service.trim(),
+          quantity: Number(i.quantity) || 0,
+          unitPrice: Number(i.unitPrice) || 0,
+        }))
+        .filter((i) => i.service.length > 0);
+      const validDays = Math.max(1, Number(form.validDays) || 14);
+      const details = quoteToDetails({
+        number: quote?.number ?? makeQuoteNumber(),
+        clientName: form.clientName.trim(),
+        clientEmail: form.clientEmail.trim() || null,
+        jobTitle: form.jobTitle.trim(),
+        description: form.description.trim() || null,
+        items: cleanItems,
+        validDays,
+        notes: form.notes.trim() || null,
+      });
+      const totalEur = cleanItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+      return save({
+        data: {
+          id: quote?.id,
+          jobId: form.jobId,
+          laborCents: eurToCents(totalEur),
+          materialsCents: 0,
+          travelCents: 0,
+          message: details.description,
+          validUntil: validUntilDate(validDays),
+          status: vars.send ? "sent" : "draft",
+          details,
+        },
+      }).then((res) => ({ ...res, number: details.number, clientName: details.clientName }));
+    },
+    onSuccess: (res, vars) => {
+      void queryClient.invalidateQueries({ queryKey: QUOTES_QUERY_KEY });
+      toast.success(
+        vars.send
+          ? `Quote ${res.number} sent to ${res.clientName}`
+          : quote
+            ? "Quote updated"
+            : `Draft ${res.number} saved`,
+        vars.send
+          ? { description: "The homeowner can now see it as a bid on their project." }
+          : undefined,
+      );
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const submit = (send: boolean) => {
+    if (!form.jobId) {
+      toast.error("Choose the project this quote is for");
+      return;
+    }
     if (!form.clientName.trim()) {
       toast.error("Client name is required");
       return;
@@ -67,43 +164,12 @@ export function QuoteForm({
       toast.error("Job title is required");
       return;
     }
-    const cleanItems = form.items
-      .map((i) => ({
-        ...i,
-        service: i.service.trim(),
-        quantity: Number(i.quantity) || 0,
-        unitPrice: Number(i.unitPrice) || 0,
-      }))
-      .filter((i) => i.service.length > 0);
-    if (cleanItems.length === 0) {
+    const hasItem = form.items.some((i) => i.service.trim().length > 0);
+    if (!hasItem) {
       toast.error("Add at least one line item");
       return;
     }
-    const payload = {
-      clientName: form.clientName.trim(),
-      clientEmail: form.clientEmail.trim() || undefined,
-      jobTitle: form.jobTitle.trim(),
-      description: form.description.trim() || undefined,
-      items: cleanItems,
-      validDays: Math.max(1, Number(form.validDays) || 14),
-      notes: form.notes.trim() || undefined,
-    };
-    if (quote) {
-      updateQuote(quote.id, {
-        ...payload,
-        status: send ? "sent" : quote.status,
-        sentAt: send ? Date.now() : quote.sentAt,
-      });
-      toast.success(send ? "Quote sent" : "Quote updated");
-    } else {
-      const q = addQuote({ ...payload, status: send ? "sent" : "draft" });
-      if (send) updateQuote(q.id, { sentAt: Date.now() });
-      toast.success(
-        send ? `Quote ${q.number} sent to ${q.clientName}` : `Draft ${q.number} saved`,
-        send ? { description: "PDF prepared and email dispatched (simulated)." } : undefined,
-      );
-    }
-    onDone();
+    mutation.mutate({ send });
   };
 
   const applyMarketplaceClient = (id: string) => {
@@ -112,6 +178,8 @@ export function QuoteForm({
     patch({ clientName: c.name, clientEmail: c.email ?? "" });
     toast.success(`Client ${c.name} applied`);
   };
+
+  const saving = mutation.isPending;
 
   return (
     <div className="space-y-5 px-5 py-5">
@@ -124,6 +192,53 @@ export function QuoteForm({
           </span>
         </div>
       )}
+
+      <section className="space-y-2">
+        <Label className="text-slate-200">
+          <Briefcase className="mr-1 inline h-3.5 w-3.5" /> Project
+        </Label>
+        {needsProjectPicker ? (
+          <>
+            <Select value={form.jobId || undefined} onValueChange={applyProject}>
+              <SelectTrigger
+                aria-label="Project"
+                className="border-white/10 bg-white/5 text-slate-100"
+              >
+                <SelectValue
+                  placeholder={
+                    feedQuery.isPending
+                      ? "Loading open projects…"
+                      : projects.length === 0
+                        ? "No open projects to quote on"
+                        : "Choose the project this quote is for"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.title}
+                    {p.city ? ` · ${p.city}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {feedQuery.isError ? (
+              <p className="text-xs text-rose-200">
+                Could not load projects: {(feedQuery.error as Error).message}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400">
+                Every quote is a bid on a homeowner project. Pick the project it belongs to.
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100">
+            {prefill?.jobLabel ?? quote?.jobTitle ?? "Linked project"}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-2">
         <Label className="text-slate-200">Client</Label>
@@ -278,18 +393,19 @@ export function QuoteForm({
       </section>
 
       <div className="sticky bottom-0 -mx-5 flex flex-col gap-2 border-t border-white/10 bg-[#0f172a]/95 px-5 py-3 backdrop-blur sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onDone}>
+        <Button variant="ghost" onClick={onDone} disabled={saving}>
           Cancel
         </Button>
-        <Button variant="secondary" onClick={() => save(false)}>
+        <Button variant="secondary" onClick={() => submit(false)} disabled={saving}>
           Save draft
         </Button>
         <Button
-          onClick={() => save(true)}
+          onClick={() => submit(true)}
+          disabled={saving}
           className="bg-gradient-to-b from-orange-500 to-orange-600 text-white"
         >
           <Send className="mr-1.5 h-4 w-4" />
-          {quote ? "Save & send" : "Send quote"}
+          {saving ? "Saving…" : quote ? "Save & send" : "Send quote"}
         </Button>
       </div>
     </div>

@@ -3,7 +3,16 @@
  * reactive auth affordance.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut, User, Wrench, BarChart3, Settings, Bell } from "lucide-react";
+import {
+  LogOut,
+  User,
+  Wrench,
+  BarChart3,
+  Settings,
+  Bell,
+  LayoutDashboard,
+  Building2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,6 +26,7 @@ import {
 import { LanguageSelector } from "@/components/shared/LanguageSelector";
 import { ThemeCycleButton } from "@/components/shared/ThemeCycleButton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { isContractorType } from "@/lib/account-role";
 
 interface HeaderActionsProps {
   showSignIn?: boolean;
@@ -44,10 +54,15 @@ export function HeaderActions({
   signInTo = "/login",
   signInLabel = "Sign in",
 }: HeaderActionsProps) {
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, profile, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
 
   const signedIn = isAuthenticated && Boolean(user);
+  // The account menu used to link straight to /contractor/profile and
+  // /contractor/performance for EVERY signed-in user, which is how a
+  // homeowner ended up inside a tradesperson profile from the top-right
+  // avatar. Branch on the real account role instead.
+  const isContractor = isContractorType(profile?.account_type);
 
   const displayName =
     (user?.user_metadata?.full_name as string) ||
@@ -104,20 +119,41 @@ export function HeaderActions({
               )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem
-              onSelect={() => void navigate({ to: "/contractor/profile" })}
-              className="gap-2 focus:bg-white/10 focus:text-white"
-            >
-              <User className="h-4 w-4" strokeWidth={1.5} />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => void navigate({ to: "/contractor/performance" })}
-              className="gap-2 focus:bg-white/10 focus:text-white"
-            >
-              <BarChart3 className="h-4 w-4" strokeWidth={1.5} />
-              Performance
-            </DropdownMenuItem>
+            {isContractor ? (
+              <>
+                <DropdownMenuItem
+                  onSelect={() => void navigate({ to: "/contractor/profile" })}
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                >
+                  <User className="h-4 w-4" strokeWidth={1.5} />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => void navigate({ to: "/contractor/performance" })}
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                >
+                  <BarChart3 className="h-4 w-4" strokeWidth={1.5} />
+                  Performance
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem
+                  onSelect={() => void navigate({ to: "/homeowner" })}
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                >
+                  <LayoutDashboard className="h-4 w-4" strokeWidth={1.5} />
+                  My projects
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => void navigate({ to: "/homeowner/properties" })}
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                >
+                  <Building2 className="h-4 w-4" strokeWidth={1.5} />
+                  My properties
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem
               onSelect={() => void navigate({ to: "/notifications" })}
               className="gap-2 focus:bg-white/10 focus:text-white"

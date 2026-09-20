@@ -20,6 +20,7 @@ import {
   SECTIONS,
 } from "@/features/contractor/onboarding/components/onboarding-constants";
 
+import { supabase } from "@/integrations/supabase/client";
 import { usePostcodeLookup } from "./handyman/hooks/usePostcodeLookup";
 import { DRAFT_KEY, useOnboardingDraft } from "./handyman/hooks/useOnboardingDraft";
 import { finalizeHandymanRegistration } from "./handyman/finalizeRegistration";
@@ -36,6 +37,8 @@ import { ProfileStep } from "./handyman/steps/ProfileStep";
 export function HandymanOnboarding() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [alreadySignedIn, setAlreadySignedIn] = useState(false);
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [pwOpen, setPwOpen] = useState(false);
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -84,6 +87,27 @@ export function HandymanOnboarding() {
     setCityAutoFilled,
     setStateAutoFilled,
   });
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!active || !data?.user) return;
+        setAlreadySignedIn(true);
+        setSessionEmail(data.user.email ?? null);
+      } catch {
+        /* not signed in */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (sessionEmail) setBusinessEmail((cur) => cur || sessionEmail);
+  }, [sessionEmail]);
 
   function toggleTrade(t: string) {
     setTrades((cur) => {
@@ -333,11 +357,17 @@ export function HandymanOnboarding() {
 
   function openPasswordModal() {
     if (!validateAllAndScroll()) return;
+    // Already signed in? Save straight onto the current account — never ask an
+    // existing user to create a second one.
+    if (alreadySignedIn) {
+      void finalizeRegistration();
+      return;
+    }
     setPwOpen(true);
   }
 
   async function finalizeRegistration() {
-    if (pw.length < 8) {
+    if (!alreadySignedIn && pw.length < 8) {
       toast.error("Password must be at least 8 characters.");
       return;
     }
@@ -362,7 +392,7 @@ export function HandymanOnboarding() {
         radiusKm: radius[0] ?? 25,
         avatarDataUrl: avatarPreview ?? null,
       },
-      pw,
+      alreadySignedIn ? null : pw,
     );
     if (error) {
       toast.error(error);

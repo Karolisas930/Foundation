@@ -1,4 +1,4 @@
-import type { QuoteStatus, QuoteLineItem } from "@/features/contractor/quotes/quotes-store";
+import type { QuoteStatus, QuoteLineItem } from "@/features/contractor/quotes/quote-model";
 
 export const eur = (n: number) =>
   new Intl.NumberFormat("de-DE", {
@@ -24,8 +24,8 @@ export const STATUS_META: Record<QuoteStatus, { label: string; className: string
     label: "Declined",
     className: "bg-rose-500/20 text-rose-200 border-rose-400/30",
   },
-  converted: {
-    label: "Converted",
+  withdrawn: {
+    label: "Withdrawn",
     className: "bg-orange-500/20 text-orange-200 border-orange-400/30",
   },
 };
@@ -34,6 +34,9 @@ export type FilterKey = "all" | QuoteStatus;
 export type QuoteSource = "lead" | "client" | "manual";
 
 export type Prefill = {
+  /** The project this quote is a bid on. */
+  jobId?: string;
+  jobLabel?: string;
   clientName?: string;
   clientEmail?: string;
   clientPhone?: string;
@@ -43,6 +46,7 @@ export type Prefill = {
 };
 
 export type FormState = {
+  jobId: string;
   clientName: string;
   clientEmail: string;
   clientPhone: string;

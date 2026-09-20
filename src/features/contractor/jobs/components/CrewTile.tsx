@@ -1,38 +1,57 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, User as UserIcon, UserPlus, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { STAFF_POOL, addCrewMember, removeCrewMember, useCrewOverride } from "./active-jobs-store";
+import { useCrewMap, useCrewMutations } from "./use-job-crew";
 
-export function CrewTile({ jobId, defaultCrew }: { jobId: string; defaultCrew: string[] }) {
-  const override = useCrewOverride(jobId);
-  const crew = override ?? defaultCrew;
+export function CrewTile({ jobId }: { jobId: string }) {
+  const crewMap = useCrewMap();
+  const { addMember, removeMember } = useCrewMutations();
+  const crew = crewMap[jobId] ?? [];
+
+  // People already assigned to any of my other jobs — a real, data-driven
+  // suggestion list instead of the old hardcoded demo pool.
+  const suggestions = useMemo(() => {
+    const all = new Set<string>();
+    for (const [id, names] of Object.entries(crewMap)) {
+      if (id === jobId) continue;
+      names.forEach((n) => all.add(n));
+    }
+    return [...all].filter((n) => !crew.includes(n)).sort();
+  }, [crewMap, jobId, crew]);
+
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const available = STAFF_POOL.filter((n) => !crew.includes(n));
+  const [newName, setNewName] = useState("");
 
   function add(name: string) {
-    addCrewMember(jobId, name, defaultCrew);
-    toast.success(`${name} added to crew`, { duration: 1800 });
+    const n = name.trim();
+    if (!n) return;
+    if (crew.some((c) => c.toLowerCase() === n.toLowerCase())) {
+      toast(`${n} is already on this job`, { duration: 1500 });
+      return;
+    }
+    addMember.mutate(
+      { bookingId: jobId, name: n },
+      {
+        onSuccess: () => toast.success(`${n} added to crew`, { duration: 1800 }),
+        onError: (err: Error) => toast.error("Could not add", { description: err.message }),
+      },
+    );
+    setNewName("");
     setPickerOpen(false);
   }
+
   function remove(name: string) {
-    removeCrewMember(jobId, name, defaultCrew);
-    toast(`${name} removed`, { duration: 1500 });
-  }
-  function invite() {
-    const e = inviteEmail.trim();
-    if (!e) return;
-    addCrewMember(jobId, e.split("@")[0], defaultCrew);
-    toast.success("Invite sent", {
-      description: `We'll email ${e} to join the crew.`,
-      duration: 2500,
-    });
-    setInviteEmail("");
-    setPickerOpen(false);
+    removeMember.mutate(
+      { bookingId: jobId, name },
+      {
+        onSuccess: () => toast(`${name} removed`, { duration: 1500 }),
+        onError: (err: Error) => toast.error("Could not remove", { description: err.message }),
+      },
+    );
   }
 
   return (
@@ -53,49 +72,51 @@ export function CrewTile({ jobId, defaultCrew }: { jobId: string; defaultCrew: s
             align="end"
             className="w-72 border-white/10 bg-[#0f172a] p-3 text-slate-100"
           >
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Assign team member
-            </p>
-            <div className="mb-3 flex flex-col gap-1">
-              {available.length === 0 && (
-                <p className="text-xs text-slate-500">
-                  Everyone from your team is already on this job.
+            {suggestions.length > 0 && (
+              <>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  From your other jobs
                 </p>
-              )}
-              {available.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => add(name)}
-                  className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm text-slate-100 hover:bg-white/10"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <UserIcon className="size-3.5 text-slate-400" />
-                    {name}
-                  </span>
-                  <Plus className="size-3.5 text-orange-glow" />
-                </button>
-              ))}
-            </div>
-            <div className="border-t border-white/10 pt-2">
+                <div className="mb-3 flex flex-col gap-1">
+                  {suggestions.map((name) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => add(name)}
+                      className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm text-slate-100 hover:bg-white/10"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <UserIcon className="size-3.5 text-slate-400" />
+                        {name}
+                      </span>
+                      <Plus className="size-3.5 text-orange-glow" />
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className={suggestions.length > 0 ? "border-t border-white/10 pt-2" : ""}>
               <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Invite new staff
+                Add team member
               </Label>
               <div className="mt-1 flex gap-1">
                 <Input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") add(newName);
+                  }}
+                  placeholder="Name or email"
                   className="h-9 border-white/10 bg-white/[0.04] text-xs text-white"
                 />
                 <Button
                   type="button"
                   size="sm"
-                  onClick={invite}
+                  disabled={addMember.isPending}
+                  onClick={() => add(newName)}
                   className="h-9 bg-orange text-slate-900 hover:bg-orange-glow"
                 >
-                  Invite
+                  Add
                 </Button>
               </div>
             </div>

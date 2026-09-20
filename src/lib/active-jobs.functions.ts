@@ -76,6 +76,9 @@ export const updateMyActiveJob = createServerFn({ method: "POST" })
     const patch: Record<string, unknown> = {};
     if (data.status) patch.status = data.status;
     if (data.status === "completed") patch.completed_at = new Date().toISOString();
+    // Moving a job back out of "completed" must clear the completion date,
+    // otherwise the job keeps reporting a finish date it no longer has.
+    else if (data.status) patch.completed_at = null;
     if (data.scheduledStart !== undefined) patch.scheduled_start = data.scheduledStart || null;
     if (data.scheduledEnd !== undefined) patch.scheduled_end = data.scheduledEnd || null;
     if (data.notes !== undefined) patch.notes = data.notes;

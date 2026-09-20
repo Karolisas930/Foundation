@@ -11,11 +11,20 @@ interface Props {
   busy: BusyKey;
   email: string;
   password: string;
+  fullName: string;
+  phone: string;
   onEmailChange: (v: string) => void;
   onPasswordChange: (v: string) => void;
+  onFullNameChange: (v: string) => void;
+  onPhoneChange: (v: string) => void;
   onForgotPassword: () => void;
   onSubmitSignIn: (email: string, password: string) => void | Promise<void>;
-  onSubmitSignUp: (email: string, password: string) => void | Promise<void>;
+  onSubmitSignUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    phone: string,
+  ) => void | Promise<void>;
   onMagicLink: (email: string) => void | Promise<void>;
 }
 
@@ -25,8 +34,12 @@ export function EmailPasswordPanel(props: Props) {
     busy,
     email,
     password,
+    fullName,
+    phone,
     onEmailChange,
     onPasswordChange,
+    onFullNameChange,
+    onPhoneChange,
     onForgotPassword,
     onSubmitSignIn,
     onSubmitSignUp,
@@ -36,7 +49,7 @@ export function EmailPasswordPanel(props: Props) {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (mode === "signup") void onSubmitSignUp(email, password);
+    if (mode === "signup") void onSubmitSignUp(email, password, fullName, phone);
     else void onSubmitSignIn(email, password);
   }
 
@@ -45,6 +58,38 @@ export function EmailPasswordPanel(props: Props) {
       className="intake-card intake-card-tone-2 space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4"
       onSubmit={handleSubmit}
     >
+      {mode === "signup" && (
+        <>
+          <div>
+            <Label htmlFor="signup-full-name" className="text-slate-200">
+              Full name
+            </Label>
+            <Input
+              id="signup-full-name"
+              type="text"
+              autoComplete="name"
+              placeholder="Jane Schmidt"
+              value={fullName}
+              onChange={(e) => onFullNameChange(e.target.value)}
+              className="dark-input intake-input mt-1 border-white/15 bg-white/[0.06] text-white placeholder:text-slate-400"
+            />
+          </div>
+          <div>
+            <Label htmlFor="signup-phone" className="text-slate-200">
+              Phone <span className="text-slate-400">(optional)</span>
+            </Label>
+            <Input
+              id="signup-phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="+49 170 1234567"
+              value={phone}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              className="dark-input intake-input mt-1 border-white/15 bg-white/[0.06] text-white placeholder:text-slate-400"
+            />
+          </div>
+        </>
+      )}
       <div>
         <Label htmlFor="email" className="text-slate-200">
           Email

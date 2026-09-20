@@ -45,6 +45,7 @@ export interface JobFeedResult {
     minProjectSize: number;
     serviceRadiusKm: number;
     postalCode: string | null;
+    city: string | null;
     trades: string[];
     languages: string[];
   };
@@ -58,7 +59,7 @@ export const listContractorJobFeed = createServerFn({ method: "GET" })
 
     const { data: prof, error: profErr } = await supabase
       .from("profiles")
-      .select("min_project_size, service_radius_km, postal_code, trades, languages")
+      .select("min_project_size, service_radius_km, postal_code, city, trades, languages")
       .eq("id", userId)
       .maybeSingle();
     if (profErr) throw new Error(profErr.message);
@@ -127,6 +128,7 @@ export const listContractorJobFeed = createServerFn({ method: "GET" })
         minProjectSize: matchingProfile.minProjectSize ?? 0,
         serviceRadiusKm: matchingProfile.serviceRadiusKm ?? 0,
         postalCode: matchingProfile.postalCode ?? null,
+        city: (prof?.city as string | null) ?? null,
         trades: matchingProfile.trades ? [...matchingProfile.trades] : [],
         languages: matchingProfile.languages ? [...matchingProfile.languages] : [],
       },

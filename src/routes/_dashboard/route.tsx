@@ -17,9 +17,12 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LegalGateWrapper } from "@/components/legal/LegalGateWrapper";
 import { stampAccountTypeIfMissing } from "@/lib/account-type";
+import { isContractorType, isHomeownerType, readProfileRole } from "@/lib/account-role";
+
 
 type DashboardContextType = {
   accountType: string | null;
@@ -47,25 +50,13 @@ export function useDashboard() {
 
 /**
  * Read `profiles.account_type` and `display_name` for the current user.
- * Never throws — a missing row / RLS block / transient error just yields `null`.
+ * Delegates to the shared helper, which retries once and reports whether
+ * the read actually succeeded (see `@/lib/account-role`).
  */
-async function readProfileData(
-  uid: string,
-): Promise<{ accountType: string | null; displayName: string | null }> {
-  try {
-    const { data } = await supabase
-      .from("profiles")
-      .select("account_type, display_name")
-      .eq("id", uid)
-      .maybeSingle();
-    return {
-      accountType: (data as { account_type: string | null } | null)?.account_type ?? null,
-      displayName: (data as { display_name: string | null } | null)?.display_name ?? null,
-    };
-  } catch {
-    return { accountType: null, displayName: null };
-  }
+async function readProfileData(uid: string) {
+  return readProfileRole(uid);
 }
+
 
 export const Route = createFileRoute("/_dashboard")({
   ssr: false,
@@ -101,41 +92,36 @@ function DashboardGate() {
         if (cancelled) return;
 
         if (session?.user) {
-          let { accountType: userAccountType, displayName: userDisplayName } =
-            await readProfileData(session.user.id);
+          let profile = await readProfileData(session.user.id);
 
-          // Safety net: some entry points (plain magic-link login, direct
-          // OAuth returns with no `?sector=` param) never call
-          // stampAccountTypeIfMissing, so profiles.account_type can be
-          // NULL here. Without this, the render guard below blocks
-          // forever on a blank screen because accountType never becomes
-          // truthy. Default new/unstamped users to "homeowner" — the
-          // same default the auth callback and login flows already use.
-          if (!userAccountType) {
+          // Only stamp a default role when the read SUCCEEDED and there is
+          // genuinely no role on file. Stamping after a failed read used to
+          // overwrite a real contractor profile with "homeowner" and then
+          // park them on the homeowner dashboard for good.
+          if (profile.ok && !profile.accountType) {
             await stampAccountTypeIfMissing("homeowner", session.user.email);
-            ({ accountType: userAccountType, displayName: userDisplayName } =
-              await readProfileData(session.user.id));
+            profile = await readProfileData(session.user.id);
           }
 
-          // Last-resort fallback: if the profile row is still unreadable
-          // (missing row, RLS block, transient error) we must NOT leave the
-          // user on a permanently blank screen. Assume "homeowner" — the
-          // same default every signup path uses — so the dashboard renders.
-          setAccountType(userAccountType ?? "homeowner");
-          setDisplayName(userDisplayName);
+          const userAccountType = profile.accountType;
+          setAccountType(userAccountType);
+          setDisplayName(profile.displayName);
           if (cancelled) return;
 
           const currentPath = window.location.pathname;
-          const isContractor = userAccountType === "handyman" || userAccountType === "business";
-          const isHomeowner = userAccountType === "homeowner";
+          const isContractor = isContractorType(userAccountType);
+          const isHomeowner = isHomeownerType(userAccountType);
 
           const wantsContractorRoute = currentPath.startsWith("/contractor");
           const wantsHomeownerRoute = currentPath.startsWith("/homeowner");
 
           // Role mismatch: A contractor is trying to access homeowner-only routes.
+          // Explain the bounce instead of silently teleporting them — landing
+          // somewhere you didn't click reads as a bug otherwise.
           if (isContractor && wantsHomeownerRoute) {
             setStatus("redirecting");
             queryClient.clear(); // Wipe cache to prevent data leaks.
+            toast.info("That page is for homeowners — here's your tradesperson workspace.");
             navigate({ to: "/contractor", replace: true });
             return;
           }
@@ -144,15 +130,17 @@ function DashboardGate() {
           if (isHomeowner && wantsContractorRoute) {
             setStatus("redirecting");
             queryClient.clear(); // Wipe cache to prevent data leaks.
+            toast.info("That page is for tradespeople — here's your project dashboard.");
             navigate({ to: "/homeowner", replace: true });
             return;
           }
 
-          // If we are here, the role matches the route or it's a generic dashboard page.
-          // It's safe to render.
+          // Role unknown (the profile read failed): render the page the user
+          // asked for instead of bouncing them to the wrong dashboard.
           setStatus("authed");
           return;
         }
+
 
         // No session found. However, if we're landing on the Supabase
         // callback page (or the URL contains auth tokens) we must NOT

@@ -14,6 +14,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { createServerPublicClient } from "@/integrations/supabase/server-public-client";
 
 export type PublicProfile = {
   id: string;
@@ -46,25 +47,8 @@ const listSchema = z.object({
   limit: z.number().int().positive().max(50).optional(),
 });
 
-function getEnv(name: string): string {
-  const value = process.env[name];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error("Missing required environment variable: " + name);
-  }
-  return value;
-}
-
 function createPublicClient() {
-  const url = getEnv("SUPABASE_URL");
-  const key = getEnv("SUPABASE_PUBLISHABLE_KEY");
-  const options = {
-    auth: {
-      storage: undefined,
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  };
-  return createClient<Database>(url, key, options);
+  return createServerPublicClient();
 }
 
 /**

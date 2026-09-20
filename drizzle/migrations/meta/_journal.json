@@ -15,6 +15,111 @@
       "when": 1789737358063,
       "tag": "0001_bootstrap_loader2",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789759206046,
+      "tag": "0002_temp_bootstrap_sql_loader",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789764519577,
+      "tag": "0003_grant_sandbox_migration_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789764539265,
+      "tag": "0004_grant_sandbox_auth_references",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789764571117,
+      "tag": "0005_grant_refs_on_auth_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789764596873,
+      "tag": "0006_temp_apply_sql_helper",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789798958195,
+      "tag": "0007_restore_handle_new_user_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789818007241,
+      "tag": "0008_temp_sql_applier",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789819211912,
+      "tag": "0009_grant_sandbox_create_on_public",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789819245932,
+      "tag": "0010_grant_sandbox_auth_setup_rights",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789819298091,
+      "tag": "0011_grant_tmp_apply_sql",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789819363128,
+      "tag": "0012_reset_public_schema_and_apply_helper",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789819526934,
+      "tag": "0013_guard_bid_accept_and_decline",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789830305545,
+      "tag": "0014_20260720100704_e40010fe",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1789830387236,
+      "tag": "0015_tmp_apply_sql_helper",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789830445506,
+      "tag": "0016_drop_tmp_apply_sql_helper",
+      "breakpoints": true
     }
   ]
 }

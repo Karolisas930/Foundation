@@ -1,0 +1,13 @@
+REVOKE EXECUTE ON FUNCTION public.accept_job_bid(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.accept_job_bid(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.cancel_job_award(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.cancel_job_award(uuid, text) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.job_bid_details(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.job_bid_details(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.job_chat_peer(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.job_chat_peer(uuid, uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.my_active_jobs() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.my_active_jobs() TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.my_job_bids() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.my_job_bids() TO authenticated;
+ALTER FUNCTION public.set_updated_at() SET search_path = public;

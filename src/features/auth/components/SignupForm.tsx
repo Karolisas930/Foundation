@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResendConfirmationForm } from "@/features/auth/components/ResendConfirmationForm";
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -70,8 +71,13 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       <div className="text-center">
         <h2 className="text-xl font-semibold text-white">Check your email</h2>
         <p className="mt-2 text-slate-300">
-          We've sent a confirmation link to your email address. Please click the link to complete your registration.
+          We've sent a confirmation link to <span className="font-semibold">{email}</span>. Click it
+          to finish setting up your account.
         </p>
+        <ResendConfirmationForm
+          defaultEmail={email}
+          redirectTo={`${window.location.origin}/auth/callback?sector=${account_type}`}
+        />
       </div>
     );
   }

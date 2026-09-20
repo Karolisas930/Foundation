@@ -33,7 +33,7 @@ export interface OnboardingProfileInput {
 
 export async function finalizeHandymanRegistration(
   input: OnboardingProfileInput,
-  password: string,
+  password: string | null,
 ): Promise<{ signedIn: boolean; error?: string }> {
   const profile = {
     ...input,
@@ -60,7 +60,56 @@ export async function finalizeHandymanRegistration(
   let signedIn = false;
   let surfacedError: string | undefined;
 
-  if (isSupabaseConfigured() && profile.businessEmail) {
+  const saveProfileRow = async (uid: string) => {
+    const { error } = await supabase.from("profiles").upsert(
+      {
+        id: uid,
+        full_name: `${profile.firstName} ${profile.lastName}`.trim() || null,
+        display_name: profile.businessName || null,
+        account_type: "handyman",
+        phone: profile.mobilePhone || null,
+        postal_code: profile.postalCode || null,
+        city: profile.city || null,
+        address_line1: profile.streetAddress || null,
+        service_radius_km: profile.radiusKm,
+        min_project_size: profile.minProjectSize,
+      },
+      { onConflict: "id" },
+    );
+    return error?.message;
+  };
+
+  // Already signed in (e.g. a homeowner adding a trade profile): never ask for
+  // a new account — just save the profile onto the current user.
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const currentUid = userData?.user?.id;
+      if (currentUid) {
+        const failure = await saveProfileRow(currentUid);
+        if (failure) return { signedIn: true, error: failure };
+        try {
+          await supabase.auth.updateUser({
+            data: {
+              full_name: `${profile.firstName} ${profile.lastName}`.trim(),
+              display_name:
+                profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+              account_type: "handyman",
+              sector: "handyman",
+              phone: profile.mobilePhone || undefined,
+            },
+          });
+        } catch {
+          /* metadata refresh is best effort */
+        }
+        return { signedIn: true };
+      }
+    } catch {
+      /* fall through to the sign-up path */
+    }
+  }
+
+  if (isSupabaseConfigured() && profile.businessEmail && password) {
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: profile.businessEmail,
@@ -69,6 +118,9 @@ export async function finalizeHandymanRegistration(
           emailRedirectTo: `${window.location.origin}/auth/callback?sector=handyman`,
           data: {
             full_name: `${profile.firstName} ${profile.lastName}`.trim(),
+            display_name: profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+            account_type: "handyman",
+            phone: profile.mobilePhone || undefined,
             sector: "handyman",
           },
         },
@@ -85,21 +137,7 @@ export async function finalizeHandymanRegistration(
         const uid = sessionData?.session?.user?.id;
         if (uid) {
           try {
-            await supabase.from("profiles").upsert(
-              {
-                id: uid,
-                full_name: `${profile.firstName} ${profile.lastName}`.trim() || null,
-                display_name: profile.businessName || null,
-                account_type: "handyman",
-                phone: profile.mobilePhone || null,
-                postal_code: profile.postalCode || null,
-                city: profile.city || null,
-                address_line1: profile.streetAddress || null,
-                service_radius_km: profile.radiusKm,
-                min_project_size: profile.minProjectSize,
-              },
-              { onConflict: "id" },
-            );
+            await saveProfileRow(uid);
           } catch {
             /* non-fatal — profile row will backfill on next save */
           }

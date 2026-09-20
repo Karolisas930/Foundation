@@ -5,6 +5,8 @@ import {
   type BusinessSettingsModal,
 } from "@/features/contractor/settings/components/BusinessSettingsModals";
 import { useDashboard } from "@/routes/_dashboard/route";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { isContractorType } from "@/lib/account-role";
 import type { Section } from "./menu-types";
 import { getHomeownerSections } from "./homeowner-sections";
 import { getContractorSections } from "./contractor-sections";
@@ -34,7 +36,12 @@ export type SectionHandlers = {
 export function useMenuSections(handlers: SectionHandlers): Section[] {
   const navigate = useNavigate();
   const bsStatus = useBusinessSettingsStatus();
-  const { isContractor } = useDashboard();
+  // Prefer the profile role from the session: useDashboard() falls back to
+  // isContractor:false outside the /_dashboard tree, which would hand a
+  // signed-in tradesperson the homeowner menu on public pages.
+  const { isContractor: dashboardIsContractor } = useDashboard();
+  const { profile } = useAuth();
+  const isContractor = isContractorType(profile?.account_type) || dashboardIsContractor;
 
   function soon(label: string) {
     handlers.setOpen(false);
