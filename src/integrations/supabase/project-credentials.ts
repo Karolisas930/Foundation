@@ -22,11 +22,24 @@ export function resolveSupabaseUrl(): string {
   return ((fromEnv as string | undefined) || "").trim();
 }
 
-/** Public publishable/anon key from the environment, or empty when not configured. */
+/**
+ * Public publishable/anon key from the environment, or empty when not configured.
+ * Accepts every common variable name so existing hosting setups (Vercel
+ * integrations that created VITE_SUPABASE_ANON_KEY or
+ * NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) keep working without renames.
+ */
 export function resolveSupabasePublishableKey(): string {
+  const env = ((typeof import.meta !== "undefined" ? import.meta.env : undefined) ??
+    {}) as Record<string, string | undefined>;
+  const proc = (typeof process !== "undefined" ? process.env : undefined) as
+    | Record<string, string | undefined>
+    | undefined;
   const fromEnv =
-    (typeof import.meta !== "undefined" &&
-      import.meta.env?.["VITE_SUPABASE_PUBLISHABLE_KEY"]) ||
-    (typeof process !== "undefined" && process.env?.["SUPABASE_PUBLISHABLE_KEY"]);
+    env?.["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    env?.["VITE_SUPABASE_ANON_KEY"] ||
+    env?.["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
+    env?.["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ||
+    proc?.["SUPABASE_PUBLISHABLE_KEY"] ||
+    proc?.["SUPABASE_ANON_KEY"];
   return ((fromEnv as string | undefined) || "").trim();
 }
