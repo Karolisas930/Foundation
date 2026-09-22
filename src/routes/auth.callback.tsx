@@ -21,6 +21,7 @@ import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny } from "@/lib
 import { claimPendingProjects } from "@/lib/pending-projects.functions";
 import { dashboardPathFor, readProfileRole } from "@/lib/account-role";
 import { ResendConfirmationForm } from "@/features/auth/components/ResendConfirmationForm";
+import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/auth/callback")({
@@ -88,9 +89,19 @@ function AuthCallbackPage() {
 
         try {
           // Move any project posted before sign-up into the new account.
-          await claimPendingProjects();
-        } catch {
-          // non-fatal - the dashboard claims it again on load
+          const claimed = await claimPendingProjects();
+          console.info("[auth-callback] pending projects claimed", claimed);
+        } catch (claimErr) {
+          // Non-fatal for routing (the dashboard retries on load), but never
+          // silent: a failed claim is exactly why a new account can land on
+          // "No projects yet" after posting as a guest.
+          console.error("[auth-callback] pending project claim failed", claimErr);
+          toast.error(
+            `We couldn't attach the project you posted before signing up${
+              claimErr instanceof Error ? ` (${claimErr.message})` : ""
+            }. Open your dashboard again to retry.`,
+            { duration: 12000 },
+          );
         }
 
         const { accountType } = await readProfileRole(userId);

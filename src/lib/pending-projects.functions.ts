@@ -42,28 +42,42 @@ const pendingProjectSchema = z.object({
 /**
  * PUBLIC (unauth) - saves a guest's project so it can be claimed once they
  * actually confirm an account. Never touches the real `jobs` table.
+ *
+ * IMPORTANT: do NOT add `.select()` here. pending_projects deliberately has
+ * an INSERT-only grant/policy for anon + authenticated (all reads happen
+ * inside the SECURITY DEFINER claim function). Asking PostgREST to return the
+ * inserted row makes it run INSERT ... RETURNING, which needs SELECT
+ * privilege, so every guest save failed with "permission denied for table
+ * pending_projects" - the project was never stored and therefore could never
+ * be claimed after email confirmation. The id is generated here instead.
  */
 export const savePendingProject = createServerFn({ method: "POST" })
   .validator((data: unknown) => pendingProjectSchema.parse(data))
   .handler(async ({ data }): Promise<{ id: string }> => {
     const supabase = createPublicClient();
-    const { data: inserted, error } = await supabase
-      .from("pending_projects")
-      .insert({
-        email: data.email,
-        title: data.title,
-        description: data.description ?? null,
-        trade: data.trade ?? null,
-        estimated_budget: data.estimatedBudget ?? null,
-        location_zip: data.locationZip ?? null,
-        city: data.city ?? null,
-        language: data.language ?? null,
-        urgency: data.urgency ?? null,
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return { id: inserted.id };
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("pending_projects").insert({
+      id,
+      email: data.email,
+      title: data.title,
+      description: data.description ?? null,
+      trade: data.trade ?? null,
+      estimated_budget: data.estimatedBudget ?? null,
+      location_zip: data.locationZip ?? null,
+      city: data.city ?? null,
+      language: data.language ?? null,
+      urgency: data.urgency ?? null,
+    });
+    if (error) {
+      console.error("[pending-projects] save failed", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+      throw new Error(`Could not store your project for later: ${error.message}`);
+    }
+    console.info("[pending-projects] saved pending project", { id, title: data.title });
+    return { id };
   });
 
 /**
@@ -75,7 +89,20 @@ export const claimPendingProjects = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ jobIds: string[] }> => {
     const { data, error } = await context.supabase.rpc("claim_pending_projects");
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[pending-projects] claim failed", {
+        userId: context.userId,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(`Could not attach your posted project to this account: ${error.message}`);
+    }
     const jobIds = ((data ?? []) as Array<{ job_id: string }>).map((row) => row.job_id);
+    console.info("[pending-projects] claim complete", {
+      userId: context.userId,
+      claimed: jobIds.length,
+    });
     return { jobIds };
   });

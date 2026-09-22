@@ -254,10 +254,15 @@ export function HomeownerForm() {
             },
           });
         } catch (pendingErr) {
-          toast.warning(
-            `Project saved locally — we'll sync it once you confirm your account${
+          // Loud on purpose: if this fails there is nothing for
+          // claim_pending_projects() to attach after email confirmation, and
+          // the new account's dashboard shows "No projects yet".
+          console.error("[pending-projects] guest save failed", pendingErr);
+          toast.error(
+            `We couldn't store "${newProject.title}" for your new account${
               pendingErr instanceof Error ? ` (${pendingErr.message})` : ""
-            }.`,
+            }. Please post it again once you're signed in.`,
+            { duration: 12000 },
           );
         }
       }
