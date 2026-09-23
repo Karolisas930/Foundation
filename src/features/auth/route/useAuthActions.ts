@@ -22,6 +22,9 @@ export function useAuthActions(sector: SignupSector = "homeowner") {
     typeof window !== "undefined"
       ? `${window.location.origin}/auth/callback?sector=${sector}`
       : `/auth/callback?sector=${sector}`;
+  // `pw=1` tells the callback page a password already exists, so it routes
+  // straight to the dashboard instead of offering the optional password step.
+  const redirectToWithPassword = `${redirectTo}&pw=1`;
   
   async function goToDashboard() {
     await router.invalidate();
@@ -46,7 +49,7 @@ export function useAuthActions(sector: SignupSector = "homeowner") {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo },
+        options: { redirectTo: redirectToWithPassword },
       });
       if (error) {
         setBusy(null);
@@ -112,7 +115,7 @@ export function useAuthActions(sector: SignupSector = "homeowner") {
         email,
         password,
         options: {
-          emailRedirectTo: redirectTo,
+          emailRedirectTo: redirectToWithPassword,
           // The DB trigger handle_new_user() copies these into public.profiles,
           // so full_name/phone must travel with the sign-up itself.
           data: {

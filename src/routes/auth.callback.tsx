@@ -22,6 +22,8 @@ import { claimPendingProjects } from "@/lib/pending-projects.functions";
 import { dashboardPathFor, readProfileRole } from "@/lib/account-role";
 import { ResendConfirmationForm } from "@/features/auth/components/ResendConfirmationForm";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 
 export const Route = createFileRoute("/auth/callback")({
@@ -51,25 +53,34 @@ function readLinkError(): string | null {
 
 function AuthCallbackPage() {
   const navigate = useNavigate();
-  const [state, setState] = useState<"waiting" | "expired">("waiting");
+  const [state, setState] = useState<"waiting" | "expired" | "password">("waiting");
   const [linkError, setLinkError] = useState<string | null>(null);
+  // Where to go once the (optional) password step is done.
+  const [target, setTarget] = useState("/homeowner");
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const sectorParam = new URL(window.location.href).searchParams.get("sector") as
+    const params = new URL(window.location.href).searchParams;
+    const sectorParam = params.get("sector") as
       | "homeowner"
       | "handyman"
       | "business"
       | "architect"
       | null;
+    // `pw=1` means the person already chose a password when they signed up (or
+    // came in through a social provider) — no reason to ask again.
+    const alreadyHasPassword = params.get("pw") === "1";
 
     async function routeToDashboard() {
+      let dashboard = "/homeowner";
       try {
         const { data: userResponse } = await supabase.auth.getUser();
         const userId = userResponse.user?.id;
 
         if (!userId) {
-          await navigate({ to: "/homeowner" });
+          await navigate({ to: dashboard });
           return;
         }
 
@@ -105,13 +116,20 @@ function AuthCallbackPage() {
         }
 
         const { accountType } = await readProfileRole(userId);
-        await navigate({ to: dashboardPathFor(accountType) });
-        return;
+        dashboard = dashboardPathFor(accountType);
       } catch {
         // fall through to homeowner default
       }
-      await navigate({ to: "/homeowner" });
 
+      if (cancelled) return;
+      if (alreadyHasPassword) {
+        await navigate({ to: dashboard });
+        return;
+      }
+      // Confirmation click and "finish setting up" are the same moment: offer
+      // the password here rather than on a second, separate visit.
+      setTarget(dashboard);
+      setState("password");
     }
 
     async function waitForSession() {
@@ -188,6 +206,57 @@ function AuthCallbackPage() {
               </Link>
             </p>
           </>
+        ) : state === "password" ? (
+          <form
+            className="text-left"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (password.length < 8) {
+                toast.error("Password must be at least 8 characters.");
+                return;
+              }
+              setSaving(true);
+              const { error } = await supabase.auth.updateUser({ password });
+              setSaving(false);
+              if (error) {
+                toast.error(error.message);
+                return;
+              }
+              toast.success("Password saved.");
+              await navigate({ to: target });
+            }}
+          >
+            <h1 className="text-center font-display text-2xl font-extrabold tracking-tight text-white">
+              Welcome!
+            </h1>
+            <p className="mt-2 text-center text-sm text-slate-300">
+              Choose a password so you can sign in any time — optional, you can skip it.
+            </p>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              className="mt-5 border-white/10 bg-white/5 text-white placeholder:text-slate-500"
+            />
+            <Button
+              type="submit"
+              disabled={saving || password.length < 8}
+              className="mt-3 h-11 w-full rounded-xl bg-white font-bold text-slate-900 hover:bg-slate-100"
+            >
+              {saving ? "Saving…" : "Save password & continue"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => void navigate({ to: target })}
+              className="mt-1 h-11 w-full rounded-xl font-semibold text-slate-300 hover:bg-white/10 hover:text-white"
+            >
+              Skip for now
+            </Button>
+          </form>
         ) : (
           <>
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-white">

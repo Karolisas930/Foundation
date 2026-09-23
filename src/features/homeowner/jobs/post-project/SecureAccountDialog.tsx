@@ -53,7 +53,7 @@ export function SecureAccountDialog({
     // this component unmounts in between, so stash full name/phone now
     // and let /auth/callback apply them once a session exists.
     stashPendingProfileFields({ fullName, phone });
-    const redirectTo = `${window.location.origin}/auth/callback?sector=homeowner`;
+    const redirectTo = `${window.location.origin}/auth/callback?sector=homeowner&pw=1`;
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
       if (error) toast.error(error.message);
@@ -134,7 +134,7 @@ export function SecureAccountDialog({
                 email,
                 password: passwordValue,
                 options: {
-                  emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner`,
+                  emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner&pw=1`,
                   data: {
                     display_name: trimmedFullName || email.split("@")[0],
                     full_name: trimmedFullName,

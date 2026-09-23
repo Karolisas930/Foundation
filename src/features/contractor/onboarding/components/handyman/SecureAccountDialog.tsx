@@ -64,7 +64,7 @@ export function SecureAccountDialog({
               try {
                 await supabase.auth.signInWithOAuth({
                   provider: "google",
-                  options: { redirectTo: `${window.location.origin}/auth/callback?sector=handyman` },
+                  options: { redirectTo: `${window.location.origin}/auth/callback?sector=handyman&pw=1` },
                 });
               } catch {
                 toast.error("Google sign-in unavailable in demo mode.");
@@ -81,7 +81,7 @@ export function SecureAccountDialog({
               try {
                 await supabase.auth.signInWithOAuth({
                   provider: "apple",
-                  options: { redirectTo: `${window.location.origin}/auth/callback?sector=handyman` },
+                  options: { redirectTo: `${window.location.origin}/auth/callback?sector=handyman&pw=1` },
                 });
               } catch {
                 toast.error("Apple sign-in unavailable in demo mode.");

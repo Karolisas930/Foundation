@@ -13,6 +13,7 @@ import type { EcosystemProject } from "@/core/demo-session";
 import { SummaryRow } from "./parts";
 import { sendMagicLink } from "./auth-helpers";
 import { SecureAccountDialog } from "./SecureAccountDialog";
+import { useConfirmedRedirect } from "@/features/auth/hooks/useConfirmedRedirect";
 
 export type SuccessState = {
   email: string;
@@ -26,6 +27,7 @@ export type SuccessState = {
 export function SuccessScreen({ success }: { success: SuccessState }) {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [postSignup, setPostSignup] = useState(false);
+  const confirmed = useConfirmedRedirect(postSignup);
 
   // Land at the top of the success page so the confirmation is immediately
   // visible (the form can be tall on mobile).
@@ -33,18 +35,29 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // If the user just set a password, show the confirmation message.
+  // If the user just set a password, show the confirmation message — and watch
+  // for the session appearing (confirmed in another tab) so this screen moves
+  // on by itself instead of feeling stuck.
   if (postSignup) {
     return (
       <main className="min-h-screen intake-grid text-slate-50">
         <TopBar />
         <section className="mx-auto max-w-2xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
           <div className="intake-card rounded-2xl p-7 text-center shadow-[0_10px_40px_-20px_rgba(0,0,0,0.6)]">
-            <h2 className="text-xl font-semibold text-white">Check your email</h2>
-            <p className="mt-2 text-slate-300">
-              We've sent a confirmation link to your email address. Please click the link to
-              complete your registration and access your dashboard.
-            </p>
+            {confirmed ? (
+              <>
+                <h2 className="text-xl font-semibold text-white">You're confirmed!</h2>
+                <p className="mt-2 text-slate-300">Taking you to your dashboard…</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold text-white">Check your email</h2>
+                <p className="mt-2 text-slate-300">
+                  We've sent a confirmation link to your email address. Please click the link to
+                  complete your registration and access your dashboard.
+                </p>
+              </>
+            )}
           </div>
         </section>
       </main>

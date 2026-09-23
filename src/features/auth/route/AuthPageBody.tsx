@@ -7,6 +7,7 @@ import { EmailPasswordPanel } from "@/features/auth/route/EmailPasswordPanel";
 import { ForgotPasswordPanel } from "@/features/auth/route/ForgotPasswordPanel";
 import { SocialAuthPanel } from "@/features/auth/route/SocialAuthPanel";
 import { useAuthActions } from "@/features/auth/route/useAuthActions";
+import { useConfirmedRedirect } from "@/features/auth/hooks/useConfirmedRedirect";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Mode, SignupSector } from "@/features/auth/route/types";
@@ -35,6 +36,8 @@ export function AuthPageBody({
   // to a protected dashboard the visitor cannot reach yet.
   const [awaitingConfirmation, setAwaitingConfirmation] = useState<string | null>(null);
   const actions = useAuthActions(sector);
+  // Confirming in another tab should move this one along automatically.
+  const confirmed = useConfirmedRedirect(awaitingConfirmation !== null);
 
   async function handleSignUp(
     signupEmail: string,
@@ -82,15 +85,30 @@ export function AuthPageBody({
     return (
       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
         <CheckCircle2 className="mx-auto size-10 text-orange" />
-        <h1 className="mt-4 font-display text-2xl font-extrabold text-white">Check your inbox</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-300">
-          We sent a confirmation link to{" "}
-          <span className="font-semibold text-white">{awaitingConfirmation}</span>. Open it and
-          you'll be taken straight to your dashboard.
-        </p>
-        <p className="mt-2 text-xs text-slate-400">
-          Nothing there? Check spam, or send the email again.
-        </p>
+        {confirmed ? (
+          <>
+            <h1 className="mt-4 font-display text-2xl font-extrabold text-white">
+              You're confirmed!
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              Taking you to your dashboard…
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="mt-4 font-display text-2xl font-extrabold text-white">
+              Check your inbox
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              We sent a confirmation link to{" "}
+              <span className="font-semibold text-white">{awaitingConfirmation}</span>. Open it and
+              you'll be taken straight to your dashboard.
+            </p>
+            <p className="mt-2 text-xs text-slate-400">
+              Nothing there? Check spam, or send the email again.
+            </p>
+          </>
+        )}
         <div className="mt-5 flex flex-col gap-2">
           <Button
             type="button"
