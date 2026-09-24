@@ -16,9 +16,37 @@ export type SupportedLang = {
   flag: string;
 };
 
+// 24 official EU languages + Swiss German (gsw), Russian, Ukrainian, Norwegian.
+// Only en/de have full translation bundles; the rest fall back to English.
 export const supportedLanguages: SupportedLang[] = [
   { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "bg", label: "Български", flag: "🇧🇬" },
+  { code: "hr", label: "Hrvatski", flag: "🇭🇷" },
+  { code: "cs", label: "Čeština", flag: "🇨🇿" },
+  { code: "da", label: "Dansk", flag: "🇩🇰" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "et", label: "Eesti", flag: "🇪🇪" },
+  { code: "fi", label: "Suomi", flag: "🇫🇮" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "el", label: "Ελληνικά", flag: "🇬🇷" },
+  { code: "hu", label: "Magyar", flag: "🇭🇺" },
+  { code: "ga", label: "Gaeilge", flag: "🇮🇪" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "lv", label: "Latviešu", flag: "🇱🇻" },
+  { code: "lt", label: "Lietuvių", flag: "🇱🇹" },
+  { code: "mt", label: "Malti", flag: "🇲🇹" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "ro", label: "Română", flag: "🇷🇴" },
+  { code: "sk", label: "Slovenčina", flag: "🇸🇰" },
+  { code: "sl", label: "Slovenščina", flag: "🇸🇮" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "sv", label: "Svenska", flag: "🇸🇪" },
+  { code: "gsw", label: "Schwiizertüütsch", flag: "🇨🇭" },
+  { code: "nb", label: "Norsk", flag: "🇳🇴" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "uk", label: "Українська", flag: "🇺🇦" },
 ];
 
 const resources = {
