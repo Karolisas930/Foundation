@@ -395,7 +395,9 @@ export function HandymanOnboarding() {
       alreadySignedIn ? null : pw,
     );
     if (error) {
-      toast.error(error);
+      toast.error(error, { duration: 10000 });
+      setSubmitting(false);
+      if (!signedIn) return; // keep the dialog open so they can fix it
     }
 
     setPwOpen(false);
