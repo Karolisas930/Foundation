@@ -37,11 +37,11 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute left-2.5 flex items-center gap-1.5 text-sm font-bold tracking-wide text-white sm:left-3",
+          "pointer-events-none absolute left-2 flex items-center gap-1 text-xs font-bold tracking-wide text-white sm:left-3 sm:gap-1.5 sm:text-sm",
           compact ? "" : "left-3",
         )}
       >
-        <span className="text-base leading-none">{currentLang.flag}</span>
+        <span className="text-sm leading-none sm:text-base">{currentLang.flag}</span>
         <span>{currentThree}</span>
       </span>
       <select
@@ -55,9 +55,9 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
           document.documentElement.dir = nextLang === "ar" ? "rtl" : "ltr";
         }}
         className={cn(
-          "h-10 appearance-none rounded-full border border-orange/50 bg-white/10 text-sm font-bold tracking-wide text-transparent shadow-sm transition-colors",
+          "h-9 appearance-none rounded-full border border-orange/50 bg-white/10 text-sm font-bold tracking-wide text-transparent shadow-sm transition-colors sm:h-10",
           "hover:bg-orange/20 hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange",
-          compact ? "pl-12 pr-7 w-[96px] sm:w-[112px] sm:pl-14 sm:pr-8" : "pl-14 pr-10 w-[140px]",
+          compact ? "w-[78px] pl-9 pr-5 sm:w-[112px] sm:pl-14 sm:pr-8" : "w-[140px] pl-14 pr-10",
         )}
       >
         {supportedLanguages.map((lang) => {
@@ -76,8 +76,8 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
       </select>
       <ChevronDown
         className={cn(
-          "pointer-events-none absolute size-4 shrink-0 text-orange",
-          compact ? "right-2 sm:right-2.5" : "right-3",
+          "pointer-events-none absolute size-3.5 shrink-0 text-orange sm:size-4",
+          compact ? "right-1.5 sm:right-2.5" : "right-3",
         )}
         aria-hidden="true"
       />

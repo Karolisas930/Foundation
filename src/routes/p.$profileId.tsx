@@ -372,13 +372,13 @@ function PublicProfilePage() {
             <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400/80">
               Handelsregister-Nr.
             </dt>
-            <dd className="mt-0.5 font-mono text-slate-200/90">HRB —</dd>
+            <dd className="mt-0.5 font-mono text-slate-200/90">Not provided</dd>
           </div>
           <div>
             <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400/80">
               USt-IdNr.
             </dt>
-            <dd className="mt-0.5 font-mono text-slate-200/90">DE —</dd>
+            <dd className="mt-0.5 font-mono text-slate-200/90">Not provided</dd>
           </div>
           <div>
             <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-400/80">

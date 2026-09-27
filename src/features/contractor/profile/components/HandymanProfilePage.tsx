@@ -42,6 +42,8 @@ type ProfileState = {
   minProjectSize: number;
   bio: string;
   city: string;
+  phone: string;
+  email: string;
   publicListing: boolean;
   avatar: string | null;
   cover: string | null;
@@ -68,6 +70,8 @@ function buildProfileState(p: HandymanProfile | null): ProfileState {
     minProjectSize: Number((source as { minProjectSize?: number }).minProjectSize ?? 500),
     bio: (source as { bio?: string }).bio ?? "",
     city: cityLine,
+    phone: ((source as { mobilePhone?: string }).mobilePhone as string) ?? "",
+    email: ((source as { businessEmail?: string }).businessEmail as string) ?? "",
     publicListing: true,
     avatar: ((source as { avatarDataUrl?: string }).avatarDataUrl as string | null) ?? null,
     cover: null,
@@ -116,48 +120,94 @@ export function HandymanProfilePage({
     return () => window.removeEventListener("chameleon_ledger_update", sync);
   }, []);
 
-  // Hydrate matching preferences (radius + minimum project size) from
-  // Supabase on mount so returning users see their saved values even when
-  // the local ledger has been cleared.
+  // Hydrate the saved registration data (name, company, phone, city, trades,
+  // bio, radius, minimum project size, languages) from Supabase on mount so
+  // returning users always see what they entered during sign-up — even on a
+  // new device or after the local draft has been cleared. Auth metadata from
+  // the sign-up form is used as a second-level fallback.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
-        const uid = sessionData?.session?.user?.id;
+        const user = sessionData?.session?.user;
+        const uid = user?.id;
         if (!uid) return;
+
+        type ProfileRow = {
+          full_name: string | null;
+          display_name: string | null;
+          company_name: string | null;
+          phone: string | null;
+          city: string | null;
+          postal_code: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          trades: string[] | null;
+          service_radius_km: number | null;
+          min_project_size: number | null;
+          languages: string[] | null;
+        };
+
         const { data } = await (
           supabase.from("profiles") as unknown as {
             select: (cols: string) => {
               eq: (
                 col: string,
                 val: string,
-              ) => {
-                maybeSingle: () => Promise<{
-                  data: {
-                    service_radius_km: number | null;
-                    min_project_size: number | null;
-                    languages: string[] | null;
-                  } | null;
-                }>;
-              };
+              ) => { maybeSingle: () => Promise<{ data: ProfileRow | null }> };
             };
           }
         )
-          .select("service_radius_km, min_project_size, languages")
+          .select(
+            "full_name, display_name, company_name, phone, city, postal_code, bio, avatar_url, trades, service_radius_km, min_project_size, languages",
+          )
           .eq("id", uid)
           .maybeSingle();
-        if (cancelled || !data) return;
-        setProfile((prev) => ({
-          ...prev,
-          radiusKm: Number(data.service_radius_km ?? prev.radiusKm) || prev.radiusKm,
-          minProjectSize:
-            Number(data.min_project_size ?? prev.minProjectSize) || prev.minProjectSize,
-          languages:
-            Array.isArray(data.languages) && data.languages.length > 0
-              ? data.languages
-              : prev.languages,
-        }));
+
+        if (cancelled) return;
+
+        const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+        const metaStr = (key: string) => {
+          const v = meta[key];
+          return typeof v === "string" && v.trim() ? v.trim() : "";
+        };
+
+        const remoteFullName = (data?.full_name ?? "").trim() || metaStr("full_name");
+        const [remoteFirst = "", ...remoteRest] = remoteFullName.split(/\s+/).filter(Boolean);
+        const remoteLast = remoteRest.join(" ");
+        const remoteCompany =
+          (data?.company_name ?? "").trim() ||
+          (data?.display_name ?? "").trim() ||
+          metaStr("display_name");
+        const remotePhone = (data?.phone ?? "").trim() || metaStr("phone");
+        const remoteCity = (data?.city ?? "").trim();
+        const remoteBio = (data?.bio ?? "").trim();
+        const remoteTrades = Array.isArray(data?.trades) ? data!.trades! : [];
+
+        setProfile((prev) => {
+          const trades = prev.trades.length > 0 ? prev.trades : remoteTrades;
+          return {
+            ...prev,
+            firstName: prev.firstName || remoteFirst,
+            lastName: prev.lastName || remoteLast,
+            businessName: prev.businessName || remoteCompany,
+            phone: prev.phone || remotePhone,
+            email: prev.email || user?.email || "",
+            city: prev.city || remoteCity,
+            bio: prev.bio || remoteBio,
+            trades,
+            trade: prev.trade || trades[0] || "",
+            avatar: prev.avatar ?? data?.avatar_url ?? null,
+            radiusKm: Number(data?.service_radius_km ?? prev.radiusKm) || prev.radiusKm,
+            minProjectSize:
+              Number(data?.min_project_size ?? prev.minProjectSize) || prev.minProjectSize,
+            languages:
+              Array.isArray(data?.languages) && data!.languages!.length > 0
+                ? data!.languages!
+                : prev.languages,
+          };
+        });
       } catch {
         /* non-fatal — local ledger values remain in place */
       }
@@ -414,13 +464,13 @@ export function HandymanProfilePage({
                   <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     Commercial Register No.
                   </dt>
-                  <dd className="text-slate-200">HRB —</dd>
+                  <dd className="text-slate-200">Not provided</dd>
                 </div>
                 <div>
                   <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     VAT ID
                   </dt>
-                  <dd className="text-slate-200">DE —</dd>
+                  <dd className="text-slate-200">Not provided</dd>
                 </div>
                 <div className="sm:col-span-2">
                   <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">

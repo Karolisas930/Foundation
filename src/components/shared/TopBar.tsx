@@ -68,18 +68,18 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-navy/80 backdrop-blur-md supports-[backdrop-filter]:bg-navy/65 dark:bg-navy/80">
       <div
-        className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6"
+        className="mx-auto flex h-16 w-full max-w-6xl items-center gap-1.5 overflow-hidden px-2.5 sm:gap-3 sm:px-6"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         {/* Left: hamburger (signed-in) + logo */}
-        <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 shrink items-center gap-1 sm:gap-2">
           {renderSignedInMenu && <AppSideMenu />}
           <Link
             to={logoTo}
             aria-label="Go to home"
-            className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-white transition-opacity hover:opacity-90 sm:text-xl"
+            className="flex min-w-0 items-center gap-2 font-display text-[15px] font-bold tracking-tight text-white transition-opacity hover:opacity-90 sm:text-xl"
           >
-            <span className="text-orange">HANDWERK</span>
+            <span className="truncate text-orange">HANDWERK</span>
           </Link>
         </div>
 
@@ -118,7 +118,7 @@ export function TopBar({
         {signedIn && <div className="flex-1" />}
 
         {/* Right: actions + mobile guest hamburger */}
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <HeaderActions
             key={user?.id ?? "guest"}
             showSignIn={showSignIn}

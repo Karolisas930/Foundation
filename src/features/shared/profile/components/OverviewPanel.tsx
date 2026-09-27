@@ -1,6 +1,10 @@
 /**
  * OverviewPanel — Public-facing profile for homeowners
  * Clean, trustworthy, and designed to help trades win jobs.
+ *
+ * Ratings and reviews are real-data only: until verified clients submit
+ * reviews for completed jobs, the panel shows honest empty states instead
+ * of placeholder testimonials.
  */
 import {
   Star,
@@ -11,7 +15,16 @@ import {
   Globe,
   Instagram,
   Phone,
+  MessageSquareQuote,
 } from "lucide-react";
+
+export interface ProfileReview {
+  id: string;
+  name: string;
+  date: string;
+  rating: number;
+  quote: string;
+}
 
 interface OverviewPanelProps {
   businessName: string;
@@ -23,36 +36,13 @@ interface OverviewPanelProps {
   rating: number;
   jobsCompleted: number;
   joinedDate: string;
+  /** Real, verified client reviews. Empty until clients submit them. */
+  reviews?: ProfileReview[];
+  onTimePct?: number | null;
+  website?: string | null;
+  instagram?: string | null;
+  phone?: string | null;
 }
-
-type DemoReview = {
-  name: string;
-  date: string;
-  rating: number;
-  quote: string;
-};
-
-const DEMO_REVIEWS: DemoReview[] = [
-  {
-    name: "Anna M.",
-    date: "May 2026",
-    rating: 5,
-    quote:
-      "Punctual, tidy and clearly explained every step. The finish looks better than we imagined.",
-  },
-  {
-    name: "Julian K.",
-    date: "April 2026",
-    rating: 5,
-    quote: "Great communication from the first quote to the final walkthrough. Would hire again.",
-  },
-  {
-    name: "Sophie R.",
-    date: "March 2026",
-    rating: 4,
-    quote: "Fair pricing, professional crew, and they left the site spotless. Highly recommend.",
-  },
-];
 
 function Stars({ value }: { value: number }) {
   return (
@@ -69,10 +59,23 @@ function Stars({ value }: { value: number }) {
   );
 }
 
-export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: OverviewPanelProps) {
-  const displayRating = rating > 0 ? rating : 4.9;
-  const reviewCount = jobsCompleted > 0 ? jobsCompleted : DEMO_REVIEWS.length;
-  const onTimePct = 98;
+export function OverviewPanel({
+  businessName,
+  bio,
+  rating,
+  reviews = [],
+  onTimePct = null,
+  website = null,
+  instagram = null,
+  phone = null,
+}: OverviewPanelProps) {
+  const reviewCount = reviews.length;
+  const hasRating = rating > 0 && reviewCount > 0;
+  const channels = [
+    website ? { Icon: Globe, label: "Website" } : null,
+    instagram ? { Icon: Instagram, label: "Instagram" } : null,
+    phone ? { Icon: Phone, label: "Phone Number" } : null,
+  ].filter(Boolean) as { Icon: typeof Globe; label: string }[];
 
   const cardBase = "rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6";
 
@@ -82,52 +85,70 @@ export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: Over
       <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
         {/* About: 60% */}
         <div className={`${cardBase} md:col-span-3`}>
-          <h3 className="font-display text-lg font-bold text-white mb-3">About {businessName}</h3>
-          <p className="leading-relaxed text-slate-300/90 text-[15px]">{bio}</p>
+          <h3 className="font-display text-lg font-bold text-white mb-3">
+            About {businessName || "this pro"}
+          </h3>
+          <p className="leading-relaxed text-slate-300/90 text-[15px]">
+            {bio || (
+              <span className="text-muted-foreground">No description added yet.</span>
+            )}
+          </p>
 
-          {/* Privacy Gate — locked contact channels */}
-          <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4 backdrop-blur-sm">
-            <div className="flex flex-col gap-2.5">
-              {[
-                { Icon: Globe, label: "Website" },
-                { Icon: Instagram, label: "Instagram" },
-                { Icon: Phone, label: "Phone Number" },
-              ].map(({ Icon, label }) => (
-                <div key={label} className="flex items-center gap-2.5 text-sm text-white/35">
-                  <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
-                  <span className="underline decoration-white/15 underline-offset-4">{label}</span>
-                </div>
-              ))}
+          {/* Privacy Gate — only channels the pro actually provided */}
+          {channels.length > 0 && (
+            <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4 backdrop-blur-sm">
+              <div className="flex flex-col gap-2.5">
+                {channels.map(({ Icon, label }) => (
+                  <div key={label} className="flex items-center gap-2.5 text-sm text-white/35">
+                    <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                    <span className="underline decoration-white/15 underline-offset-4">{label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex items-start gap-2 border-t border-white/[0.05] pt-3 text-[12px] text-white/55">
+                <Lock className="mt-0.5 size-3.5 shrink-0 text-white/50" strokeWidth={1.5} />
+                <p className="leading-relaxed">
+                  🔒 Contact details will be unlocked after mutual acceptance of the offer.
+                </p>
+              </div>
             </div>
-            <div className="mt-3 flex items-start gap-2 border-t border-white/[0.05] pt-3 text-[12px] text-white/55">
-              <Lock className="mt-0.5 size-3.5 shrink-0 text-white/50" strokeWidth={1.5} />
-              <p className="leading-relaxed">
-                🔒 Contact details will be unlocked after mutual acceptance of the offer.
-              </p>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Performance pills: 40% */}
+        {/* Performance pills: 40% — real values only */}
         <div className="md:col-span-2 flex flex-col gap-6">
           <div className="flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6">
-            <Star className="size-5 fill-orange/70 text-orange/70 shrink-0" />
+            <Star
+              className={
+                hasRating
+                  ? "size-5 fill-orange/70 text-orange/70 shrink-0"
+                  : "size-5 text-white/25 shrink-0"
+              }
+            />
             <div className="min-w-0">
               <div className="font-display text-xl font-bold text-white leading-tight">
-                {displayRating.toFixed(1)}
+                {hasRating ? rating.toFixed(1) : "—"}
               </div>
               <p className="text-xs text-muted-foreground">
-                {reviewCount} review{reviewCount === 1 ? "" : "s"}
+                {hasRating
+                  ? `${reviewCount} review${reviewCount === 1 ? "" : "s"}`
+                  : "No reviews yet"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6">
-            <Award className="size-5 text-orange/70 shrink-0" />
+            <Award
+              className={
+                onTimePct != null ? "size-5 text-orange/70 shrink-0" : "size-5 text-white/25 shrink-0"
+              }
+            />
             <div className="min-w-0">
               <div className="font-display text-xl font-bold text-white leading-tight">
-                {onTimePct}%
+                {onTimePct != null ? `${onTimePct}%` : "—"}
               </div>
-              <p className="text-xs text-muted-foreground">On-time delivery</p>
+              <p className="text-xs text-muted-foreground">
+                {onTimePct != null ? "On-time delivery" : "No completed jobs yet"}
+              </p>
             </div>
           </div>
         </div>
@@ -161,21 +182,31 @@ export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: Over
         </p>
       </section>
 
-      {/* Verified Client Reviews */}
+      {/* Verified Client Reviews — real reviews only */}
       <section className={cardBase}>
         <h4 className="font-display text-lg font-bold text-white mb-4">Verified Client Reviews</h4>
-        <ul className="space-y-3">
-          {DEMO_REVIEWS.map((r) => (
-            <li key={r.name} className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <Stars value={r.rating} />
-                <span className="text-xs text-muted-foreground">{r.date}</span>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-slate-300/90">“{r.quote}”</p>
-              <p className="mt-2 text-xs font-semibold text-white/70">— {r.name}</p>
-            </li>
-          ))}
-        </ul>
+        {reviewCount === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.015] px-4 py-8 text-center">
+            <MessageSquareQuote className="size-6 text-muted-foreground/60" />
+            <p className="text-sm font-medium text-white/70">No client reviews yet</p>
+            <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
+              Reviews appear here once verified clients complete a project and rate the work.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {reviews.map((r) => (
+              <li key={r.id} className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <Stars value={r.rating} />
+                  <span className="text-xs text-muted-foreground">{r.date}</span>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-300/90">“{r.quote}”</p>
+                <p className="mt-2 text-xs font-semibold text-white/70">— {r.name}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

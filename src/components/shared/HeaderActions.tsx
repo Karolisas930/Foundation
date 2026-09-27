@@ -85,10 +85,10 @@ export function HeaderActions({
   return (
     <div
       key={user?.id ?? "guest"} // ← Forces re-render when auth state changes
-      className={"flex shrink-0 items-center gap-1.5 sm:gap-3 md:gap-4 " + className}
+      className={"flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4 " + className}
     >
-      <LanguageSelector compact={compact} className="h-10 min-w-10 px-1.5 sm:px-2.5" />
-      <ThemeCycleButton className="h-10 w-10" />
+      <LanguageSelector compact={compact} className="h-9 min-w-9 px-0 sm:h-10 sm:px-2.5" />
+      <ThemeCycleButton className="h-9 w-9 sm:h-10 sm:w-10" />
 
       {signedIn ? (
         <DropdownMenu>
@@ -97,9 +97,9 @@ export function HeaderActions({
               type="button"
               aria-label="Open account menu"
               title={displayName}
-              className="rounded-full outline-none ring-offset-navy transition focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2"
+              className="shrink-0 rounded-full outline-none ring-offset-navy transition focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2"
             >
-              <Avatar className="h-10 w-10 border border-white/15">
+              <Avatar className="h-9 w-9 border border-white/15 sm:h-10 sm:w-10">
                 <AvatarImage src={avatarUrl} alt="" />
                 <AvatarFallback className="bg-white/10 text-xs font-bold text-white">
                   {getInitials(displayEmail, displayName)}
