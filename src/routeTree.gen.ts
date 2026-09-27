@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as DashboardRouteRouteImport } from './routes/_dashboard/route'
+import { Route as CheckEmailRouteImport } from './routes/check-email'
 import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as FinanzRouteImport } from './routes/finanz'
 import { Route as ImpressumRouteImport } from './routes/impressum'
@@ -66,6 +67,11 @@ const AuthRouteRoute = AuthRouteRouteImport.update({
 } as any)
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/_dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckEmailRoute = CheckEmailRouteImport.update({
+  id: '/check-email',
+  path: '/check-email',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DatenschutzRoute = DatenschutzRouteImport.update({
@@ -297,6 +303,7 @@ const DashboardContractorTeamLocationsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/check-email': typeof CheckEmailRoute
   '/datenschutz': typeof DatenschutzRoute
   '/finanz': typeof FinanzRoute
   '/impressum': typeof ImpressumRoute
@@ -342,6 +349,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/check-email': typeof CheckEmailRoute
   '/datenschutz': typeof DatenschutzRoute
   '/finanz': typeof FinanzRoute
   '/impressum': typeof ImpressumRoute
@@ -387,6 +395,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_dashboard': typeof DashboardRouteRouteWithChildren
+  '/check-email': typeof CheckEmailRoute
   '/datenschutz': typeof DatenschutzRoute
   '/finanz': typeof FinanzRoute
   '/impressum': typeof ImpressumRoute
@@ -434,6 +443,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/check-email'
     | '/datenschutz'
     | '/finanz'
     | '/impressum'
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/check-email'
     | '/datenschutz'
     | '/finanz'
     | '/impressum'
@@ -523,6 +534,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_auth'
     | '/_dashboard'
+    | '/check-email'
     | '/datenschutz'
     | '/finanz'
     | '/impressum'
@@ -571,6 +583,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  CheckEmailRoute: typeof CheckEmailRoute
   DatenschutzRoute: typeof DatenschutzRoute
   FinanzRoute: typeof FinanzRoute
   ImpressumRoute: typeof ImpressumRoute
@@ -610,6 +623,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof DashboardRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/check-email': {
+      id: '/check-email'
+      path: '/check-email'
+      fullPath: '/check-email'
+      preLoaderRoute: typeof CheckEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/datenschutz': {
@@ -1036,6 +1056,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  CheckEmailRoute: CheckEmailRoute,
   DatenschutzRoute: DatenschutzRoute,
   FinanzRoute: FinanzRoute,
   ImpressumRoute: ImpressumRoute,

@@ -372,7 +372,7 @@ export function HandymanOnboarding() {
       return;
     }
     setSubmitting(true);
-    const { signedIn, error } = await finalizeHandymanRegistration(
+    const { signedIn, error, alreadyRegistered } = await finalizeHandymanRegistration(
       {
         firstName,
         lastName,
@@ -395,9 +395,7 @@ export function HandymanOnboarding() {
       alreadySignedIn ? null : pw,
     );
     if (error) {
-      toast.error(error, { duration: 10000 });
-      setSubmitting(false);
-      if (!signedIn) return; // keep the dialog open so they can fix it
+      toast.error(error);
     }
 
     setPwOpen(false);
@@ -411,11 +409,18 @@ export function HandymanOnboarding() {
     if (signedIn) {
       toast.success("You're signed in. Opening your profile…");
       await navigate({ to: "/contractor/profile", replace: true });
-    } else {
-      toast.info("Profile saved. Please check your email to verify your account.", {
-        duration: 10000,
-      });
+    } else if (alreadyRegistered) {
+      toast.info("This email already has an account. Please log in.", { duration: 10000 });
       await navigate({ to: "/login", replace: true });
+    } else if (error) {
+      // Keep the user on the form so they can fix it and retry.
+      return;
+    } else {
+      await navigate({
+        to: "/check-email",
+        search: { email: businessEmail.trim().toLowerCase(), sector: "handyman" },
+        replace: true,
+      });
     }
   }
 
