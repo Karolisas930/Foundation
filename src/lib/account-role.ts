@@ -73,19 +73,32 @@ export function dashboardPathFor(accountType: string | null | undefined): "/cont
   return isContractorType(accountType) ? "/contractor" : "/homeowner";
 }
 
+/** Role hint carried in the auth user's metadata (set at sign-up). */
+export function accountTypeFromMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): string | null {
+  if (!metadata) return null;
+  const candidate = metadata["account_type"] ?? metadata["sector"];
+  return typeof candidate === "string" && candidate.trim() ? candidate.trim() : null;
+}
+
 /**
  * Resolve the landing dashboard for the current session. Never guesses
- * "homeowner" off a failed read.
+ * "homeowner" off a failed read: when the profile row is missing or the
+ * read failed, fall back to the role stored in the auth user's metadata.
  */
 export async function resolveDashboardPath(): Promise<"/contractor" | "/homeowner"> {
   try {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    const uid = session?.user?.id;
-    if (!uid) return "/homeowner";
-    const { accountType } = await readProfileRole(uid);
-    return dashboardPathFor(accountType);
+    const user = session?.user;
+    if (!user?.id) return "/homeowner";
+    const { accountType } = await readProfileRole(user.id);
+    const metaType = accountTypeFromMetadata(
+      user.user_metadata as Record<string, unknown> | null | undefined,
+    );
+    return dashboardPathFor(accountType ?? metaType);
   } catch (e) {
     console.warn("[account-role] resolveDashboardPath failed:", e);
     return "/homeowner";

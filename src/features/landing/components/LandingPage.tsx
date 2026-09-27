@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { getLandingData } from "@/lib/landing-stats.functions";
 import { TopBar } from "@/components/shared/TopBar";
 import { getEcosystemLedger } from "@/core/demo-session";
 import { getDemoUser, subscribeDemoUser } from "@/lib/demo-auth";
 import { DashboardShell } from "@/features/shared/dashboard/components/DashboardShell";
 import type { SectorId } from "@/core/sector-config";
+import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/integrations/supabase/config";
+import { resolveDashboardPath } from "@/lib/account-role";
 import { Hero } from "@/features/landing/components/Hero";
 import { HomeCarousel, PartnerStrip } from "@/features/landing/components/HomeCarousel";
 import { ValueCards } from "@/features/landing/components/ValueCards";
@@ -48,6 +52,36 @@ export function LandingPage() {
       window.removeEventListener("chameleon_ledger_update", onLedger);
     };
   }, []);
+
+  // A real (non-demo) signed-in account never belongs on the guest
+  // landing page — send them straight to their own dashboard.
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    let cancelled = false;
+
+    const route = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (cancelled || !session?.user) return;
+        const path = await resolveDashboardPath();
+        if (!cancelled) void navigate({ to: path, replace: true });
+      } catch {
+        /* stay on the landing page */
+      }
+    };
+
+    void route();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") void route();
+    });
+    return () => {
+      cancelled = true;
+      sub?.subscription?.unsubscribe();
+    };
+  }, [navigate]);
 
   if (hydrated && signedInSector) {
     return <DashboardShell sector={signedInSector} />;
