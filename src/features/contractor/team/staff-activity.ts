@@ -27,45 +27,16 @@ function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-function seed(): StaffActivity[] {
-  const now = Date.now();
-  return [
-    {
-      id: uid(),
-      kind: "photo",
-      actor: "Luke",
-      message: "uploaded 3 before-photos to Bathroom renovation",
-      createdAt: now - 1000 * 60 * 22,
-    },
-    {
-      id: uid(),
-      kind: "receipt",
-      actor: "Anna",
-      message: "scanned a receipt from OBI Baumarkt",
-      amount: 245,
-      createdAt: now - 1000 * 60 * 60 * 3,
-    },
-    {
-      id: uid(),
-      kind: "hours",
-      actor: "Marco",
-      message: "logged 6h on Bathroom renovation",
-      createdAt: now - 1000 * 60 * 60 * 6,
-    },
-  ];
-}
-
 export function loadActivity(): StaffActivity[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) {
-      const s = seed();
-      localStorage.setItem(KEY, JSON.stringify(s));
-      return s;
+      return [];
     }
     const parsed = JSON.parse(raw) as StaffActivity[];
-    return Array.isArray(parsed) ? parsed : [];
+    const demo = new Set(["Luke", "Anna", "Marco"]);
+    return Array.isArray(parsed) ? parsed.filter((a) => !demo.has(a.actor)) : [];
   } catch {
     return [];
   }

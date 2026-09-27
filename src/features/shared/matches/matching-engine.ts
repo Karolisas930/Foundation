@@ -19,6 +19,7 @@
  * functions, or components.
  */
 import { distanceBetweenPostcodes } from "@/regions";
+import { toTradeCode, toTradeKeys } from "@/regions/trade-codes";
 
 /** Contractor-side inputs the classifier needs. */
 export interface MatchingProfile {
@@ -162,9 +163,10 @@ export function computeMatchScore(
     reasons.push(`~${Math.round(distanceKm)} km — outside ${radius} km radius.`);
   }
 
-  // Trade score — exact match full, none partial when contractor is unset.
-  const trades = normalizeList(profile.trades);
-  const leadTrade = lead.trade?.trim().toLowerCase() ?? "";
+  // Trade score — compares canonical trade codes (language-independent);
+  // unmapped legacy text falls back to case-insensitive text comparison.
+  const trades = toTradeKeys(profile.trades);
+  const leadTrade = lead.trade ? (toTradeCode(lead.trade) ?? lead.trade.trim().toLowerCase()) : "";
   let tradeScore = 0;
   if (trades.length === 0) {
     tradeScore = Math.round(TRADE_MAX * 0.5);

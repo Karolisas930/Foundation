@@ -186,19 +186,19 @@ export function HandymanProfilePage({
         const remoteTrades = Array.isArray(data?.trades) ? data!.trades! : [];
 
         setProfile((prev) => {
-          const trades = prev.trades.length > 0 ? prev.trades : remoteTrades;
+          const trades = remoteTrades.length > 0 ? remoteTrades : prev.trades;
           return {
             ...prev,
-            firstName: prev.firstName || remoteFirst,
-            lastName: prev.lastName || remoteLast,
-            businessName: prev.businessName || remoteCompany,
-            phone: prev.phone || remotePhone,
-            email: prev.email || user?.email || "",
-            city: prev.city || remoteCity,
-            bio: prev.bio || remoteBio,
+            firstName: remoteFirst || prev.firstName,
+            lastName: remoteLast || prev.lastName,
+            businessName: remoteCompany || prev.businessName,
+            phone: remotePhone || prev.phone,
+            email: user?.email || prev.email || "",
+            city: remoteCity || prev.city,
+            bio: remoteBio || prev.bio,
             trades,
-            trade: prev.trade || trades[0] || "",
-            avatar: prev.avatar ?? data?.avatar_url ?? null,
+            trade: trades[0] || prev.trade || "",
+            avatar: data?.avatar_url ?? prev.avatar ?? null,
             radiusKm: Number(data?.service_radius_km ?? prev.radiusKm) || prev.radiusKm,
             minProjectSize:
               Number(data?.min_project_size ?? prev.minProjectSize) || prev.minProjectSize,
@@ -281,7 +281,7 @@ export function HandymanProfilePage({
             trades={profile.trades}
             city={profile.city}
             radiusKm={profile.radiusKm}
-            verified={true}
+            verified={false}
             avatar={profile.avatar}
             cover={profile.cover}
             activeLangs={AVAILABLE_LANGUAGES.filter((l) => profile.languages.includes(l.code))}

@@ -23,7 +23,7 @@ import { VoiceToInvoiceSheet } from "@/features/contractor/profile/components/to
 import { PostHelpRequestSheet } from "@/features/contractor/onboarding/components/PostHelpRequestSheet";
 import { SiteDiarySheet } from "@/features/contractor/team/components/SiteDiarySheet";
 
-import { getEcosystemLedger } from "@/core/demo-session";
+import { useLeadFeed } from "@/features/contractor/leads/use-lead-feed";
 import { getActiveHandymanProfile } from "@/features/contractor/profile/profile-gate";
 import { useAllInvoices } from "@/features/contractor/profile/components/toolbelt/invoice-store";
 
@@ -53,9 +53,9 @@ export function ContractorDashboard() {
     (i) => i.status === "sent" || i.status === "overdue",
   ).length;
 
-  const ledger = getEcosystemLedger();
-  const activeJobs = ledger.projects.filter((p) => p.status === "awarded").length;
-  const openJobs = ledger.projects.filter((p) => p.status === "open").length;
+  const { feed } = useLeadFeed();
+  const activeJobs = 0;
+  const openJobs = feed.priority.length;
 
   const kmLogged = (profile as unknown as { kmMonth?: number } | null)?.kmMonth ?? 0;
 
@@ -116,7 +116,7 @@ export function ContractorDashboard() {
         <MetricCard
           label="Active jobs"
           value={String(activeJobs)}
-          hint={`${openJobs} open · region`}
+          hint={`${openJobs} matching open jobs`}
           Icon={Hammer}
           tint="sky"
         />
