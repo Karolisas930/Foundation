@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getLandingData } from "@/lib/landing-stats.functions";
 import { TopBar } from "@/components/shared/TopBar";
 import { getEcosystemLedger } from "@/core/demo-session";
 import { getDemoUser, subscribeDemoUser } from "@/lib/demo-auth";
@@ -12,7 +15,12 @@ import { SiteFooter } from "@/features/landing/components/SiteFooter";
 
 export function LandingPage() {
   const [cityFilter, setCityFilter] = useState<string | undefined>(undefined);
-  const [ledger, setLedger] = useState(() => getEcosystemLedger());
+  const fetchLanding = useServerFn(getLandingData);
+  const { data } = useQuery({
+    queryKey: ["landing-data"],
+    queryFn: () => fetchLanding(),
+    staleTime: 30_000,
+  });
   const [signedInSector, setSignedInSector] = useState<SectorId | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -33,7 +41,6 @@ export function LandingPage() {
     const unsubUser = subscribeDemoUser(compute);
     const onLedger = () => {
       compute();
-      setLedger(getEcosystemLedger());
     };
     window.addEventListener("chameleon_ledger_update", onLedger);
     return () => {
@@ -46,12 +53,10 @@ export function LandingPage() {
     return <DashboardShell sector={signedInSector} />;
   }
 
-  const liveJobs = ledger.projects.filter((p) => {
-    if (p.status !== "open" && p.status !== "clarifying") return false;
-    if (cityFilter) return (p.city ?? "").toLowerCase() === cityFilter.toLowerCase();
-    return true;
-  });
-  const openCount = ledger.projects.filter((p) => p.status === "open").length;
+  const allJobs = data?.jobs ?? [];
+  const liveJobs = cityFilter
+    ? allJobs.filter((p) => (p.city ?? "").toLowerCase() === cityFilter.toLowerCase())
+    : allJobs;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground/90">
@@ -71,8 +76,12 @@ export function LandingPage() {
         id="top"
         className="relative z-10 mx-auto max-w-6xl space-y-16 px-4 pb-24 pt-16 sm:space-y-20 sm:px-5 sm:pb-28 sm:pt-20 lg:px-8 lg:pt-24"
       >
-        <Hero verifiedTrades={1284} openCount={openCount} bwCoverage={5} />
-        <HomeCarousel liveJobs={liveJobs} cityFilter={cityFilter} onCityChange={setCityFilter} />
+        <Hero
+          verifiedTrades={data?.proCount ?? 0}
+          openCount={data?.openCount ?? 0}
+          bwCoverage={data?.cityCount ?? 0}
+        />
+        <HomeCarousel liveJobs={liveJobs} pros={data?.pros ?? []} cityFilter={cityFilter} onCityChange={setCityFilter} />
         <PartnerStrip />
         <ValueCards />
         <CtaFooterSection />
