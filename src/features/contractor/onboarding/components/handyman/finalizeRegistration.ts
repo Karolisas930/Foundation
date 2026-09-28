@@ -10,6 +10,7 @@ import { setDemoUser } from "@/lib/demo-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { persistOnboardingProfile } from "@/components/shared/shared";
+import { saveProfileFields, toAuthMetadata, type ProfileFields } from "@/lib/profile-sync";
 
 export interface OnboardingProfileInput {
   firstName: string;
@@ -62,28 +63,22 @@ export async function finalizeHandymanRegistration(
   let alreadyRegistered = false;
   let emailSent = false;
 
-  const saveProfileRow = async (uid: string) => {
-    const { error } = await supabase.from("profiles").upsert(
-      {
-        id: uid,
-        full_name: `${profile.firstName} ${profile.lastName}`.trim() || null,
-        display_name: profile.businessName || null,
-        company_name: profile.businessName || null,
-        account_type: "handyman",
-        phone: profile.mobilePhone || null,
-        postal_code: profile.postalCode || null,
-        city: profile.city || null,
-        address_line1: profile.streetAddress || null,
-        bio: profile.bio || null,
-        trades: profile.trades?.length ? profile.trades : null,
-        languages: profile.languages?.length ? profile.languages : null,
-        service_radius_km: profile.radiusKm,
-        min_project_size: profile.minProjectSize,
-      },
-      { onConflict: "id" },
-    );
-    return error?.message;
+  const fields: ProfileFields = {
+    accountType: "handyman",
+    fullName: `${profile.firstName} ${profile.lastName}`.trim(),
+    displayName: profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+    companyName: profile.businessName,
+    phone: profile.mobilePhone,
+    postalCode: profile.postalCode,
+    city: profile.city,
+    addressLine1: profile.streetAddress,
+    bio: profile.bio,
+    trades: profile.trades,
+    languages: profile.languages,
+    serviceRadiusKm: profile.radiusKm,
+    minProjectSize: profile.minProjectSize,
   };
+  const saveProfileRow = (uid: string) => saveProfileFields(uid, fields);
 
   // Already signed in (e.g. a homeowner adding a trade profile): never ask for
   // a new account — just save the profile onto the current user.
@@ -94,20 +89,6 @@ export async function finalizeHandymanRegistration(
       if (currentUid) {
         const failure = await saveProfileRow(currentUid);
         if (failure) return { signedIn: true, error: failure };
-        try {
-          await supabase.auth.updateUser({
-            data: {
-              full_name: `${profile.firstName} ${profile.lastName}`.trim(),
-              display_name:
-                profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
-              account_type: "handyman",
-              sector: "handyman",
-              phone: profile.mobilePhone || undefined,
-            },
-          });
-        } catch {
-          /* metadata refresh is best effort */
-        }
         return { signedIn: true };
       }
     } catch {
@@ -122,13 +103,7 @@ export async function finalizeHandymanRegistration(
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback?sector=handyman`,
-          data: {
-            full_name: `${profile.firstName} ${profile.lastName}`.trim(),
-            display_name: profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
-            account_type: "handyman",
-            phone: profile.mobilePhone || undefined,
-            sector: "handyman",
-          },
+          data: toAuthMetadata(fields),
         },
       });
       signedIn = !!signUpData?.session;

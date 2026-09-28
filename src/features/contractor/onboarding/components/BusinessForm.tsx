@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { startDemoSession } from "@/core/demo-session";
 import { FormShell } from "@/components/shared/FormShell";
 import { persistOnboardingProfile } from "@/components/shared/shared";
+import { saveProfileForCurrentUser } from "@/lib/profile-sync";
 
 const TEAM_SIZE_OPTIONS = ["1", "2 – 5", "6 – 10", "11 – 20", "21 – 50", "50+"];
 
@@ -46,6 +47,15 @@ export function BusinessForm() {
     }
     setSubmitting(true);
     persistOnboardingProfile("business", profile);
+    const saveError = await saveProfileForCurrentUser({
+      accountType: "business",
+      companyName: profile.legalCompanyName,
+      fullName: `${profile.managingDirectorFirstName ?? ""} ${profile.managingDirectorLastName}`.trim(),
+      phone: profile.companyPhone,
+      city: profile.headquartersCity,
+      postalCode: profile.headquartersPostalCode,
+    });
+    if (saveError) toast.error(saveError);
     startDemoSession("business");
     toast.success("Corporate profile saved.");
     await navigate({ to: "/contractor", replace: true });
