@@ -54,7 +54,16 @@ export interface JobFeedResult {
 /** Load and classify open jobs for the signed-in contractor. */
 export const listContractorJobFeed = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<JobFeedResult> => {
+  .inputValidator(
+    (d: { radiusKm?: number; extraTrades?: string[] } | undefined) => ({
+      radiusKm:
+        typeof d?.radiusKm === "number" && d.radiusKm > 0 && d.radiusKm <= 500 ? d.radiusKm : undefined,
+      extraTrades: Array.isArray(d?.extraTrades)
+        ? d!.extraTrades.filter((t) => typeof t === "string" && t.length < 100).slice(0, 30)
+        : [],
+    }),
+  )
+  .handler(async ({ context, data }): Promise<JobFeedResult> => {
     const { supabase, userId } = context;
 
     const { data: prof, error: profErr } = await supabase
@@ -66,9 +75,9 @@ export const listContractorJobFeed = createServerFn({ method: "GET" })
 
     const matchingProfile: MatchingProfile = {
       minProjectSize: (prof?.min_project_size as number | null) ?? null,
-      serviceRadiusKm: (prof?.service_radius_km as number | null) ?? null,
+      serviceRadiusKm: data.radiusKm ?? (prof?.service_radius_km as number | null) ?? null,
       postalCode: (prof?.postal_code as string | null) ?? null,
-      trades: (prof?.trades as string[] | null) ?? [],
+      trades: [...new Set([...((prof?.trades as string[] | null) ?? []), ...data.extraTrades])],
       languages: (prof?.languages as string[] | null) ?? [],
     };
 

@@ -31,7 +31,7 @@ export function useLeadFeed() {
   const fetchFeed = useServerFn(listContractorJobFeed);
   const query = useQuery({
     queryKey: LEAD_FEED_QUERY_KEY,
-    queryFn: () => fetchFeed(),
+    queryFn: () => fetchFeed({ data: {} }),
     staleTime: 30_000,
     retry: false,
   });

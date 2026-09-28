@@ -26,7 +26,7 @@ export function MiniRadar() {
           </div>
         </div>
         <Link
-          to="/search"
+          to="/contractor/radar"
           className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/80 hover:border-orange/40 hover:text-orange"
         >
           View all <ArrowUpRight className="h-3 w-3" />
@@ -42,7 +42,7 @@ export function MiniRadar() {
           {jobs.map(({ job: j, classification }) => (
             <li key={j.id}>
               <Link
-                to="/search"
+                to="/contractor/radar"
                 className="group block h-full rounded-xl border border-white/10 bg-white/[0.02] p-3 transition hover:border-orange/30 hover:bg-white/[0.05]"
               >
                 <div className="flex items-start justify-between gap-2">
