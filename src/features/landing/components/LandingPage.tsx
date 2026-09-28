@@ -115,7 +115,7 @@ export function LandingPage() {
           openCount={data?.openCount ?? 0}
           bwCoverage={data?.cityCount ?? 0}
         />
-        <HomeCarousel liveJobs={liveJobs} pros={data?.pros ?? []} cityFilter={cityFilter} onCityChange={setCityFilter} />
+        <HomeCarousel liveJobs={liveJobs} pros={data?.pros ?? []} verifiedPros={data?.verifiedPros ?? []} cityFilter={cityFilter} onCityChange={setCityFilter} />
         <PartnerStrip />
         <ValueCards />
         <CtaFooterSection />
