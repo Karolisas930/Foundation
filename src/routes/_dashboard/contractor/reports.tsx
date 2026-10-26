@@ -1,3 +1,4 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { DownloadsReportsPage } from "@/features/contractor/reports/components/DownloadsReportsPage";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ function ReportsPending() {
   );
 }
 
-function ReportsError({ error, reset }: { error: Error; reset: () => void }) {
+function ReportsError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   return (
     <ReportsShellMessage title="Something went wrong">
