@@ -40,7 +40,7 @@ function ReportsError({ error, reset }: ErrorComponentProps) {
   return (
     <ReportsShellMessage title="Something went wrong">
       <p className="text-sm text-slate-400">
-        {error?.message ?? "The Downloads & Reports page failed to load."}
+        {(error as Error | undefined)?.message ?? "The Downloads & Reports page failed to load."}
       </p>
       <div className="mt-4 flex justify-center gap-2">
         <Button
