@@ -130,6 +130,21 @@ export function SecureAccountDialog({
               const trimmedFullName = fullName?.trim() || undefined;
               const trimmedPhone = phone?.trim() || undefined;
 
+              // Already signed in (they clicked the email link, maybe in another
+              // tab)? Then the account exists — just attach the password to it.
+              const { data: existing } = await supabase.auth.getSession();
+              if (existing.session) {
+                const { error: upErr } = await supabase.auth.updateUser({ password: passwordValue });
+                if (upErr) {
+                  toast.error(upErr.message);
+                  return;
+                }
+                toast.success("Password saved.");
+                onPasswordCreated();
+                return;
+              }
+
+
               const { data: signUpData, error } = await supabase.auth.signUp({
                 email,
                 password: passwordValue,

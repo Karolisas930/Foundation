@@ -14,6 +14,9 @@ import { SummaryRow } from "./parts";
 import { sendMagicLink } from "./auth-helpers";
 import { SecureAccountDialog } from "./SecureAccountDialog";
 import { useConfirmedRedirect } from "@/features/auth/hooks/useConfirmedRedirect";
+import { useNavigate } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
+import { resolveDashboardPath } from "@/lib/account-role";
 
 export type SuccessState = {
   email: string;
@@ -25,8 +28,10 @@ export type SuccessState = {
 };
 
 export function SuccessScreen({ success }: { success: SuccessState }) {
+  const navigate = useNavigate();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [postSignup, setPostSignup] = useState(false);
+  const [linkClicked, setLinkClicked] = useState(false);
   const confirmed = useConfirmedRedirect(postSignup);
 
   // Land at the top of the success page so the confirmation is immediately
@@ -34,6 +39,31 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  // Watch for the email link being clicked (session appears, even from another
+  // tab). When it does, pop up the "create a password" dialog automatically.
+  useEffect(() => {
+    if (linkClicked) return;
+    const hit = () => {
+      setLinkClicked(true);
+      setPasswordOpen(true);
+    };
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (s?.user) hit();
+    });
+    const poll = setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) hit();
+    }, 2000);
+    return () => {
+      clearInterval(poll);
+      sub.subscription.unsubscribe();
+    };
+  }, [linkClicked]);
+
+  async function goDashboard() {
+    await navigate({ to: await resolveDashboardPath() });
+  }
 
   // If the user just set a password, show the confirmation message — and watch
   // for the session appearing (confirmed in another tab) so this screen moves
@@ -141,18 +171,6 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
           </div>
 
           <div className="mt-6 flex flex-col gap-3">
-            <Button
-              type="button"
-              size="lg"
-              onClick={async () => {
-                const res = await sendMagicLink(success.email);
-                if (res.ok) toast.success(res.message);
-                else toast.error(res.message);
-              }}
-              className="btn-glow btn-glow-hover h-14 w-full rounded-full px-8 text-base font-bold uppercase tracking-wide"
-            >
-              Sign In & View Dashboard <ArrowRight className="ml-2 size-5" />
-            </Button>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Button
                 type="button"
@@ -186,7 +204,7 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
         email={success.email}
         fullName={success.fullName}
         phone={success.phone}
-        onPasswordCreated={() => setPostSignup(true)}
+        onPasswordCreated={() => (linkClicked ? void goDashboard() : setPostSignup(true))}
       />
     </main>
   );

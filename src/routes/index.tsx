@@ -22,8 +22,20 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+import { useEffect } from "react";
 import { LandingPage } from "@/features/landing/components/LandingPage";
 
 function Index() {
+  // If an email link fell back to the home page (redirect URL not allow-listed),
+  // hand it to /auth/callback so the person lands on their dashboard instead.
+  useEffect(() => {
+    const { search, hash } = window.location;
+    const q = new URLSearchParams(search);
+    const fromEmail =
+      q.has("code") || q.has("token_hash") || /access_token=|type=(magiclink|signup)/.test(hash);
+    if (!fromEmail) return;
+    if (!q.has("sector")) q.set("sector", "homeowner");
+    window.location.replace(`/auth/callback?${q.toString()}${hash}`);
+  }, []);
   return <LandingPage />;
 }
