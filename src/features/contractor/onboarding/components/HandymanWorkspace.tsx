@@ -46,8 +46,6 @@ import {
   evaluateLeadGate,
   defaultTrialActive,
   maskPersonalField,
-  ALLOW_UNVERIFIED_TEST_CONTACT,
-  UNVERIFIED_ESTIMATE_LABEL,
 } from "@/features/contractor/leads/lead-gate";
 import { ComplianceBanner, BlurredValue } from "@/components/shared/ComplianceBanner";
 
@@ -179,46 +177,37 @@ export function HandymanWorkspace() {
   const visibleLeads = showOnlyMatches ? matchingLeads : priorityLeads;
   const hasProfile = Boolean(profile && myTrades.length > 0);
 
-  // Testing mode: unverified contractors may act after acknowledging the
-  // legal verification notice; their messages are labelled non-binding.
-  const testMode = ALLOW_UNVERIFIED_TEST_CONTACT && !leadGate.canMessage;
-  const tag = (text: string) => (testMode ? `[${UNVERIFIED_ESTIMATE_LABEL}]\n${text}` : text);
-
-  const handleSendQuestion = (projectId: string, acknowledged = false) => {
+  const handleSendQuestion = (projectId: string) => {
     if (!questionText.trim()) return;
-    if (!leadGate.canMessage && !(testMode && acknowledged)) {
+    if (!profileComplete) {
       setPendingAction({ kind: "quote", projectId });
       setActiveProjectId(null);
       setGateOpen(true);
       return;
     }
-    const success = sendQuickQuestion(projectId, tag(questionText));
+    const success = sendQuickQuestion(projectId, questionText);
     if (success) {
-      toast.success("Question sent", {
-        description: testMode
-          ? "Sent as a non-binding message from an unverified profile."
-          : "Your query was routed to the homeowner inbox.",
+      toast.success("Question transmitted", {
+        description: "Your query was routed to the homeowner inbox.",
       });
       setQuestionText("");
       setActiveProjectId(null);
     }
   };
 
-  const handleSubmitBid = (projectId: string, acknowledged = false) => {
-    if (!leadGate.canMessage && !(testMode && acknowledged)) {
+  const handleSubmitBid = (projectId: string) => {
+    if (!profileComplete) {
       setPendingAction({ kind: "bid", projectId });
       setGateOpen(true);
       return;
     }
     const success = sendQuickQuestion(
       projectId,
-      tag("Bid submitted — full quotation attached. Available to start within 2 weeks."),
+      "Bid submitted — full quotation attached. Available to start within 2 weeks.",
     );
     if (success) {
       toast.success("Bid submitted", {
-        description: testMode
-          ? "Shown to the homeowner as a non-binding estimate (unverified profile)."
-          : "Your verified bid is now visible to the homeowner.",
+        description: "Your verified bid is now visible to the homeowner.",
       });
     }
   };
@@ -556,13 +545,13 @@ export function HandymanWorkspace() {
                             onClick={() => handleSendQuestion(p.id)}
                             className="text-xs bg-orange text-white hover:bg-orange/90 gap-1"
                           >
-                            {leadGate.canMessage || testMode ? (
+                            {profileComplete ? (
                               <>
                                 <Send className="h-3 w-3" /> Transmit Note
                               </>
                             ) : (
                               <>
-                                <Lock className="h-3 w-3" /> Verify to send
+                                <Lock className="h-3 w-3" /> Complete profile to send
                               </>
                             )}
                           </Button>
@@ -574,7 +563,7 @@ export function HandymanWorkspace() {
                       onClick={() => handleSubmitBid(p.id)}
                       className="h-8 text-xs bg-orange text-white hover:bg-orange/90 gap-1"
                     >
-                      {leadGate.canMessage ? (
+                      {profileComplete ? (
                         <>
                           <Send className="h-3.5 w-3.5" /> Submit Bid
                         </>
@@ -589,7 +578,7 @@ export function HandymanWorkspace() {
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Pending client confirmation
                       </span>
-                    ) : leadGate.canUnlockLeads || testMode ? (
+                    ) : leadGate.canUnlockLeads ? (
                       <Button
                         size="sm"
                         onClick={() => handleAcceptLead(p.id)}
@@ -714,20 +703,6 @@ export function HandymanWorkspace() {
             <Progress value={completion.percent} className="h-2 bg-slate-200" />
           </div>
 
-          {testMode && (
-            <div className="mt-2 rounded-md border border-amber-400/50 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-900">
-              <p className="font-bold">Verifizierung ausstehend — Testphase</p>
-              <p className="mt-1">
-                Under the German Crafts Code (Handwerksordnung), binding commercial offers and
-                direct client contact require a verified trade registration (Gewerbeanmeldung /
-                Handwerkskarte) and liability insurance. Until your profile is verified, anything
-                you send is shown to the homeowner as a <strong>non-binding cost estimate from an
-                unverified profile</strong>. Please upload your documents below to get fully
-                verified.
-              </p>
-            </div>
-          )}
-
           {completion.missing.length > 0 && (
             <ul className="text-[11px] text-slate-600 space-y-1 mt-2">
               {completion.missing.map((m) => (
@@ -791,7 +766,7 @@ export function HandymanWorkspace() {
             >
               Close
             </Button>
-            {pendingAction && (leadGate.canMessage || testMode) && (
+            {profileComplete && pendingAction && (
               <Button
                 size="sm"
                 className="text-xs bg-orange text-white hover:bg-orange/90"
@@ -799,11 +774,10 @@ export function HandymanWorkspace() {
                   const action = pendingAction;
                   setGateOpen(false);
                   setPendingAction(null);
-                  if (action.kind === "bid") handleSubmitBid(action.projectId, true);
-                  else handleSendQuestion(action.projectId, true);
+                  if (action.kind === "bid") handleSubmitBid(action.projectId);
                 }}
               >
-                {testMode ? "I understand — send as non-binding estimate" : "Continue submission"}
+                Continue submission
               </Button>
             )}
           </div>

@@ -4,4 +4,3 @@
  */
 export * from "./config";
 export * from "./germany";
-export * from "./trade-codes";

@@ -28,7 +28,6 @@ import {
 import { cn } from "@/lib/utils";
 import { startDemoSession } from "@/core/demo-session";
 import { persistOnboardingProfile } from "@/components/shared/shared";
-import { saveProfileForCurrentUser } from "@/lib/profile-sync";
 
 type PostalEntry = { match: RegExp; city: string; state: string };
 type CountryEntry = {
@@ -192,14 +191,6 @@ export function ArchitectForm() {
       city,
       stateRegion,
     });
-    void saveProfileForCurrentUser({
-      accountType: "architect",
-      fullName: `${firstName} ${lastName}`.trim(),
-      companyName: firm,
-      phone,
-      postalCode,
-      city,
-    }).then((err) => err && toast.error(err));
     // Architect rides on the admin sector slot so the dashboard router can
     // preview the architect sector panel.
     startDemoSession("admin");

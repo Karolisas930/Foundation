@@ -10,7 +10,6 @@ import { setDemoUser } from "@/lib/demo-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { persistOnboardingProfile } from "@/components/shared/shared";
-import { saveProfileFields, toAuthMetadata, type ProfileFields } from "@/lib/profile-sync";
 
 export interface OnboardingProfileInput {
   firstName: string;
@@ -35,7 +34,7 @@ export interface OnboardingProfileInput {
 export async function finalizeHandymanRegistration(
   input: OnboardingProfileInput,
   password: string | null,
-): Promise<{ signedIn: boolean; error?: string; alreadyRegistered?: boolean; emailSent?: boolean }> {
+): Promise<{ signedIn: boolean; error?: string }> {
   const profile = {
     ...input,
     firstName: input.firstName.trim(),
@@ -60,25 +59,25 @@ export async function finalizeHandymanRegistration(
 
   let signedIn = false;
   let surfacedError: string | undefined;
-  let alreadyRegistered = false;
-  let emailSent = false;
 
-  const fields: ProfileFields = {
-    accountType: "handyman",
-    fullName: `${profile.firstName} ${profile.lastName}`.trim(),
-    displayName: profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
-    companyName: profile.businessName,
-    phone: profile.mobilePhone,
-    postalCode: profile.postalCode,
-    city: profile.city,
-    addressLine1: profile.streetAddress,
-    bio: profile.bio,
-    trades: profile.trades,
-    languages: profile.languages,
-    serviceRadiusKm: profile.radiusKm,
-    minProjectSize: profile.minProjectSize,
+  const saveProfileRow = async (uid: string) => {
+    const { error } = await supabase.from("profiles").upsert(
+      {
+        id: uid,
+        full_name: `${profile.firstName} ${profile.lastName}`.trim() || null,
+        display_name: profile.businessName || null,
+        account_type: "handyman",
+        phone: profile.mobilePhone || null,
+        postal_code: profile.postalCode || null,
+        city: profile.city || null,
+        address_line1: profile.streetAddress || null,
+        service_radius_km: profile.radiusKm,
+        min_project_size: profile.minProjectSize,
+      },
+      { onConflict: "id" },
+    );
+    return error?.message;
   };
-  const saveProfileRow = (uid: string) => saveProfileFields(uid, fields);
 
   // Already signed in (e.g. a homeowner adding a trade profile): never ask for
   // a new account — just save the profile onto the current user.
@@ -89,6 +88,20 @@ export async function finalizeHandymanRegistration(
       if (currentUid) {
         const failure = await saveProfileRow(currentUid);
         if (failure) return { signedIn: true, error: failure };
+        try {
+          await supabase.auth.updateUser({
+            data: {
+              full_name: `${profile.firstName} ${profile.lastName}`.trim(),
+              display_name:
+                profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+              account_type: "handyman",
+              sector: "handyman",
+              phone: profile.mobilePhone || undefined,
+            },
+          });
+        } catch {
+          /* metadata refresh is best effort */
+        }
         return { signedIn: true };
       }
     } catch {
@@ -96,58 +109,49 @@ export async function finalizeHandymanRegistration(
     }
   }
 
-  if (isSupabaseConfigured() && profile.businessEmail && password) {
-    try {
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: profile.businessEmail,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?sector=handyman`,
-          data: toAuthMetadata(fields),
-        },
-      });
-      signedIn = !!signUpData?.session;
-      // Supabase hides "email taken" behind a fake success whose user has no
-      // identities — and in that case NO confirmation email is sent.
-      const identities = signUpData?.user?.identities;
-      if (!signUpError && signUpData?.user && Array.isArray(identities) && identities.length === 0) {
-        alreadyRegistered = true;
-      } else if (!signUpError && signUpData?.user && !signedIn) {
-        emailSent = true;
-      }
-      if (!signedIn) {
-        const { data: signInData } = await supabase.auth
-          .signInWithPassword({ email: profile.businessEmail, password })
-          .catch(() => ({ data: { session: null } }) as { data: { session: unknown | null } });
-        signedIn = !!signInData?.session;
-      }
-      if (signedIn) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const uid = sessionData?.session?.user?.id;
-        if (uid) {
-          try {
-            await saveProfileRow(uid);
-          } catch {
-            /* non-fatal — profile row will backfill on next save */
-          }
-        }
-      }
-      if (signUpError && !signedIn) {
-        if (/already|registered|exists/i.test(signUpError.message)) {
-          alreadyRegistered = true;
-        } else if (/rate limit|too many/i.test(signUpError.message)) {
-          surfacedError =
-            "Too many confirmation emails were requested. Please wait a few minutes and use \"Resend\".";
-        } else if (/failed to fetch|networkerror|load failed/i.test(signUpError.message)) {
-          surfacedError = "Could not reach the server. Check your connection and try again.";
-        } else {
-          surfacedError = signUpError.message;
-        }
-      }
-    } catch (err) {
-      surfacedError = err instanceof Error ? err.message : "Sign-up failed.";
-    }
+  if (!isSupabaseConfigured()) {
+    return { signedIn: false, error: "Sign-up is not connected — no confirmation email could be sent." };
+  }
+  if (!profile.businessEmail || !password) {
+    return { signedIn: false, error: "Enter your business email and a password to create the account." };
   }
 
-  return { signedIn, error: surfacedError, alreadyRegistered, emailSent };
+  try {
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: profile.businessEmail,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?sector=handyman&pw=1`,
+        data: {
+          full_name: `${profile.firstName} ${profile.lastName}`.trim(),
+          display_name: profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+          account_type: "handyman",
+          phone: profile.mobilePhone || undefined,
+          sector: "handyman",
+        },
+      },
+    });
+    if (signUpError) {
+      console.error("[handyman signup] failed:", signUpError);
+      return { signedIn: false, error: `Sign-up failed: ${signUpError.message}` };
+    }
+    // Supabase hides "email already registered": it returns a user with no
+    // identities and sends NO email. Say so instead of "check your inbox".
+    if (signUpData?.user && (signUpData.user.identities?.length ?? 0) === 0) {
+      return {
+        signedIn: false,
+        error: "This email already has an account — sign in or use “Forgot password”.",
+      };
+    }
+    signedIn = !!signUpData?.session;
+    if (signedIn && signUpData.session?.user?.id) {
+      const failure = await saveProfileRow(signUpData.session.user.id);
+      if (failure) console.error("[handyman signup] profile save failed:", failure);
+    }
+  } catch (err) {
+    console.error("[handyman signup] network error:", err);
+    surfacedError = "Couldn't reach the sign-up server — check your connection and try again.";
+  }
+
+  return { signedIn, error: surfacedError };
 }

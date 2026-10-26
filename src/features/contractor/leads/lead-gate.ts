@@ -24,19 +24,6 @@
 export const INITIAL_FREE_TRIAL_UNTIL = "2027-05-01T00:00:00.000Z";
 
 /**
- * TESTING SWITCH. When true, unverified contractors may still send quick
- * questions, bids and accept leads — but only after acknowledging a legal
- * verification notice, and everything they send is labelled as a
- * non-binding estimate from an unverified profile.
- * Set to FALSE before production launch to restore the strict gate.
- */
-export const ALLOW_UNVERIFIED_TEST_CONTACT = true;
-
-/** Label attached to anything sent by an unverified contractor in test mode. */
-export const UNVERIFIED_ESTIMATE_LABEL =
-  "Unverbindliche Kostenschätzung — Profil noch nicht verifiziert";
-
-/**
  * Fallback default for `is_trial_active` when no per-profile trial state
  * exists yet. Kept TRUE for the launch window described above.
  */

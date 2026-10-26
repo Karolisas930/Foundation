@@ -1,12 +1,11 @@
 /**
  * PerformanceStats — Tab 4: ratings, performance and reviews summary.
- *
- * Real-data only: no placeholder reviews or invented percentages. Values
- * arrive through props once verified, completed jobs produce them.
+ * Static demo content for now; structured so real data can be wired in
+ * without touching the surrounding tab shell.
  */
 import { Star, Repeat2, Timer, ThumbsUp, MessageSquareQuote } from "lucide-react";
 
-export interface Review {
+interface Review {
   id: string;
   author: string;
   rating: number;
@@ -14,22 +13,32 @@ export interface Review {
   text: string;
 }
 
-export interface PerformanceStatsProps {
-  reviews?: Review[];
-  recommendPct?: number | null;
-  onTimePct?: number | null;
-  repeatPct?: number | null;
-}
+const DEMO_REVIEWS: Review[] = [
+  {
+    id: "r1",
+    author: "Anja M.",
+    rating: 5,
+    date: "2026-06-22",
+    text: "Punctual, tidy and explained every step. Booked again for the kitchen.",
+  },
+  {
+    id: "r2",
+    author: "Tobias K.",
+    rating: 5,
+    date: "2026-06-14",
+    text: "Smart Receipt invoicing made expenses painless. Highly recommend.",
+  },
+  {
+    id: "r3",
+    author: "Lena R.",
+    rating: 4,
+    date: "2026-05-30",
+    text: "Great work on the balcony repaint, slight delay on materials.",
+  },
+];
 
-export function PerformanceStats({
-  reviews = [],
-  recommendPct = null,
-  onTimePct = null,
-  repeatPct = null,
-}: PerformanceStatsProps) {
-  const hasReviews = reviews.length > 0;
-  const average = hasReviews ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
-  const pct = (v: number | null) => (v == null ? "—" : `${v}%`);
+export function PerformanceStats() {
+  const average = DEMO_REVIEWS.reduce((s, r) => s + r.rating, 0) / DEMO_REVIEWS.length;
 
   return (
     <div className="space-y-6">
@@ -46,32 +55,28 @@ export function PerformanceStats({
       {/* Top metrics */}
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Metric
-          icon={
-            <Star
-              className={hasReviews ? "size-4 fill-orange text-orange" : "size-4 text-slate-500"}
-            />
-          }
+          icon={<Star className="size-4 fill-orange text-orange" />}
           label="Rating"
-          value={hasReviews ? average.toFixed(1) : "—"}
-          hint={hasReviews ? `${reviews.length} reviews` : "No reviews yet"}
+          value={average.toFixed(1)}
+          hint={`${DEMO_REVIEWS.length} reviews`}
         />
         <Metric
           icon={<ThumbsUp className="size-4" />}
           label="Recommend"
-          value={pct(recommendPct)}
+          value="96%"
           hint="Would rebook"
         />
         <Metric
           icon={<Timer className="size-4" />}
           label="On time"
-          value={pct(onTimePct)}
+          value="98%"
           hint="Arrivals last 30d"
         />
         <Metric
           icon={<Repeat2 className="size-4" />}
           label="Repeat"
-          value={pct(repeatPct)}
-          hint="Of recent jobs"
+          value="32%"
+          hint="Of last 50 jobs"
         />
       </section>
 
@@ -81,36 +86,27 @@ export function PerformanceStats({
           <MessageSquareQuote className="size-4 text-orange" />
           <h3 className="font-display text-base font-bold text-white">Recent reviews</h3>
         </div>
-        {!hasReviews ? (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/10 px-4 py-8 text-center">
-            <p className="text-sm font-medium text-white/70">No reviews yet</p>
-            <p className="max-w-sm text-xs leading-relaxed text-slate-400">
-              Reviews appear here once clients rate your completed projects.
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-white/5">
-            {reviews.map((r) => (
-              <li key={r.id} className="py-4 first:pt-0 last:pb-0">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-white">{r.author}</p>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500">{r.date}</p>
-                </div>
-                <div className="mt-1 flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`size-3.5 ${
-                        i < r.rating ? "fill-orange text-orange" : "text-slate-600"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className="mt-2 text-sm text-slate-300">{r.text}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="divide-y divide-white/5">
+          {DEMO_REVIEWS.map((r) => (
+            <li key={r.id} className="py-4 first:pt-0 last:pb-0">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-white">{r.author}</p>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500">{r.date}</p>
+              </div>
+              <div className="mt-1 flex gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`size-3.5 ${
+                      i < r.rating ? "fill-orange text-orange" : "text-slate-600"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-slate-300">{r.text}</p>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );
