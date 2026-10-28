@@ -11,7 +11,8 @@ import { MapPin, Lock, Sparkles, MessageCircle, Send, Handshake, Phone } from "l
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { getActiveHandymanProfile } from "@/features/contractor/profile/profile-gate";
-import { getEcosystemLedger, type EcosystemProject } from "@/core/demo-session";
+import type { EcosystemProject } from "@/core/demo-session";
+import { useRealOpenJobs } from "@/features/contractor/dashboard/hooks/useRealJobs";
 import {
   listHelpRequests,
   subscribeHelpRequests,
@@ -141,11 +142,11 @@ export function JobRadar() {
   const postalCode = profile?.postalCode;
   const radiusKm = profile?.radiusKm;
 
-  const ledger = getEcosystemLedger();
+  const { jobs: realJobs } = useRealOpenJobs();
   const trending = useMemo(
-    () => buildTrending(ledger.projects, trades, city),
+    () => buildTrending(realJobs, trades, city),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ledger.projects, trades.join("|"), city],
+    [realJobs, trades.join("|"), city],
   );
 
   const hasProfileArea = Boolean(city || postalCode);

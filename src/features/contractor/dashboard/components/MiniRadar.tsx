@@ -1,17 +1,17 @@
 import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, MapPin, Radar } from "lucide-react";
-import { getEcosystemLedger } from "@/core/demo-session";
+import { useRealOpenJobs } from "../hooks/useRealJobs";
 import { getActiveHandymanProfile } from "@/features/contractor/profile/profile-gate";
 import { eur } from "./helpers";
 
 export function MiniRadar() {
   const profile = getActiveHandymanProfile();
   const trades = new Set((profile?.trades ?? []).map((t) => t.toLowerCase()));
-  const ledger = getEcosystemLedger();
+  const { jobs: real } = useRealOpenJobs();
 
   const jobs = useMemo(() => {
-    const open = ledger.projects.filter((p) => p.status === "open" || p.status === "clarifying");
+    const open = real.filter((p) => p.status === "open" || p.status === "clarifying");
     open.sort((a, b) => {
       const aM = a.trade && trades.has(a.trade.toLowerCase()) ? 1 : 0;
       const bM = b.trade && trades.has(b.trade.toLowerCase()) ? 1 : 0;
@@ -19,7 +19,7 @@ export function MiniRadar() {
     });
     return open.slice(0, 4);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ledger.projects.length, [...trades].join("|")]);
+  }, [real, [...trades].join("|")]);
 
   return (
     <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
@@ -68,7 +68,7 @@ export function MiniRadar() {
                   <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-white/60">
                     <span className="inline-flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
-                      {j.city ?? j.locationZip}
+                      {j.city ?? "—"}
                     </span>
                     <span className="font-mono font-semibold text-white/80">
                       {eur(j.budgetTotal)}

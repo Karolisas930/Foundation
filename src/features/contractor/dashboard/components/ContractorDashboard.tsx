@@ -23,7 +23,7 @@ import { VoiceToInvoiceSheet } from "@/features/contractor/profile/components/to
 import { PostHelpRequestSheet } from "@/features/contractor/onboarding/components/PostHelpRequestSheet";
 import { SiteDiarySheet } from "@/features/contractor/team/components/SiteDiarySheet";
 
-import { getEcosystemLedger } from "@/core/demo-session";
+import { useRealOpenJobs, useActiveJobCount } from "../hooks/useRealJobs";
 import { getActiveHandymanProfile } from "@/features/contractor/profile/profile-gate";
 import { useAllInvoices } from "@/features/contractor/profile/components/toolbelt/invoice-store";
 
@@ -53,9 +53,8 @@ export function ContractorDashboard() {
     (i) => i.status === "sent" || i.status === "overdue",
   ).length;
 
-  const ledger = getEcosystemLedger();
-  const activeJobs = ledger.projects.filter((p) => p.status === "awarded").length;
-  const openJobs = ledger.projects.filter((p) => p.status === "open").length;
+  const { openCount: openJobs } = useRealOpenJobs();
+  const activeJobs = useActiveJobCount();
 
   const kmLogged = (profile as unknown as { kmMonth?: number } | null)?.kmMonth ?? 0;
 
