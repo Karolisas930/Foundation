@@ -13,32 +13,12 @@ interface Review {
   text: string;
 }
 
-const DEMO_REVIEWS: Review[] = [
-  {
-    id: "r1",
-    author: "Anja M.",
-    rating: 5,
-    date: "2026-06-22",
-    text: "Punctual, tidy and explained every step. Booked again for the kitchen.",
-  },
-  {
-    id: "r2",
-    author: "Tobias K.",
-    rating: 5,
-    date: "2026-06-14",
-    text: "Smart Receipt invoicing made expenses painless. Highly recommend.",
-  },
-  {
-    id: "r3",
-    author: "Lena R.",
-    rating: 4,
-    date: "2026-05-30",
-    text: "Great work on the balcony repaint, slight delay on materials.",
-  },
-];
+const DEMO_REVIEWS: Review[] = [];
 
 export function PerformanceStats() {
-  const average = DEMO_REVIEWS.reduce((s, r) => s + r.rating, 0) / DEMO_REVIEWS.length;
+  const average = DEMO_REVIEWS.length
+    ? DEMO_REVIEWS.reduce((s, r) => s + r.rating, 0) / DEMO_REVIEWS.length
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -57,26 +37,26 @@ export function PerformanceStats() {
         <Metric
           icon={<Star className="size-4 fill-orange text-orange" />}
           label="Rating"
-          value={average.toFixed(1)}
+          value={DEMO_REVIEWS.length ? average.toFixed(1) : "—"}
           hint={`${DEMO_REVIEWS.length} reviews`}
         />
         <Metric
           icon={<ThumbsUp className="size-4" />}
           label="Recommend"
-          value="96%"
+          value="—"
           hint="Would rebook"
         />
         <Metric
           icon={<Timer className="size-4" />}
           label="On time"
-          value="98%"
-          hint="Arrivals last 30d"
+          value="—"
+          hint="Arrivals"
         />
         <Metric
           icon={<Repeat2 className="size-4" />}
           label="Repeat"
-          value="32%"
-          hint="Of last 50 jobs"
+          value="—"
+          hint="Of completed jobs"
         />
       </section>
 
@@ -86,6 +66,9 @@ export function PerformanceStats() {
           <MessageSquareQuote className="size-4 text-orange" />
           <h3 className="font-display text-base font-bold text-white">Recent reviews</h3>
         </div>
+        {DEMO_REVIEWS.length === 0 && (
+          <p className="text-sm text-slate-400">No reviews yet. They appear after completed jobs.</p>
+        )}
         <ul className="divide-y divide-white/5">
           {DEMO_REVIEWS.map((r) => (
             <li key={r.id} className="py-4 first:pt-0 last:pb-0">

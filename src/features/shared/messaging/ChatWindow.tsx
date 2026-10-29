@@ -46,23 +46,7 @@ type Msg =
   | { id: string; mine: boolean; kind: "voice"; duration: string; time: string; read?: boolean }
   | { id: string; mine: boolean; kind: "location"; label: string; time: string; read?: boolean };
 
-const DEMO_SEED: Msg[] = [
-  {
-    id: "s1",
-    mine: false,
-    kind: "text",
-    body: "Hallo! Können Sie am Freitag vorbeikommen?",
-    time: "09:12",
-  },
-  {
-    id: "s2",
-    mine: true,
-    kind: "text",
-    body: "Ja klar — 10 Uhr passt.",
-    time: "09:14",
-    read: true,
-  },
-];
+const DEMO_SEED: Msg[] = [];
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, {

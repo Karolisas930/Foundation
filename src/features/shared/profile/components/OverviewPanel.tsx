@@ -32,27 +32,7 @@ type DemoReview = {
   quote: string;
 };
 
-const DEMO_REVIEWS: DemoReview[] = [
-  {
-    name: "Anna M.",
-    date: "May 2026",
-    rating: 5,
-    quote:
-      "Punctual, tidy and clearly explained every step. The finish looks better than we imagined.",
-  },
-  {
-    name: "Julian K.",
-    date: "April 2026",
-    rating: 5,
-    quote: "Great communication from the first quote to the final walkthrough. Would hire again.",
-  },
-  {
-    name: "Sophie R.",
-    date: "March 2026",
-    rating: 4,
-    quote: "Fair pricing, professional crew, and they left the site spotless. Highly recommend.",
-  },
-];
+const DEMO_REVIEWS: DemoReview[] = [];
 
 function Stars({ value }: { value: number }) {
   return (
@@ -70,9 +50,9 @@ function Stars({ value }: { value: number }) {
 }
 
 export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: OverviewPanelProps) {
-  const displayRating = rating > 0 ? rating : 4.9;
-  const reviewCount = jobsCompleted > 0 ? jobsCompleted : DEMO_REVIEWS.length;
-  const onTimePct = 98;
+  const displayRating = rating > 0 ? rating : 0;
+  const reviewCount = jobsCompleted;
+  const onTimePct: number | null = null;
 
   const cardBase = "rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6";
 
@@ -125,7 +105,7 @@ export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: Over
             <Award className="size-5 text-orange/70 shrink-0" />
             <div className="min-w-0">
               <div className="font-display text-xl font-bold text-white leading-tight">
-                {onTimePct}%
+                {onTimePct === null ? "—" : `${onTimePct}%`}
               </div>
               <p className="text-xs text-muted-foreground">On-time delivery</p>
             </div>
@@ -164,6 +144,9 @@ export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: Over
       {/* Verified Client Reviews */}
       <section className={cardBase}>
         <h4 className="font-display text-lg font-bold text-white mb-4">Verified Client Reviews</h4>
+        {DEMO_REVIEWS.length === 0 && (
+          <p className="text-sm text-muted-foreground">No reviews yet. Reviews appear after completed jobs.</p>
+        )}
         <ul className="space-y-3">
           {DEMO_REVIEWS.map((r) => (
             <li key={r.name} className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-4">
