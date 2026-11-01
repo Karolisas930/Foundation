@@ -6,14 +6,11 @@
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, CheckCircle2, KeyRound, Mail, Sparkles } from "lucide-react";
+import { CheckCircle2, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TopBar } from "@/components/shared/TopBar";
 import type { EcosystemProject } from "@/core/demo-session";
 import { SummaryRow } from "./parts";
-import { sendMagicLink } from "./auth-helpers";
-import { SecureAccountDialog } from "./SecureAccountDialog";
-import { useConfirmedRedirect } from "@/features/auth/hooks/useConfirmedRedirect";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveDashboardPath } from "@/lib/account-role";
@@ -29,70 +26,35 @@ export type SuccessState = {
 
 export function SuccessScreen({ success }: { success: SuccessState }) {
   const navigate = useNavigate();
-  const [passwordOpen, setPasswordOpen] = useState(false);
-  const [postSignup, setPostSignup] = useState(false);
-  const [linkClicked, setLinkClicked] = useState(false);
-  const confirmed = useConfirmedRedirect(postSignup);
+  const [confirmed, setConfirmed] = useState(false);
 
-  // Land at the top of the success page so the confirmation is immediately
-  // visible (the form can be tall on mobile).
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Watch for the email link being clicked (session appears, even from another
-  // tab). When it does, pop up the "create a password" dialog automatically.
+  // The account was created with a password during intake. As soon as a
+  // session exists (link clicked, even in another tab), go to the dashboard.
   useEffect(() => {
-    if (linkClicked) return;
-    const hit = () => {
-      setLinkClicked(true);
-      setPasswordOpen(true);
+    if (confirmed) return;
+    let done = false;
+    const hit = async () => {
+      if (done) return;
+      done = true;
+      setConfirmed(true);
+      await navigate({ to: await resolveDashboardPath() });
     };
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (s?.user) hit();
+      if (s?.user) void hit();
     });
     const poll = setInterval(async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session?.user) hit();
+      if (data.session?.user) void hit();
     }, 2000);
     return () => {
       clearInterval(poll);
       sub.subscription.unsubscribe();
     };
-  }, [linkClicked]);
-
-  async function goDashboard() {
-    await navigate({ to: await resolveDashboardPath() });
-  }
-
-  // If the user just set a password, show the confirmation message — and watch
-  // for the session appearing (confirmed in another tab) so this screen moves
-  // on by itself instead of feeling stuck.
-  if (postSignup) {
-    return (
-      <main className="min-h-screen intake-grid text-slate-50">
-        <TopBar />
-        <section className="mx-auto max-w-2xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
-          <div className="intake-card rounded-2xl p-7 text-center shadow-[0_10px_40px_-20px_rgba(0,0,0,0.6)]">
-            {confirmed ? (
-              <>
-                <h2 className="text-xl font-semibold text-white">You're confirmed!</h2>
-                <p className="mt-2 text-slate-300">Taking you to your dashboard…</p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-semibold text-white">Check your email</h2>
-                <p className="mt-2 text-slate-300">
-                  We've sent a confirmation link to your email address. Please click the link to
-                  complete your registration and access your dashboard.
-                </p>
-              </>
-            )}
-          </div>
-        </section>
-      </main>
-    );
-  }
+  }, [confirmed, navigate]);
 
   return (
     <main className="min-h-screen intake-grid text-slate-50">
@@ -161,51 +123,42 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
           <div className="mt-4 rounded-xl border border-white/15 bg-white/8 p-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-white">
               <Mail className="size-4 text-orange-glow" />
-              Sign-in link sent
+              {confirmed ? "You're confirmed! Opening your dashboard…" : "Confirm your email"}
             </div>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              We emailed a secure link to{" "}
-              <span className="font-semibold text-white">{success.email}</span> so you can return
-              to your dashboard any time. Check spam if it hasn't arrived.
-            </p>
+            {!confirmed && (
+              <p className="mt-2 text-sm leading-6 text-slate-200">
+                We sent a confirmation link to{" "}
+                <span className="font-semibold text-white">{success.email}</span>. Tap it and
+                you'll go straight to your dashboard — this page will also move on by itself.
+                Check spam if it hasn't arrived.
+              </p>
+            )}
           </div>
 
-          <div className="mt-6 flex flex-col gap-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPasswordOpen(true)}
-                className="h-11 rounded-full border-white/15 bg-white/5 px-5 font-semibold text-white hover:bg-white/10 hover:text-white"
-              >
-                <KeyRound className="mr-2 size-4 text-orange-glow" />
-                Set a password
-              </Button>
+          {!confirmed && (
+            <div className="mt-6">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={async () => {
-                  const res = await sendMagicLink(success.email);
-                  if (res.ok) toast.success(res.message);
-                  else toast.error(res.message);
+                  const { error } = await supabase.auth.resend({
+                    type: "signup",
+                    email: success.email,
+                    options: {
+                      emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner&pw=1`,
+                    },
+                  });
+                  if (error) toast.error(error.message);
+                  else toast.success("Confirmation email sent again.");
                 }}
                 className="h-11 rounded-full px-5 font-semibold text-slate-200 hover:bg-white/10 hover:text-white"
               >
-                Resend sign-in link
+                Resend confirmation email
               </Button>
             </div>
-          </div>
+          )}
         </div>
       </section>
-
-      <SecureAccountDialog
-        open={passwordOpen}
-        onOpenChange={setPasswordOpen}
-        email={success.email}
-        fullName={success.fullName}
-        phone={success.phone}
-        onPasswordCreated={() => (linkClicked ? void goDashboard() : setPostSignup(true))}
-      />
     </main>
   );
 }

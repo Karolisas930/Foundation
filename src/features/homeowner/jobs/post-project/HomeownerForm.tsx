@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 
 import { FormShell } from "@/components/shared/FormShell";
+import { Input } from "@/components/ui/input";
 import { TopBar } from "@/components/shared/TopBar";
 
 import {
@@ -51,6 +52,10 @@ export function HomeownerForm() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessState | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
+  }, []);
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -114,6 +119,8 @@ export function HomeownerForm() {
         return (toast.error("Please enter your phone number."), false);
       if (postalCode.trim().length < 4)
         return (toast.error("Please enter your postal code."), false);
+      if (!signedIn && String(fd.get("password") ?? "").length < 8)
+        return (toast.error("Please create a password (at least 8 characters)."), false);
       return true;
     }
     if (step === 3) {
@@ -265,6 +272,40 @@ export function HomeownerForm() {
             { duration: 12000 },
           );
         }
+
+        // Create the account now with the password chosen in step 2, so the
+        // confirmation email goes out immediately — no extra dialogs later.
+        const password = String(fd.get("password") ?? "");
+        const { data: su, error: suErr } = await supabase.auth.signUp({
+          email: profile.email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner&pw=1`,
+            data: {
+              display_name: profile.fullName || profile.email.split("@")[0],
+              full_name: profile.fullName,
+              phone: profile.mobile,
+              account_type: "homeowner",
+              has_password: true,
+            },
+          },
+        });
+        if (suErr) {
+          toast.error(`We couldn't create your account: ${suErr.message}`);
+        } else if (su?.user && (su.user.identities?.length ?? 0) === 0) {
+          // Email already registered — sign in with the password instead.
+          const { error: inErr } = await supabase.auth.signInWithPassword({
+            email: profile.email,
+            password,
+          });
+          if (inErr) {
+            toast.error("This email already has an account. Please sign in to see your project.");
+          } else {
+            setSubmitting(false);
+            window.location.assign("/auth/callback?sector=homeowner&pw=1");
+            return;
+          }
+        }
       }
     } catch (err) {
       toast.warning(
@@ -274,7 +315,6 @@ export function HomeownerForm() {
       );
     }
 
-    toast.success(`"${newProject.title}" is live — check your inbox to sign in.`);
     setSuccess({
       email: profile.email,
       fullName: profile.fullName,
@@ -318,7 +358,7 @@ export function HomeownerForm() {
               goNext();
             }
           }}
-          className="mt-6 space-y-4"
+          className="mt-6 space-y-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] sm:pb-0"
         >
           <div hidden={currentStep !== 1}>
             <ProjectStep
@@ -351,6 +391,25 @@ export function HomeownerForm() {
               cityAutoFilled={cityAutoFilled}
               setCityAutoFilled={setCityAutoFilled}
             />
+            {!signedIn && (
+              <div className="intake-card mt-4 rounded-2xl p-5">
+                <label htmlFor="password" className="text-sm font-semibold text-white">
+                  Create a password
+                </label>
+                <p className="mt-1 text-xs text-slate-400">
+                  Used to sign in to your dashboard. At least 8 characters.
+                </p>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  placeholder="At least 8 characters"
+                  className="intake-input mt-3"
+                />
+              </div>
+            )}
           </div>
 
           <div hidden={currentStep !== 3}>

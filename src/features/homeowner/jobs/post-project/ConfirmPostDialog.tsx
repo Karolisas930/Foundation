@@ -115,8 +115,8 @@ export function ConfirmPostDialog({
 
         <p className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2.5 text-[12px] leading-5 text-emerald-100">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-300" />
-          Your contact details stay private until you accept a quote. We'll email you a magic
-          sign-in link so you can manage bids from your dashboard.
+          Your contact details stay private until you accept a quote. We'll email you a link to
+          confirm your account and open your dashboard.
         </p>
 
         <AlertDialogFooter className="mt-2 gap-2">

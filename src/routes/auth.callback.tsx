@@ -122,7 +122,10 @@ function AuthCallbackPage() {
       }
 
       if (cancelled) return;
-      if (alreadyHasPassword) {
+      // Also trust the account itself: the `pw=1` flag can be lost in redirects.
+      const { data: u } = await supabase.auth.getUser();
+      const meta = (u.user?.user_metadata ?? {}) as { has_password?: boolean };
+      if (alreadyHasPassword || meta.has_password) {
         await navigate({ to: dashboard });
         return;
       }
@@ -218,7 +221,7 @@ function AuthCallbackPage() {
               setSaving(true);
               const { error } = await supabase.auth.updateUser({ password });
               setSaving(false);
-              if (error) {
+              if (error && !/different from the old password/i.test(error.message)) {
                 toast.error(error.message);
                 return;
               }
