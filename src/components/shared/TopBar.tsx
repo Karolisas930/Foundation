@@ -68,7 +68,7 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-navy/80 backdrop-blur-md supports-[backdrop-filter]:bg-navy/65 dark:bg-navy/80">
       <div
-        className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6"
+        className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-3 sm:gap-3 sm:px-6"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
         {/* Left: hamburger (signed-in) + logo */}
