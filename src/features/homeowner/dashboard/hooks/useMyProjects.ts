@@ -36,14 +36,16 @@ export function useMyProjects() {
           );
         }
       } catch (claimErr) {
-        // Claiming never blocks the dashboard, but it must not fail silently.
+        // Logged, then judged below: only warn if no project actually shows.
         console.error("[pending-projects] claim failed on dashboard load", claimErr);
-        toast.error(
-          `We couldn't attach the project you posted before signing up${
-            claimErr instanceof Error ? ` (${claimErr.message})` : ""
-          }. Please reload to retry.`,
-          { duration: 12000 },
-        );
+        const list = await listMyProjectsFn();
+        if (!list?.projects?.length) {
+          toast.error(
+            "We couldn't attach the project you posted before signing up. Please reload to retry.",
+            { duration: 12000 },
+          );
+        }
+        return list;
       }
       return listMyProjectsFn();
     },
