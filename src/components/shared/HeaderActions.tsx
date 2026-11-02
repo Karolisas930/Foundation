@@ -85,10 +85,10 @@ export function HeaderActions({
   return (
     <div
       key={user?.id ?? "guest"} // ← Forces re-render when auth state changes
-      className={"flex shrink-0 items-center gap-1.5 sm:gap-3 md:gap-4 " + className}
+      className={"flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4 " + className}
     >
-      <LanguageSelector compact={compact} className="h-10 min-w-10 px-1.5 sm:px-2.5" />
-      <ThemeCycleButton className="h-10 w-10" />
+      <LanguageSelector compact={compact} className="h-10" />
+      <ThemeCycleButton className="h-9 w-9 sm:h-10 sm:w-10" />
 
       {signedIn ? (
         <DropdownMenu>
@@ -99,7 +99,7 @@ export function HeaderActions({
               title={displayName}
               className="rounded-full outline-none ring-offset-navy transition focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2"
             >
-              <Avatar className="h-10 w-10 border border-white/15">
+              <Avatar className="h-9 w-9 border border-white/15 sm:h-10 sm:w-10">
                 <AvatarImage src={avatarUrl} alt="" />
                 <AvatarFallback className="bg-white/10 text-xs font-bold text-white">
                   {getInitials(displayEmail, displayName)}
@@ -180,7 +180,7 @@ export function HeaderActions({
         </DropdownMenu>
       ) : (
         showSignIn && (
-          <Button asChild size="sm" className="btn-glow btn-glow-hover h-10 px-3 text-sm sm:px-5">
+          <Button asChild size="sm" className="btn-glow btn-glow-hover hidden h-10 px-3 text-sm sm:inline-flex sm:px-5">
             <Link to={signInTo as "/login"}>{signInLabel}</Link>
           </Button>
         )
