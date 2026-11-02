@@ -46,12 +46,27 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       if (s?.user) void hit();
     });
-    const poll = setInterval(async () => {
+    // Mobile browsers freeze background tabs, so re-check the moment the
+    // person comes back, and when another tab writes the login.
+    const check = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) void hit();
-    }, 2000);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key?.includes("auth-token") && e.newValue) void check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    window.addEventListener("storage", onStorage);
+    const poll = setInterval(check, 2000);
     return () => {
       clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      window.removeEventListener("storage", onStorage);
       sub.subscription.unsubscribe();
     };
   }, [confirmed, navigate]);
@@ -128,7 +143,7 @@ export function SuccessScreen({ success }: { success: SuccessState }) {
             {!confirmed && (
               <p className="mt-2 text-sm leading-6 text-slate-200">
                 We sent a confirmation link to{" "}
-                <span className="font-semibold text-white">{success.email}</span>. Tap it and
+                <span className="font-semibold text-white [overflow-wrap:anywhere]">{success.email}</span>. Tap it and
                 you'll go straight to your dashboard — this page will also move on by itself.
                 Check spam if it hasn't arrived.
               </p>
