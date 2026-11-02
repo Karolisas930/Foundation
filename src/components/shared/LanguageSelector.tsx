@@ -57,7 +57,7 @@ export function LanguageSelector({ className, compact = false }: LanguageSelecto
         className={cn(
           "h-10 appearance-none rounded-full border border-orange/50 bg-white/10 text-sm font-bold tracking-wide text-transparent shadow-sm transition-colors",
           "hover:bg-orange/20 hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange",
-          compact ? "pl-12 pr-7 w-[96px] sm:w-[112px] sm:pl-14 sm:pr-8" : "pl-14 pr-10 w-[140px]",
+          compact ? "pl-12 pr-6 w-[88px] sm:w-[112px] sm:pl-14 sm:pr-8" : "pl-14 pr-10 w-[140px]",
         )}
       >
         {supportedLanguages.map((lang) => {
