@@ -103,16 +103,9 @@ function AuthCallbackPage() {
           const claimed = await claimPendingProjects();
           console.info("[auth-callback] pending projects claimed", claimed);
         } catch (claimErr) {
-          // Non-fatal for routing (the dashboard retries on load), but never
-          // silent: a failed claim is exactly why a new account can land on
-          // "No projects yet" after posting as a guest.
+          // Logged only: the dashboard retries on load and warns there if the
+          // project is really missing (avoids false "Failed to fetch" toasts).
           console.error("[auth-callback] pending project claim failed", claimErr);
-          toast.error(
-            `We couldn't attach the project you posted before signing up${
-              claimErr instanceof Error ? ` (${claimErr.message})` : ""
-            }. Open your dashboard again to retry.`,
-            { duration: 12000 },
-          );
         }
 
         const { accountType } = await readProfileRole(userId);
