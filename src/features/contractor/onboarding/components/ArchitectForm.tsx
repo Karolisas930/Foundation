@@ -197,7 +197,7 @@ export function ArchitectForm() {
     toast.success("Welcome to your dashboard", {
       description: `${firm || "Your firm"} — session active.`,
     });
-    navigate({ to: "/contractor" });
+    navigate({ to: "/contractor/profile" });
   }
 
   return (
