@@ -48,7 +48,7 @@ export function BusinessForm() {
     persistOnboardingProfile("business", profile);
     startDemoSession("business");
     toast.success("Corporate profile saved.");
-    await navigate({ to: "/contractor", replace: true });
+    await navigate({ to: "/contractor/profile", replace: true });
   }
 
   return (
