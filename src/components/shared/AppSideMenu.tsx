@@ -199,6 +199,7 @@ export function AppSideMenu() {
         </SheetTrigger>
         <SheetContent
           side="left"
+          hideClose
           className="flex h-full w-[88%] max-w-sm flex-col gap-0 border-r border-white/10 bg-[#0f172a] p-0 text-slate-50"
         >
           <SheetTitle className="sr-only">Main menu</SheetTitle>
