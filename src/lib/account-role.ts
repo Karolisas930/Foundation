@@ -69,15 +69,18 @@ export async function readProfileRole(uid: string, attempts = 2): Promise<Profil
 }
 
 /** Where should this account land after sign-in / confirmation? */
-export function dashboardPathFor(accountType: string | null | undefined): "/contractor" | "/homeowner" {
-  return isContractorType(accountType) ? "/contractor" : "/homeowner";
+export function dashboardPathFor(
+  accountType: string | null | undefined,
+): "/contractor/profile" | "/homeowner" {
+  // Contractors land on their profile page first, not the stats dashboard.
+  return isContractorType(accountType) ? "/contractor/profile" : "/homeowner";
 }
 
 /**
  * Resolve the landing dashboard for the current session. Never guesses
  * "homeowner" off a failed read.
  */
-export async function resolveDashboardPath(): Promise<"/contractor" | "/homeowner"> {
+export async function resolveDashboardPath(): Promise<"/contractor/profile" | "/homeowner"> {
   try {
     const {
       data: { session },
