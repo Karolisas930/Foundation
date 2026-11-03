@@ -24,6 +24,7 @@ import { PostHelpRequestSheet } from "@/features/contractor/onboarding/component
 import { SiteDiarySheet } from "@/features/contractor/team/components/SiteDiarySheet";
 
 import { useRealOpenJobs, useActiveJobCount } from "../hooks/useRealJobs";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getActiveHandymanProfile } from "@/features/contractor/profile/profile-gate";
 import { useAllInvoices } from "@/features/contractor/profile/components/toolbelt/invoice-store";
 
@@ -39,6 +40,7 @@ export function ContractorDashboard() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const profile = getActiveHandymanProfile();
+  const { user } = useAuth();
   const invoices = useAllInvoices();
 
   const now = new Date();
@@ -58,7 +60,12 @@ export function ContractorDashboard() {
 
   const kmLogged = (profile as unknown as { kmMonth?: number } | null)?.kmMonth ?? 0;
 
-  const firstName = profile?.firstName?.trim() || "Handwerker";
+  const meta = (user?.user_metadata ?? {}) as { full_name?: string; first_name?: string };
+  const firstName =
+    meta.first_name?.trim() ||
+    meta.full_name?.trim().split(/\s+/)[0] ||
+    profile?.firstName?.trim() ||
+    "there";
   const hour = now.getHours();
   const greet =
     hour < 5
