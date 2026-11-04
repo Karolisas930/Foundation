@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardSkeleton, EmptyState } from "@/components/shared/EmptyState";
 import {
   acceptProjectBid,
+  getAcceptedBidContact,
   cancelProjectAward,
   declineProjectBid,
 } from "@/lib/job-bids.functions";
@@ -108,6 +109,12 @@ export function HomeownerDashboard() {
 
   const { bids, proposals } = useProjectBids(selected?.id ?? null);
   const acceptedBid = bids.find((b) => b.status === "accepted") ?? null;
+  const contactFn = useServerFn(getAcceptedBidContact);
+  const contactQuery = useQuery({
+    queryKey: ["accepted-bid-contact", selected?.id ?? null, acceptedBid?.id ?? null],
+    queryFn: () => contactFn({ data: { jobId: selected!.id } }),
+    enabled: Boolean(selected && acceptedBid),
+  });
 
   /* ------------------------------------------------------------- chat */
 
@@ -339,6 +346,19 @@ export function HomeownerDashboard() {
                         setCancelOpen(true);
                       }}
                     />
+                  )}
+                  {acceptedBid && contactQuery.data?.phone && (
+                    <div className="rounded-2xl border border-orange/30 bg-orange/10 p-4">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-glow">
+                        Contact unlocked
+                      </p>
+                      <p className="mt-1 text-sm text-slate-200">
+                        {acceptedBid.contractorName} —{" "}
+                        <a href={`tel:${contactQuery.data.phone}`} className="font-bold text-white underline">
+                          {contactQuery.data.phone}
+                        </a>
+                      </p>
+                    </div>
                   )}
                   <ProposalsPanel
                     project={selected}
