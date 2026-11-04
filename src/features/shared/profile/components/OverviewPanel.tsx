@@ -23,6 +23,8 @@ interface OverviewPanelProps {
   rating: number;
   jobsCompleted: number;
   joinedDate: string;
+  /** Shown only when the viewer is allowed to see it (owner / accepted bid). */
+  phone?: string;
 }
 
 type DemoReview = {
@@ -49,7 +51,7 @@ function Stars({ value }: { value: number }) {
   );
 }
 
-export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: OverviewPanelProps) {
+export function OverviewPanel({ businessName, bio, rating, jobsCompleted, phone }: OverviewPanelProps) {
   const displayRating = rating > 0 ? rating : 0;
   const reviewCount = jobsCompleted;
   const onTimePct: number | null = null;
@@ -71,11 +73,11 @@ export function OverviewPanel({ businessName, bio, rating, jobsCompleted }: Over
               {[
                 { Icon: Globe, label: "Website" },
                 { Icon: Instagram, label: "Instagram" },
-                { Icon: Phone, label: "Phone Number" },
-              ].map(({ Icon, label }) => (
-                <div key={label} className="flex items-center gap-2.5 text-sm text-white/35">
+                { Icon: Phone, label: "Phone Number", value: phone },
+              ].map(({ Icon, label, value }) => (
+                <div key={label} className={`flex items-center gap-2.5 text-sm ${value ? "text-white/90" : "text-white/35"}`}>
                   <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
-                  <span className="underline decoration-white/15 underline-offset-4">{label}</span>
+                  <span className="underline decoration-white/15 underline-offset-4">{value || label}</span>
                 </div>
               ))}
             </div>
