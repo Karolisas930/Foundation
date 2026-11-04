@@ -100,3 +100,45 @@ export async function applyPendingProfileFieldsIfAny(): Promise<void> {
     /* non-fatal — a later profile edit will fill these in */
   }
 }
+
+/**
+ * Contractor sign-up stores the whole onboarding profile on the account
+ * (user_metadata) because no session exists until the email is confirmed.
+ * Once a session lands, copy those fields into `profiles` — only filling
+ * columns that are still empty so later edits are never overwritten.
+ */
+export async function syncContractorMetadataToProfile(): Promise<void> {
+  try {
+    const { data: sess } = await supabase.auth.getSession();
+    const user = sess?.session?.user;
+    if (!user) return;
+    const m = (user.user_metadata ?? {}) as Record<string, unknown>;
+    if (!m.business_name && !Array.isArray(m.trades) && !m.service_radius_km) return;
+    const { data: row } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    const cur = (row ?? {}) as Record<string, unknown>;
+    const empty = (v: unknown) => v == null || v === "" || (Array.isArray(v) && v.length === 0);
+    const wanted: Record<string, unknown> = {
+      full_name: m.full_name,
+      company_name: m.business_name,
+      display_name: m.business_name || m.full_name,
+      phone: m.phone,
+      city: m.city,
+      postal_code: m.postal_code,
+      address_line1: m.street_address,
+      service_radius_km: m.service_radius_km,
+      min_project_size: m.min_project_size,
+      trades: m.trades,
+      languages: m.languages,
+      bio: m.bio,
+    };
+    const patch: Record<string, unknown> = { id: user.id };
+    for (const [k, v] of Object.entries(wanted)) {
+      if (!empty(v) && (empty(cur[k]) || (k === "languages" && JSON.stringify(cur[k]) === '["de"]'))) patch[k] = v;
+    }
+    if (Object.keys(patch).length > 1) {
+      await supabase.from("profiles").upsert(patch as never, { onConflict: "id" });
+    }
+  } catch (err) {
+    console.error("[profile sync] contractor metadata sync failed", err);
+  }
+}
