@@ -66,6 +66,7 @@ export async function finalizeHandymanRegistration(
         id: uid,
         full_name: `${profile.firstName} ${profile.lastName}`.trim() || null,
         display_name: profile.businessName || null,
+        company_name: profile.businessName || null,
         account_type: "handyman",
         phone: profile.mobilePhone || null,
         postal_code: profile.postalCode || null,
@@ -73,10 +74,30 @@ export async function finalizeHandymanRegistration(
         address_line1: profile.streetAddress || null,
         service_radius_km: profile.radiusKm,
         min_project_size: profile.minProjectSize,
-      },
+        trades: profile.trades ?? [],
+        languages: profile.languages ?? [],
+        bio: profile.bio || null,
+      } as never,
       { onConflict: "id" },
     );
     return error?.message;
+  };
+
+  // Everything the profile page needs, stored on the account itself so it
+  // survives the email-confirmation gap (no session = no profiles write yet).
+  const contractorMeta = {
+    first_name: profile.firstName,
+    last_name: profile.lastName,
+    business_name: profile.businessName,
+    city: profile.city,
+    state: profile.state,
+    postal_code: profile.postalCode,
+    street_address: profile.streetAddress,
+    service_radius_km: profile.radiusKm,
+    min_project_size: profile.minProjectSize,
+    trades: profile.trades ?? [],
+    languages: profile.languages ?? [],
+    bio: profile.bio,
   };
 
   // Already signed in (e.g. a homeowner adding a trade profile): never ask for
