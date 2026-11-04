@@ -336,3 +336,30 @@ export const cancelProjectAward = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Phone number of the contractor whose bid the caller accepted. Only works
+ * when the caller owns the project and the bid status is "accepted".
+ */
+export const getAcceptedBidContact = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ jobId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }): Promise<{ phone: string | null; email: string | null }> => {
+    // job_bid_details verifies the caller owns the job.
+    const { data: rows, error } = await untyped(context.supabase).rpc("job_bid_details", {
+      _job_id: data.jobId,
+    });
+    if (error) throw new Error(error.message);
+    const accepted = ((rows ?? []) as Record<string, unknown>[]).find((r) => r.status === "accepted");
+    if (!accepted) return { phone: null, email: null };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("phone")
+      .eq("id", String(accepted.contractor_id))
+      .maybeSingle();
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(String(accepted.contractor_id));
+    const meta = (u?.user?.user_metadata ?? {}) as Record<string, unknown>;
+    const phone = (prof as { phone?: string | null } | null)?.phone || (meta.phone as string) || null;
+    return { phone, email: u?.user?.email ?? null };
+  });
