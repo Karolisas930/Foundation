@@ -17,7 +17,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny } from "@/lib/account-type";
+import { stampAccountTypeIfMissing, applyPendingProfileFieldsIfAny, syncContractorMetadataToProfile } from "@/lib/account-type";
 import { claimPendingProjects } from "@/lib/pending-projects.functions";
 import { dashboardPathFor, readProfileRole } from "@/lib/account-role";
 import { ResendConfirmationForm } from "@/features/auth/components/ResendConfirmationForm";
@@ -92,6 +92,7 @@ function AuthCallbackPage() {
           }
         }
 
+        await syncContractorMetadataToProfile();
         try {
           await applyPendingProfileFieldsIfAny();
         } catch {
