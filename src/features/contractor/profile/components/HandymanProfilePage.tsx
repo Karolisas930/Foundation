@@ -24,6 +24,7 @@ import {
 import type { HandymanProfile } from "@/features/contractor/profile/profile-gate";
 import { clearDemoUser } from "@/lib/demo-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { syncContractorMetadataToProfile } from "@/lib/account-type";
 import { getTradeSpecialtyBySlug, type TradeSpecialtyDef } from "@/api/db/schema";
 
 import {
@@ -193,6 +194,9 @@ export function HandymanProfilePage({
             // saved profile.
             trades: profile.trades ?? [],
             languages: profile.languages ?? [],
+            full_name: fullName || null,
+            company_name: profile.businessName || null,
+            bio: profile.bio || null,
           } as never,
           { onConflict: "id" },
         );
@@ -202,14 +206,11 @@ export function HandymanProfilePage({
     }
     toast.success("Profile saved — visible to homeowners");
     setEditDirty(false);
-  }, [profile]);
+  }, [profile, fullName]);
 
   const specialties = useMemo(
     () =>
-      (profile.trades && profile.trades.length > 0
-        ? profile.trades
-        : ["Fundamente", "Mauerwerk", "Sanierung"]
-      ).slice(0, 8),
+(profile.trades ?? []).slice(0, 8),
     [profile.trades],
   );
 
@@ -263,6 +264,18 @@ export function HandymanProfilePage({
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {(tab === "overview" || tab === "edit") && (
+          <div className="flex justify-end px-4 pt-4 sm:px-6">
+            <button
+              type="button"
+              onClick={() => setTab(tab === "edit" ? "overview" : "edit")}
+              className="rounded-full border border-orange-400/40 bg-orange-500/15 px-4 py-1.5 text-xs font-semibold text-orange-100 hover:bg-orange-500/25"
+            >
+              {tab === "edit" ? "View public profile" : "Edit profile"}
+            </button>
           </div>
         )}
 
