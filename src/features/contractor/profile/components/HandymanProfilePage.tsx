@@ -43,6 +43,11 @@ type ProfileState = {
   minProjectSize: number;
   bio: string;
   city: string;
+  phone: string;
+  email: string;
+  street: string;
+  postalCode: string;
+  country: string;
   publicListing: boolean;
   avatar: string | null;
   cover: string | null;
@@ -69,6 +74,11 @@ function buildProfileState(p: HandymanProfile | null): ProfileState {
     minProjectSize: Number((source as { minProjectSize?: number }).minProjectSize ?? 500),
     bio: (source as { bio?: string }).bio ?? "",
     city: cityLine,
+    phone: (source as { mobilePhone?: string }).mobilePhone ?? "",
+    email: (source as { businessEmail?: string }).businessEmail ?? "",
+    street: (source as { streetAddress?: string }).streetAddress ?? "",
+    postalCode: (source as { postalCode?: string }).postalCode ?? "",
+    country: "",
     publicListing: true,
     avatar: ((source as { avatarDataUrl?: string }).avatarDataUrl as string | null) ?? null,
     cover: null,
@@ -146,6 +156,11 @@ export function HandymanProfilePage({
             trades,
             trade: trades[0] ?? prev.trade,
             city: str(r.city, m.city, prev.city),
+            phone: str(r.phone, m.phone, prev.phone),
+            email: str(m.business_email, user.email, prev.email),
+            street: str(r.address_line1, m.street_address, prev.street),
+            postalCode: str(r.postal_code, m.postal_code, prev.postalCode),
+            country: str(r.country, m.country, prev.country),
             bio: str(r.bio, m.bio, prev.bio),
             avatar: str(r.avatar_url, prev.avatar) || null,
             radiusKm: Number(r.service_radius_km ?? m.service_radius_km) || prev.radiusKm,
@@ -197,6 +212,10 @@ export function HandymanProfilePage({
             full_name: fullName || null,
             company_name: profile.businessName || null,
             bio: profile.bio || null,
+            phone: profile.phone || null,
+            city: profile.city || null,
+            address_line1: profile.street || null,
+            postal_code: profile.postalCode || null,
           } as never,
           { onConflict: "id" },
         );
@@ -348,6 +367,18 @@ export function HandymanProfilePage({
                     : [...profile.languages, code],
                 })
               }
+              phone={profile.phone}
+              email={profile.email}
+              city={profile.city}
+              street={profile.street}
+              postalCode={profile.postalCode}
+              country={profile.country}
+              setPhone={(v) => updateProfile({ phone: v })}
+              setEmail={(v) => updateProfile({ email: v })}
+              setCity={(v) => updateProfile({ city: v })}
+              setStreet={(v) => updateProfile({ street: v })}
+              setPostalCode={(v) => updateProfile({ postalCode: v })}
+              setCountry={(v) => updateProfile({ country: v })}
               onSave={saveProfile}
             />
           )}
