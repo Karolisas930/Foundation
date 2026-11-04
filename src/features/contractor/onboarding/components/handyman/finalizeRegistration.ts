@@ -118,6 +118,7 @@ export async function finalizeHandymanRegistration(
               account_type: "handyman",
               sector: "handyman",
               phone: profile.mobilePhone || undefined,
+              ...contractorMeta,
             },
           });
         } catch {
@@ -149,6 +150,8 @@ export async function finalizeHandymanRegistration(
           account_type: "handyman",
           phone: profile.mobilePhone || undefined,
           sector: "handyman",
+          has_password: true,
+          ...contractorMeta,
         },
       },
     });
