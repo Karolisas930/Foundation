@@ -60,6 +60,18 @@ export interface EditProfilePanelProps {
   toggleLanguage: (code: string) => void;
   onPickAvatar: (file?: File | null) => void;
   onPickCover: (file?: File | null) => void;
+  phone: string;
+  email: string;
+  city: string;
+  street: string;
+  postalCode: string;
+  country: string;
+  setPhone: (v: string) => void;
+  setEmail: (v: string) => void;
+  setCity: (v: string) => void;
+  setStreet: (v: string) => void;
+  setPostalCode: (v: string) => void;
+  setCountry: (v: string) => void;
   onSave: () => void;
   onPrefillDemo?: () => void;
 }
@@ -94,12 +106,9 @@ export function EditProfilePanel(p: EditProfilePanelProps) {
   // Fields that don't yet live on the profile prop shape are held locally
   // so the page stays self-contained without touching sibling components.
   const [title, setTitle] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [city, setCity] = useState("");
-  const [street, setStreet] = useState("");
-  const [postal, setPostal] = useState("");
-  const [country, setCountry] = useState("");
+  const { phone, setPhone, email, setEmail, city, setCity, street, setStreet, country, setCountry } = p;
+  const postal = p.postalCode;
+  const setPostal = p.setPostalCode;
 
   const logoInput = useRef<HTMLInputElement>(null);
   const bannerInput = useRef<HTMLInputElement>(null);
