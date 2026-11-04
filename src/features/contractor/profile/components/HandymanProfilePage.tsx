@@ -116,50 +116,45 @@ export function HandymanProfilePage({
     return () => window.removeEventListener("chameleon_ledger_update", sync);
   }, []);
 
-  // Hydrate matching preferences (radius + minimum project size) from
-  // Supabase on mount so returning users see their saved values even when
-  // the local ledger has been cleared.
+  // Hydrate the whole profile from the signed-in account: the `profiles` row
+  // first, then the sign-up details stored on the account as a fallback.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
-        const uid = sessionData?.session?.user?.id;
-        if (!uid) return;
-        const { data } = await (
-          supabase.from("profiles") as unknown as {
-            select: (cols: string) => {
-              eq: (
-                col: string,
-                val: string,
-              ) => {
-                maybeSingle: () => Promise<{
-                  data: {
-                    service_radius_km: number | null;
-                    min_project_size: number | null;
-                    languages: string[] | null;
-                  } | null;
-                }>;
-              };
-            };
-          }
-        )
-          .select("service_radius_km, min_project_size, languages")
-          .eq("id", uid)
-          .maybeSingle();
-        if (cancelled || !data) return;
-        setProfile((prev) => ({
-          ...prev,
-          radiusKm: Number(data.service_radius_km ?? prev.radiusKm) || prev.radiusKm,
-          minProjectSize:
-            Number(data.min_project_size ?? prev.minProjectSize) || prev.minProjectSize,
-          languages:
-            Array.isArray(data.languages) && data.languages.length > 0
-              ? data.languages
-              : prev.languages,
-        }));
+        const user = sessionData?.session?.user;
+        if (!user) return;
+        await syncContractorMetadataToProfile();
+        const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+        if (cancelled) return;
+        const r = (data ?? {}) as Record<string, unknown>;
+        const m = (user.user_metadata ?? {}) as Record<string, unknown>;
+        const str = (...v: unknown[]) => (v.find((x) => typeof x === "string" && x.trim()) as string) ?? "";
+        const arr = (...v: unknown[]) =>
+          (v.find((x) => Array.isArray(x) && x.length > 0) as string[] | undefined) ?? [];
+        const fullName = str(r.full_name, m.full_name);
+        const [fn, ...rest] = fullName.split(" ");
+        setProfile((prev) => {
+          const trades = arr(r.trades, m.trades, prev.trades);
+          return {
+            ...prev,
+            firstName: str(m.first_name, fn, prev.firstName),
+            lastName: str(m.last_name, rest.join(" "), prev.lastName),
+            businessName: str(r.company_name, m.business_name, prev.businessName),
+            trades,
+            trade: trades[0] ?? prev.trade,
+            city: str(r.city, m.city, prev.city),
+            bio: str(r.bio, m.bio, prev.bio),
+            avatar: str(r.avatar_url, prev.avatar) || null,
+            radiusKm: Number(r.service_radius_km ?? m.service_radius_km) || prev.radiusKm,
+            minProjectSize: Number(r.min_project_size ?? m.min_project_size) || prev.minProjectSize,
+            languages: arr(m.languages, r.languages, prev.languages),
+            joinedDate: prev.joinedDate || (user.created_at ?? "").slice(0, 7),
+          };
+        });
       } catch {
-        /* non-fatal — local ledger values remain in place */
+        /* non-fatal — local values remain in place */
       }
     })();
     return () => {
