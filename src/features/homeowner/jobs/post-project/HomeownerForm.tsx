@@ -1,3 +1,4 @@
+import { authDisplayName } from "@/lib/auth-display-name";
 /**
  * HomeownerForm — 3-step wizard coordinator for the private-client onboarding
  * + project intake flow. Owns top-level form state and submission; renders
@@ -282,7 +283,10 @@ export function HomeownerForm() {
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback?sector=homeowner&pw=1`,
             data: {
-              display_name: profile.fullName || profile.email.split("@")[0],
+              display_name: authDisplayName(
+                "homeowner",
+                profile.fullName || profile.email.split("@")[0],
+              ),
               full_name: profile.fullName,
               phone: profile.mobile,
               account_type: "homeowner",
