@@ -1,3 +1,4 @@
+import { authDisplayName } from "@/lib/auth-display-name";
 import { useState } from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -121,7 +122,7 @@ export function useAuthActions(sector: SignupSector = "homeowner") {
           data: {
             account_type: sector,
             ...(fullName?.trim()
-              ? { full_name: fullName.trim(), display_name: fullName.trim() }
+              ? { full_name: fullName.trim(), display_name: authDisplayName(sector, fullName) }
               : {}),
             ...(phone?.trim() ? { phone: phone.trim() } : {}),
           },
