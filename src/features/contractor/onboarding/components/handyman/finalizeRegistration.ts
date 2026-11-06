@@ -1,3 +1,4 @@
+import { authDisplayName } from "@/lib/auth-display-name";
 /**
  * finalizeHandymanRegistration — persists the completed onboarding profile
  * into the demo ledger, flips the demo-auth flag, and (when Cloud is
@@ -85,6 +86,11 @@ export async function finalizeHandymanRegistration(
 
   // Everything the profile page needs, stored on the account itself so it
   // survives the email-confirmation gap (no session = no profiles write yet).
+  const authLabel = authDisplayName(
+    "handyman",
+    `${profile.firstName} ${profile.lastName}`,
+    profile.businessName,
+  );
   const contractorMeta = {
     first_name: profile.firstName,
     last_name: profile.lastName,
@@ -113,8 +119,7 @@ export async function finalizeHandymanRegistration(
           await supabase.auth.updateUser({
             data: {
               full_name: `${profile.firstName} ${profile.lastName}`.trim(),
-              display_name:
-                profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+              display_name: authLabel,
               account_type: "handyman",
               sector: "handyman",
               phone: profile.mobilePhone || undefined,
@@ -146,7 +151,7 @@ export async function finalizeHandymanRegistration(
         emailRedirectTo: `${window.location.origin}/auth/callback?sector=handyman&pw=1`,
         data: {
           full_name: `${profile.firstName} ${profile.lastName}`.trim(),
-          display_name: profile.businessName || `${profile.firstName} ${profile.lastName}`.trim(),
+          display_name: authLabel,
           account_type: "handyman",
           phone: profile.mobilePhone || undefined,
           sector: "handyman",
