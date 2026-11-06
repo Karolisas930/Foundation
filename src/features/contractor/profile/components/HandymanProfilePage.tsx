@@ -44,6 +44,8 @@ type ProfileState = {
   bio: string;
   city: string;
   phone: string;
+  website: string;
+  instagram: string;
   email: string;
   street: string;
   postalCode: string;
@@ -75,6 +77,8 @@ function buildProfileState(p: HandymanProfile | null): ProfileState {
     bio: (source as { bio?: string }).bio ?? "",
     city: cityLine,
     phone: (source as { mobilePhone?: string }).mobilePhone ?? "",
+    website: "",
+    instagram: "",
     email: (source as { businessEmail?: string }).businessEmail ?? "",
     street: (source as { streetAddress?: string }).streetAddress ?? "",
     postalCode: (source as { postalCode?: string }).postalCode ?? "",
@@ -157,6 +161,8 @@ export function HandymanProfilePage({
             trade: trades[0] ?? prev.trade,
             city: str(r.city, m.city, prev.city),
             phone: str(r.phone, m.phone, prev.phone),
+            website: str(r.website_url, prev.website),
+            instagram: str(r.instagram_handle, prev.instagram),
             email: str(m.business_email, user.email, prev.email),
             street: str(r.address_line1, m.street_address, prev.street),
             postalCode: str(r.postal_code, m.postal_code, prev.postalCode),
@@ -333,7 +339,33 @@ export function HandymanProfilePage({
               </div>
             </div>
           )}
-          {tab === "overview" && <OverviewPanel {...profile} />}
+          {tab === "overview" && (
+            <OverviewPanel
+              {...profile}
+              onSaveContact={async (c) => {
+                const { data: s } = await supabase.auth.getSession();
+                const uid = s?.session?.user?.id;
+                if (!uid) {
+                  toast.error("Please sign in to edit your contact details.");
+                  return;
+                }
+                const { error } = await supabase
+                  .from("profiles")
+                  .update({
+                    phone: c.phone || null,
+                    website_url: c.website || null,
+                    instagram_handle: c.instagram.replace(/^@/, "") || null,
+                  } as never)
+                  .eq("id", uid);
+                if (error) {
+                  toast.error(`Couldn't save: ${error.message}`);
+                  throw error;
+                }
+                setProfile((prev) => ({ ...prev, ...c }));
+                toast.success("Contact details saved");
+              }}
+            />
+          )}
           {tab === "edit" && (
             <EditProfilePanel
               firstName={profile.firstName}
