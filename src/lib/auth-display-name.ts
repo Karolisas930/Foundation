@@ -10,10 +10,14 @@ const LABELS: Record<string, string> = {
   build: "Builder",
 };
 
-/** Label shown in the sign-in users list: "[Contractor] Legal Name · Company". */
-export function authDisplayName(accountType: string, legalName: string, company?: string | null) {
-  const label = LABELS[accountType] ?? accountType;
+export function accountTypeLabel(accountType: string | null | undefined) {
+  if (!accountType) return "Unknown";
+  return LABELS[accountType] ?? accountType;
+}
+
+/** Clean name for the sign-in users list: "Legal Name (Company)". Role lives in profiles/admin directory. */
+export function authDisplayName(_accountType: string, legalName: string, company?: string | null) {
   const name = legalName.trim();
   const co = (company ?? "").trim();
-  return `[${label}] ${name}${co ? ` · ${co}` : ""}`.trim();
+  return co && co !== name ? `${name} (${co})` : name;
 }
