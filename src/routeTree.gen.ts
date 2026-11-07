@@ -23,6 +23,7 @@ import { Route as SupabaseSetupRouteImport } from './routes/supabase-setup'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthSignupRouteImport } from './routes/_auth/signup'
+import { Route as DashboardAdminRouteImport } from './routes/_dashboard/admin'
 import { Route as DashboardContractorRouteRouteImport } from './routes/_dashboard/contractor/route'
 import { Route as DashboardDevRouteImport } from './routes/_dashboard/dev'
 import { Route as DashboardHomeownerRouteRouteImport } from './routes/_dashboard/homeowner/route'
@@ -122,6 +123,11 @@ const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => AuthRouteRoute,
+} as any)
+const DashboardAdminRoute = DashboardAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardContractorRouteRoute =
   DashboardContractorRouteRouteImport.update({
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/homeowner': typeof DashboardHomeownerRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
+  '/admin': typeof DashboardAdminRoute
   '/dev': typeof DashboardDevRoute
   '/messages': typeof DashboardMessagesRoute
   '/notifications': typeof DashboardNotificationsRoute
@@ -353,6 +360,7 @@ export interface FileRoutesByTo {
   '/terms-of-service': typeof TermsOfServiceRoute
   '/login': typeof AuthLoginRoute
   '/signup': typeof AuthSignupRoute
+  '/admin': typeof DashboardAdminRoute
   '/dev': typeof DashboardDevRoute
   '/messages': typeof DashboardMessagesRoute
   '/notifications': typeof DashboardNotificationsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/_dashboard/homeowner': typeof DashboardHomeownerRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/signup': typeof AuthSignupRoute
+  '/_dashboard/admin': typeof DashboardAdminRoute
   '/_dashboard/dev': typeof DashboardDevRoute
   '/_dashboard/messages': typeof DashboardMessagesRoute
   '/_dashboard/notifications': typeof DashboardNotificationsRoute
@@ -447,6 +456,7 @@ export interface FileRouteTypes {
     | '/homeowner'
     | '/login'
     | '/signup'
+    | '/admin'
     | '/dev'
     | '/messages'
     | '/notifications'
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/terms-of-service'
     | '/login'
     | '/signup'
+    | '/admin'
     | '/dev'
     | '/messages'
     | '/notifications'
@@ -536,6 +547,7 @@ export interface FileRouteTypes {
     | '/_dashboard/homeowner'
     | '/_auth/login'
     | '/_auth/signup'
+    | '/_dashboard/admin'
     | '/_dashboard/dev'
     | '/_dashboard/messages'
     | '/_dashboard/notifications'
@@ -688,6 +700,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/signup'
       preLoaderRoute: typeof AuthSignupRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/_dashboard/admin': {
+      id: '/_dashboard/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof DashboardAdminRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/_dashboard/contractor': {
       id: '/_dashboard/contractor'
@@ -1011,6 +1030,7 @@ const DashboardHomeownerRouteRouteWithChildren =
 interface DashboardRouteRouteChildren {
   DashboardContractorRouteRoute: typeof DashboardContractorRouteRouteWithChildren
   DashboardHomeownerRouteRoute: typeof DashboardHomeownerRouteRouteWithChildren
+  DashboardAdminRoute: typeof DashboardAdminRoute
   DashboardDevRoute: typeof DashboardDevRoute
   DashboardMessagesRoute: typeof DashboardMessagesRoute
   DashboardNotificationsRoute: typeof DashboardNotificationsRoute
@@ -1021,6 +1041,7 @@ interface DashboardRouteRouteChildren {
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardContractorRouteRoute: DashboardContractorRouteRouteWithChildren,
   DashboardHomeownerRouteRoute: DashboardHomeownerRouteRouteWithChildren,
+  DashboardAdminRoute: DashboardAdminRoute,
   DashboardDevRoute: DashboardDevRoute,
   DashboardMessagesRoute: DashboardMessagesRoute,
   DashboardNotificationsRoute: DashboardNotificationsRoute,
