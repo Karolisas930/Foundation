@@ -5,10 +5,11 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Lock, FileText } from "lucide-react";
+import { Lock } from "lucide-react";
 
 import { ProfileHeader } from "@/features/shared/profile/components/ProfileHeader";
 import { OverviewPanel } from "@/features/shared/profile/components/OverviewPanel";
+import { LegalImprintCard } from "@/features/contractor/profile/components/LegalImprintCard";
 import { EditProfilePanel } from "@/features/contractor/profile/components/EditProfilePanel";
 import { ShowcasePortfolio } from "@/features/contractor/onboarding/components/ShowcasePortfolio";
 
@@ -461,59 +462,7 @@ export function HandymanProfilePage({
         {/* GERMAN LEGAL COMPLIANCE — Impressum footer */}
         {isPublicView && (
           <div className="px-4 pb-6 pt-6 sm:px-6">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-              <div className="mb-3 flex items-center gap-2 text-slate-200">
-                <FileText className="size-4 text-orange" />
-                <h3 className="font-display text-sm font-extrabold uppercase tracking-wider">
-                  Legal Disclosure &amp; Imprint
-                </h3>
-              </div>
-              <dl className="grid gap-x-4 gap-y-2 text-xs text-slate-300 sm:grid-cols-2">
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Company
-                  </dt>
-                  <dd className="text-slate-200">{profile.businessName || "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Managing Director
-                  </dt>
-                  <dd className="text-slate-200">{fullName || "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Commercial Register No.
-                  </dt>
-                  <dd className="text-slate-200">HRB —</dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    VAT ID
-                  </dt>
-                  <dd className="text-slate-200">DE —</dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Responsible for Content (acc. to § 55 Abs. 2 RStV)
-                  </dt>
-                  <dd className="text-slate-200">{fullName || "—"}</dd>
-                </div>
-              </dl>
-              <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-                Information pursuant to § 5 TMG. Dispute Resolution: The European Commission
-                provides a platform for online dispute resolution (OS):{" "}
-                <a
-                  href="https://ec.europa.eu/consumers/odr"
-                  className="text-orange-300 underline hover:text-orange-200"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  ec.europa.eu/consumers/odr
-                </a>
-                .
-              </p>
-            </div>
+            <LegalImprintCard defaultCompany={profile.businessName} defaultName={fullName} />
           </div>
         )}
       </div>
