@@ -12,6 +12,7 @@ import { Bell } from "lucide-react";
 type NotificationRow = {
   id: string;
   type: string;
+  title: string | null;
   message: string;
   read: boolean;
   created_at: string;
@@ -28,10 +29,16 @@ export function NotificationsList() {
     if (!userId) return;
     setLoading(true);
     try {
+      // Pick up alerts for open jobs posted before this account existed.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc("backfill_my_job_alerts").then(
+        () => undefined,
+        () => undefined,
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("notifications")
-        .select("id, type, message, read, created_at, sender_id")
+        .select("id, type, title, message, read, created_at, sender_id")
         .eq("recipient_id", userId)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -106,14 +113,10 @@ export function NotificationsList() {
       )}
 
       <ul className="divide-y divide-border rounded-lg border">
-        {rows.map((n) => (
-          <li
-            key={n.id}
-            className={
-              "flex items-start gap-3 p-3 " +
-              (n.read ? "opacity-70" : "bg-amber-50/40 dark:bg-amber-500/5")
-            }
-          >
+        {rows.map((n) => {
+          const meta = TYPE_META[n.type];
+          const body = (
+            <>
             <span
               aria-hidden
               className={
@@ -123,18 +126,42 @@ export function NotificationsList() {
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded bg-muted px-1.5 py-0.5 font-mono uppercase tracking-wide">
-                  {n.type}
+                <span className="rounded bg-muted px-1.5 py-0.5 font-medium">
+                  {meta?.label ?? n.type}
                 </span>
                 <time dateTime={n.created_at}>{new Date(n.created_at).toLocaleString()}</time>
               </div>
-              <p className="mt-1 truncate text-sm">{n.message || "—"}</p>
+              {n.title && <p className="mt-1 text-sm font-medium">{n.title}</p>}
+              <p className="mt-0.5 truncate text-sm">{n.message || "—"}</p>
             </div>
-          </li>
-        ))}
+            </>
+          );
+          const cls =
+            "flex items-start gap-3 p-3 " +
+            (n.read ? "opacity-70" : "bg-amber-50/40 dark:bg-amber-500/5");
+          return (
+            <li key={n.id}>
+              {meta?.href ? (
+                <a href={meta.href} className={cls + " hover:bg-muted/50"}>
+                  {body}
+                </a>
+              ) : (
+                <div className={cls}>{body}</div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
+
+const TYPE_META: Record<string, { label: string; href?: string }> = {
+  new_job: { label: "New matching job", href: "/contractor/radar" },
+  priority_lead: { label: "Priority lead", href: "/contractor/radar" },
+  message_sent: { label: "New message", href: "/messages" },
+  quote_sent: { label: "New quote" },
+  staff_added: { label: "Team update" },
+};
 
 export default NotificationsList;
