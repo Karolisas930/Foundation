@@ -50,51 +50,6 @@ import {
 } from "@/features/contractor/leads/lead-gate";
 import { ComplianceBanner, BlurredValue } from "@/components/shared/ComplianceBanner";
 
-const SAMPLE_MATCHES: {
-  id: string;
-  trade: string;
-  title: string;
-  zip: string;
-  km: number;
-  budget: number;
-  posted: string;
-  summary: string;
-}[] = [
-  {
-    id: "s1",
-    trade: "Plumbing",
-    title: "Replace leaking kitchen mixer + shut-off valve",
-    zip: "70197",
-    km: 6,
-    budget: 320,
-    posted: "2h ago",
-    summary:
-      "Single-lever tap drips constantly. Homeowner has the new fixture; needs a 1-hour visit and a fresh angle valve.",
-  },
-  {
-    id: "s2",
-    trade: "Electrical",
-    title: "Install 3 ceiling spots in renovated bedroom",
-    zip: "71034",
-    km: 18,
-    budget: 480,
-    posted: "Yesterday",
-    summary:
-      "Concrete ceiling, conduits already pulled. Looking for a certified electrician for a clean Friday afternoon job.",
-  },
-  {
-    id: "s3",
-    trade: "Painting",
-    title: "Repaint 42 m² living room — 2 coats, white",
-    zip: "70173",
-    km: 3,
-    budget: 640,
-    posted: "2 days ago",
-    summary:
-      "Furniture already moved out. Includes minor filler work around old picture hooks. Flexible on weekday timing.",
-  },
-];
-
 export function HandymanWorkspace() {
   const [questionText, setQuestionText] = useState("");
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -367,69 +322,10 @@ export function HandymanWorkspace() {
           </CardHeader>
           <CardContent className="space-y-4">
             {visibleLeads.length === 0 && (
-              <div className="space-y-3">
-                <p className="rounded-md border border-dashed border-slate-200 p-3 text-center text-xs text-slate-500">
-                  No live leads in your radius right now — here are recent jobs that matched trades
-                  like yours.
-                </p>
-                {SAMPLE_MATCHES.map((s) => (
-                  <div
-                    key={s.id}
-                    className="rounded-lg border border-slate-200 bg-white p-4 space-y-2 transition-all hover:border-orange/40 hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
-                            {s.trade}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="bg-orange/10 text-orange border-orange/30"
-                          >
-                            sample match
-                          </Badge>
-                          <span className="text-[10px] uppercase tracking-wider text-slate-400">
-                            {s.posted}
-                          </span>
-                        </div>
-                        <h3 className="mt-1 text-sm font-bold text-slate-900">{s.title}</h3>
-                        <p className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
-                          <MapPin className="h-3 w-3" /> PLZ {s.zip} · ~{s.km} km away
-                        </p>
-                      </div>
-                      <span className="text-sm font-extrabold text-slate-900">€{s.budget}</span>
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">{s.summary}</p>
-                    <div className="flex justify-end gap-2 border-t border-slate-100 pt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs border-slate-300 hover:border-orange hover:text-orange transition-all active:scale-95"
-                        onClick={() =>
-                          toast.message("Sample lead", {
-                            description:
-                              "Real homeowner leads appear here as soon as they're posted in your radius.",
-                          })
-                        }
-                      >
-                        Preview
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs bg-orange text-white hover:bg-orange/90 transition-all active:scale-95"
-                        onClick={() =>
-                          toast.success("Saved to watchlist", {
-                            description: "We'll alert you when a matching lead opens.",
-                          })
-                        }
-                      >
-                        Notify me
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="rounded-md border border-dashed border-slate-200 p-3 text-center text-xs text-slate-500">
+                No open jobs in your radius right now. You'll get a notification as soon as a
+                matching job is posted.
+              </p>
             )}
 
             {visibleLeads.map((lead) => {

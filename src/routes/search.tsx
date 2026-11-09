@@ -1,93 +1,10 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { listDirectoryPros } from "@/lib/landing-feed.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BadgeCheck, MapPin, Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { TopBar } from "@/components/shared/TopBar";
 import { SiteFooter } from "@/features/landing/components/SiteFooter";
-
-type Contractor = {
-  id: string;
-  name: string;
-  trade: string;
-  city: string;
-  plz: string;
-  rating: number;
-  verified: boolean;
-};
-
-const MOCK_CONTRACTORS: Contractor[] = [
-  {
-    id: "c-01",
-    name: "Meister Bauer GmbH",
-    trade: "Bricklaying & Concrete",
-    city: "Mannheim",
-    plz: "68159",
-    rating: 4.9,
-    verified: true,
-  },
-  {
-    id: "c-02",
-    name: "Fliesen Kaya",
-    trade: "Tiling & Mosaics",
-    city: "Heidelberg",
-    plz: "69115",
-    rating: 4.8,
-    verified: true,
-  },
-  {
-    id: "c-03",
-    name: "Dach & Dämmung Karlsruhe",
-    trade: "Roofing & Insulation",
-    city: "Karlsruhe",
-    plz: "76131",
-    rating: 4.7,
-    verified: true,
-  },
-  {
-    id: "c-04",
-    name: "Schreinerei Freiburg",
-    trade: "Carpentry & Timber",
-    city: "Freiburg",
-    plz: "79100",
-    rating: 4.9,
-    verified: true,
-  },
-  {
-    id: "c-05",
-    name: "Elektro Schwarz",
-    trade: "Electrical",
-    city: "Stuttgart",
-    plz: "70173",
-    rating: 4.6,
-    verified: true,
-  },
-  {
-    id: "c-06",
-    name: "Sanitär Müller",
-    trade: "Plumbing & Heating",
-    city: "Mannheim",
-    plz: "68161",
-    rating: 4.5,
-    verified: false,
-  },
-  {
-    id: "c-07",
-    name: "Malerbetrieb Weber",
-    trade: "Painting & Plaster",
-    city: "Heidelberg",
-    plz: "69117",
-    rating: 4.7,
-    verified: true,
-  },
-  {
-    id: "c-08",
-    name: "Garten Landschaft KA",
-    trade: "Landscaping",
-    city: "Karlsruhe",
-    plz: "76133",
-    rating: 4.4,
-    verified: false,
-  },
-];
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -110,13 +27,19 @@ export const Route = createFileRoute("/search")({
 
 function SearchPage() {
   const [q, setQ] = useState("");
+  const { data, isLoading } = useQuery({
+    queryKey: ["directory-pros"],
+    queryFn: () => listDirectoryPros(),
+    staleTime: 30_000,
+  });
   const results = useMemo(() => {
+    const all = data?.pros ?? [];
     const needle = q.trim().toLowerCase();
-    if (!needle) return MOCK_CONTRACTORS;
-    return MOCK_CONTRACTORS.filter((c) =>
-      [c.name, c.trade, c.city, c.plz].some((v) => v.toLowerCase().includes(needle)),
+    if (!needle) return all;
+    return all.filter((c) =>
+      [c.name, c.trade ?? "", c.city ?? ""].some((v) => v.toLowerCase().includes(needle)),
     );
-  }, [q]);
+  }, [q, data]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#1e233b] text-white/90">
@@ -156,28 +79,23 @@ function SearchPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="truncate text-base font-bold text-white">{c.name}</h2>
-                    {c.verified ? (
-                      <BadgeCheck
-                        className="size-4 shrink-0 text-orange-glow"
-                        aria-label="Verified"
-                      />
-                    ) : null}
+                    <Link to="/p/$profileId" params={{ profileId: c.id }} className="truncate text-base font-bold text-white hover:text-orange-glow">{c.name}</Link>
                   </div>
-                  <p className="mt-0.5 text-xs text-white/60">{c.trade}</p>
+                  <p className="mt-0.5 text-xs text-white/60">{c.trade ?? "Trade professional"}</p>
                   <p className="mt-2 flex items-center gap-1 text-[11px] text-white/50">
-                    <MapPin className="size-3" /> {c.plz} · {c.city}
+                    <MapPin className="size-3" /> {c.city ?? "Baden-Württemberg"}
                   </p>
-                </div>
-                <div className="shrink-0 rounded-full border border-orange/30 bg-orange/10 px-2 py-0.5 text-[11px] font-bold text-orange-glow">
-                  ★ {c.rating.toFixed(1)}
                 </div>
               </div>
             </li>
           ))}
           {results.length === 0 ? (
             <li className="col-span-full rounded-2xl bg-[#111424] border border-slate-800/80 p-6 text-center text-sm text-white/50">
-              No trades match "{q}".
+              {isLoading
+                ? "Loading registered pros…"
+                : q
+                  ? `No pros match "${q}".`
+                  : "No pros have registered yet — check back soon."}
             </li>
           ) : null}
         </ul>

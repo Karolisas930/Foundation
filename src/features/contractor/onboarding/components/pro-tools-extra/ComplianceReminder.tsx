@@ -16,33 +16,11 @@ type ComplianceItem = {
   notes: string;
 };
 
-const SEED_COMPLIANCE: ComplianceItem[] = [
-  {
-    id: "c1",
-    label: "Gas-Safe / TRGI certification",
-    trade: "Heating & gas",
-    renewsOn: "",
-    notes: "Annual practical refresher recommended.",
-  },
-  {
-    id: "c2",
-    label: "DGUV V3 electrical safety inspection",
-    trade: "Electrical",
-    renewsOn: "",
-    notes: "Required on all portable tools yearly.",
-  },
-  {
-    id: "c3",
-    label: "Asbestos awareness (TRGS 519)",
-    trade: "Demolition / renovation",
-    renewsOn: "",
-    notes: "Re-test every 6 years.",
-  },
-];
+const SEED_COMPLIANCE: ComplianceItem[] = [];
 
 export function ComplianceReminder() {
   const [items, setItems] = useLocalState<ComplianceItem[]>(
-    "handyman.compliance.v1",
+    "handyman.compliance.v2",
     SEED_COMPLIANCE,
   );
   const [draft, setDraft] = useState<ComplianceItem>({

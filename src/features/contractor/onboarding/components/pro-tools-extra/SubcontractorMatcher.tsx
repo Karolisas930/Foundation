@@ -24,47 +24,10 @@ type Helper = {
   notes: string;
 };
 
-const SEED_HELPERS: Helper[] = [
-  {
-    id: "h1",
-    name: "Lukas B.",
-    trade: "Electrician helper",
-    availability: "today",
-    rate: 28,
-    rating: 4.8,
-    notes: "Own van, lives 5km away",
-  },
-  {
-    id: "h2",
-    name: "Marta K.",
-    trade: "Tiler",
-    availability: "this-week",
-    rate: 35,
-    rating: 4.6,
-    notes: "Specializes in bathrooms",
-  },
-  {
-    id: "h3",
-    name: "Diego R.",
-    trade: "General labourer",
-    availability: "today",
-    rate: 22,
-    rating: 4.4,
-    notes: "Reliable for demo days",
-  },
-  {
-    id: "h4",
-    name: "Anya P.",
-    trade: "Painter",
-    availability: "next-week",
-    rate: 26,
-    rating: 4.9,
-    notes: "Detail-oriented, slow but clean",
-  },
-];
+const SEED_HELPERS: Helper[] = [];
 
 export function SubcontractorMatcher() {
-  const [pool, setPool] = useLocalState<Helper[]>("handyman.helpers.v1", SEED_HELPERS);
+  const [pool, setPool] = useLocalState<Helper[]>("handyman.helpers.v2", SEED_HELPERS);
   const [need, setNeed] = useState("");
   const [when, setWhen] = useState<"any" | Helper["availability"]>("any");
   const [draft, setDraft] = useState<Helper>({

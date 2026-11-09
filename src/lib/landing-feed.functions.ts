@@ -104,3 +104,41 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
     };
   },
 );
+
+/** Public directory of registered pros (real profiles only, no demo). */
+export const listDirectoryPros = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ pros: LandingPro[]; error: string | null }> => {
+    const url = env("SUPABASE_URL", "VITE_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL");
+    const key = env(
+      "SUPABASE_PUBLISHABLE_KEY",
+      "VITE_SUPABASE_PUBLISHABLE_KEY",
+      "SUPABASE_ANON_KEY",
+      "VITE_SUPABASE_ANON_KEY",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    );
+    if (!url || !key) return { pros: [], error: "Backend not configured" };
+    const sb = createClient(url, key, {
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+      global: {
+        fetch: (input, init) => {
+          const h = new Headers(init?.headers);
+          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
+            h.delete("Authorization");
+          h.set("apikey", key);
+          return fetch(input, { ...init, headers: h });
+        },
+      },
+    });
+    const { data, error } = await sb.rpc("list_public_profiles", { _search: null, _limit: 200 });
+    if (error) console.error("[directory]", error.message);
+    type Row = { id: string; business_name: string | null; trade: string | null; city: string | null };
+    const pros = ((data as Row[] | null) ?? []).map((p) => ({
+      id: p.id,
+      name: p.business_name?.trim() || "Registered pro",
+      trade: p.trade,
+      city: p.city,
+    }));
+    return { pros, error: error?.message ?? null };
+  },
+);
