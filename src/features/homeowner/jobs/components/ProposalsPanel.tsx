@@ -7,11 +7,9 @@ import { Link } from "@tanstack/react-router";
 import { Building2, Handshake, MapPin, MessageSquare, Star, XCircle } from "lucide-react";
 import type { EcosystemProject, EcosystemProposal } from "@/core/demo-session";
 import { Button } from "@/components/ui/button";
-import { getMatchScore } from "../../dashboard/components/parts/helpers";
 import { Panel } from "../../dashboard/components/parts/Panel";
 import { Breakdown } from "../../dashboard/components/parts/Breakdown";
 import { ContractorAvatar } from "../../dashboard/components/parts/ContractorAvatar";
-import { MatchScoreBadge } from "../../dashboard/components/parts/MatchScoreBadge";
 
 export function ProposalsPanel({
   project,
@@ -72,7 +70,6 @@ export function ProposalsPanel({
         ) : (
           proposals.map((bid, idx) => {
             const total = bid.labor + bid.materials + bid.travel;
-            const score = getMatchScore(bid.id);
             return (
               <article
                 key={bid.id}
@@ -160,7 +157,6 @@ export function ProposalsPanel({
                       </div>
                     )}
                   </div>
-                  <MatchScoreBadge score={score} />
                 </div>
 
                 <div className="mt-4 grid grid-cols-3 gap-2">

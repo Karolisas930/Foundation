@@ -157,8 +157,8 @@ export function NotificationsList() {
 }
 
 const TYPE_META: Record<string, { label: string; href?: string }> = {
-  new_job: { label: "New matching job", href: "/contractor/radar" },
-  priority_lead: { label: "Priority lead", href: "/contractor/radar" },
+  new_job: { label: "New matching job", href: "/contractor" },
+  priority_lead: { label: "Priority lead", href: "/contractor" },
   message_sent: { label: "New message", href: "/messages" },
   quote_sent: { label: "New quote" },
   staff_added: { label: "Team update" },

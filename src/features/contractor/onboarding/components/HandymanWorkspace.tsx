@@ -1,3 +1,4 @@
+import { MatchBreakdown } from "@/features/shared/matches/MatchBreakdown";
 /**
  * src/components/HandymanWorkspace.tsx
  * Solo Tradesperson Cockpit & Ecosystem Sourcing Core.
@@ -502,6 +503,7 @@ export function HandymanWorkspace() {
                       <span className="text-sm font-extrabold">€{p.budgetTotal}</span>
                     </div>
                   </div>
+                  <MatchBreakdown score={classification.score} />
                   <p className="text-xs text-slate-600 leading-relaxed">{p.description}</p>
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
