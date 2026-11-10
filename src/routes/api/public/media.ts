@@ -27,8 +27,10 @@ export const Route = createFileRoute("/api/public/media")({
           await getR2().put(key, await file.arrayBuffer(), type);
           return Response.json({ key });
         } catch (e) {
-          console.error("[media] upload failed", e);
-          return Response.json({ error: e instanceof Error ? e.message : "upload failed" }, { status: 500 });
+          const msg = e instanceof Error ? e.message : "upload failed";
+          const notConfigured = msg.includes("not configured");
+          if (!notConfigured) console.error("[media] upload failed", e);
+          return Response.json({ error: msg }, { status: notConfigured ? 503 : 502 });
         }
       },
       GET: async ({ request }) => {
