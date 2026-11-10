@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { startDemoSession } from "@/core/demo-session";
 import { FormShell } from "@/components/shared/FormShell";
 import { persistOnboardingProfile } from "@/components/shared/shared";
 
@@ -46,7 +45,6 @@ export function BusinessForm() {
     }
     setSubmitting(true);
     persistOnboardingProfile("business", profile);
-    startDemoSession("business");
     toast.success("Corporate profile saved.");
     await navigate({ to: "/contractor/profile", replace: true });
   }

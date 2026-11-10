@@ -6,8 +6,6 @@ import { authDisplayName } from "@/lib/auth-display-name";
  * critical fields into the `profiles` row. Kept side-effect-only so the
  * wizard component stays presentational.
  */
-import { startDemoSession } from "@/core/demo-session";
-import { setDemoUser } from "@/lib/demo-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { isSupabaseConfigured } from "@/integrations/supabase/config";
 import { persistOnboardingProfile } from "@/components/shared/shared";
@@ -52,11 +50,6 @@ export async function finalizeHandymanRegistration(
   };
 
   persistOnboardingProfile("handyman", profile);
-  startDemoSession("handyman");
-  setDemoUser({
-    email: profile.businessEmail,
-    name: [profile.firstName, profile.lastName].filter(Boolean).join(" ") || profile.businessName,
-  });
 
   let signedIn = false;
   let surfacedError: string | undefined;

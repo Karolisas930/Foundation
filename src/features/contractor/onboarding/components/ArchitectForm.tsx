@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { startDemoSession } from "@/core/demo-session";
 import { persistOnboardingProfile } from "@/components/shared/shared";
 
 type PostalEntry = { match: RegExp; city: string; state: string };
@@ -193,7 +192,6 @@ export function ArchitectForm() {
     });
     // Architect rides on the admin sector slot so the dashboard router can
     // preview the architect sector panel.
-    startDemoSession("admin");
     toast.success("Welcome to your dashboard", {
       description: `${firm || "Your firm"} — session active.`,
     });

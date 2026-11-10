@@ -1,3 +1,4 @@
+import { uploadMedia } from "@/lib/media-upload";
 import { authDisplayName } from "@/lib/auth-display-name";
 /**
  * HomeownerForm — 3-step wizard coordinator for the private-client onboarding
@@ -18,9 +19,6 @@ import { Input } from "@/components/ui/input";
 import { TopBar } from "@/components/shared/TopBar";
 
 import {
-  getEcosystemLedger,
-  startDemoSession,
-  updateEcosystemLedger,
   type EcosystemProject,
 } from "@/core/demo-session";
 import { persistOnboardingProfile } from "@/components/shared/shared";
@@ -187,7 +185,17 @@ export function HomeownerForm() {
       consentAcceptedAt: new Date().toISOString(),
     });
 
-    const ledger = getEcosystemLedger();
+    // Upload photos + voice memo to Cloudflare R2 so they persist everywhere.
+    let mediaKeys: string[] = [];
+    try {
+      const blobs: (File | Blob)[] = [...mediaFiles];
+      if (audioUrl) blobs.push(await fetch(audioUrl).then((r) => r.blob()));
+      if (blobs.length) mediaKeys = await uploadMedia(blobs);
+    } catch (upErr) {
+      console.error("[media] upload failed", upErr);
+      toast.warning("Your photos or voice memo couldn't be uploaded. The project is still posted.");
+    }
+
     const newProject: EcosystemProject = {
       id: `PROJ-${Date.now()}`,
       seekerId,
@@ -205,13 +213,10 @@ export function HomeownerForm() {
       desiredStart: timeline || undefined,
       language: formatProjectLanguages(projectLanguages, customLanguage),
     };
-    ledger.projects = [...(ledger.projects ?? []), newProject];
 
     // No fabricated bids here any more: real bids come from the database
     // (see src/lib/job-bids.functions.ts) once contractors actually quote.
 
-    updateEcosystemLedger(ledger);
-    startDemoSession("homeowner");
 
     try {
       const { data: userRes } = await supabase.auth.getUser();
@@ -230,7 +235,8 @@ export function HomeownerForm() {
             language: newProject.language ?? null,
             urgency: timeline === "asap" ? "urgent" : "normal",
             status: "open",
-          })
+            media_keys: mediaKeys,
+          } as never)
           .select("id")
           .single();
         if (jobErr) {
@@ -239,7 +245,6 @@ export function HomeownerForm() {
           );
         } else if (jobRow?.id) {
           newProject.id = jobRow.id;
-          updateEcosystemLedger(ledger);
         }
       } else {
         // No account yet - this is the common case for a brand-new guest.
@@ -259,6 +264,7 @@ export function HomeownerForm() {
               city: profile.city || undefined,
               language: newProject.language ?? undefined,
               urgency: timeline === "asap" ? "urgent" : "normal",
+              mediaKeys,
             },
           });
         } catch (pendingErr) {

@@ -4,7 +4,6 @@ import {
   HandymanProfilePage,
   type FullPageTab,
 } from "@/features/contractor/profile/components/HandymanProfilePage";
-import { getDemoUser, setDemoUser } from "@/lib/demo-auth";
 import { useEffect } from "react";
 
 export function ProfileAppPage({
@@ -15,7 +14,6 @@ export function ProfileAppPage({
   initialSpecialtySlug?: string;
 }) {
   useEffect(() => {
-    if (!getDemoUser()) setDemoUser({ name: "You" });
   }, []);
 
   return (

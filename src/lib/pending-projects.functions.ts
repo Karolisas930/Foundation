@@ -37,6 +37,7 @@ const pendingProjectSchema = z.object({
   city: z.string().trim().max(120).optional(),
   language: z.string().trim().max(40).optional(),
   urgency: z.string().trim().max(40).optional(),
+  mediaKeys: z.array(z.string().max(200)).max(20).optional(),
 });
 
 /**
@@ -67,6 +68,7 @@ export const savePendingProject = createServerFn({ method: "POST" })
       city: data.city ?? null,
       language: data.language ?? null,
       urgency: data.urgency ?? null,
+      media_keys: data.mediaKeys ?? [],
     });
     if (error) {
       console.error("[pending-projects] save failed", {

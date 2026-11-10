@@ -50,6 +50,7 @@ import { Route as DashboardContractorTeamRouteImport } from './routes/_dashboard
 import { Route as DashboardHomeownerIndexRouteImport } from './routes/_dashboard/homeowner/index'
 import { Route as DashboardHomeownerBrowseRouteImport } from './routes/_dashboard/homeowner/browse'
 import { Route as DashboardHomeownerPropertiesRouteImport } from './routes/_dashboard/homeowner/properties'
+import { Route as ApiPublicMediaRouteImport } from './routes/api/public/media'
 import { Route as DashboardContractorJobsActiveRouteImport } from './routes/_dashboard/contractor/jobs.active'
 import { Route as DashboardContractorJobsQuotesRouteImport } from './routes/_dashboard/contractor/jobs.quotes'
 import { Route as DashboardContractorNetworkIndexRouteImport } from './routes/_dashboard/contractor/network.index'
@@ -270,6 +271,11 @@ const DashboardHomeownerPropertiesRoute =
     path: '/properties',
     getParentRoute: () => DashboardHomeownerRouteRoute,
   } as any)
+const ApiPublicMediaRoute = ApiPublicMediaRouteImport.update({
+  id: '/api/public/media',
+  path: '/api/public/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardContractorJobsActiveRoute =
   DashboardContractorJobsActiveRouteImport.update({
     id: '/jobs/active',
@@ -339,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/contractor/team': typeof DashboardContractorTeamRouteWithChildren
   '/homeowner/browse': typeof DashboardHomeownerBrowseRoute
   '/homeowner/properties': typeof DashboardHomeownerPropertiesRoute
+  '/api/public/media': typeof ApiPublicMediaRoute
   '/contractor/': typeof DashboardContractorIndexRoute
   '/homeowner/': typeof DashboardHomeownerIndexRoute
   '/contractor/jobs/active': typeof DashboardContractorJobsActiveRoute
@@ -382,6 +389,7 @@ export interface FileRoutesByTo {
   '/contractor/team': typeof DashboardContractorTeamRouteWithChildren
   '/homeowner/browse': typeof DashboardHomeownerBrowseRoute
   '/homeowner/properties': typeof DashboardHomeownerPropertiesRoute
+  '/api/public/media': typeof ApiPublicMediaRoute
   '/contractor': typeof DashboardContractorIndexRoute
   '/homeowner': typeof DashboardHomeownerIndexRoute
   '/contractor/jobs/active': typeof DashboardContractorJobsActiveRoute
@@ -431,6 +439,7 @@ export interface FileRoutesById {
   '/_dashboard/contractor/team': typeof DashboardContractorTeamRouteWithChildren
   '/_dashboard/homeowner/browse': typeof DashboardHomeownerBrowseRoute
   '/_dashboard/homeowner/properties': typeof DashboardHomeownerPropertiesRoute
+  '/api/public/media': typeof ApiPublicMediaRoute
   '/_dashboard/contractor/': typeof DashboardContractorIndexRoute
   '/_dashboard/homeowner/': typeof DashboardHomeownerIndexRoute
   '/_dashboard/contractor/jobs/active': typeof DashboardContractorJobsActiveRoute
@@ -479,6 +488,7 @@ export interface FileRouteTypes {
     | '/contractor/team'
     | '/homeowner/browse'
     | '/homeowner/properties'
+    | '/api/public/media'
     | '/contractor/'
     | '/homeowner/'
     | '/contractor/jobs/active'
@@ -522,6 +532,7 @@ export interface FileRouteTypes {
     | '/contractor/team'
     | '/homeowner/browse'
     | '/homeowner/properties'
+    | '/api/public/media'
     | '/contractor'
     | '/homeowner'
     | '/contractor/jobs/active'
@@ -570,6 +581,7 @@ export interface FileRouteTypes {
     | '/_dashboard/contractor/team'
     | '/_dashboard/homeowner/browse'
     | '/_dashboard/homeowner/properties'
+    | '/api/public/media'
     | '/_dashboard/contractor/'
     | '/_dashboard/homeowner/'
     | '/_dashboard/contractor/jobs/active'
@@ -599,6 +611,7 @@ export interface RootRouteChildren {
   PProfileIdRoute: typeof PProfileIdRoute
   TradesSpecialtyRoute: typeof TradesSpecialtyRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
+  ApiPublicMediaRoute: typeof ApiPublicMediaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -890,6 +903,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardHomeownerPropertiesRouteImport
       parentRoute: typeof DashboardHomeownerRouteRoute
     }
+    '/api/public/media': {
+      id: '/api/public/media'
+      path: '/api/public/media'
+      fullPath: '/api/public/media'
+      preLoaderRoute: typeof ApiPublicMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_dashboard/contractor/jobs/active': {
       id: '/_dashboard/contractor/jobs/active'
       path: '/jobs/active'
@@ -1073,6 +1093,7 @@ const rootRouteChildren: RootRouteChildren = {
   PProfileIdRoute: PProfileIdRoute,
   TradesSpecialtyRoute: TradesSpecialtyRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
+  ApiPublicMediaRoute: ApiPublicMediaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
