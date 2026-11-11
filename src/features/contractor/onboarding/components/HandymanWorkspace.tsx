@@ -6,7 +6,10 @@ import { MatchBreakdown } from "@/features/shared/matches/MatchBreakdown";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { sendQuickQuestion, orderEcosystemSupply } from "@/lib/ecosystem-actions";
+import { orderEcosystemSupply } from "@/lib/ecosystem-actions";
+import { sendJobQuestion } from "@/lib/job-messages.functions";
+import { saveMyBid } from "@/lib/job-bids.functions";
+import { mediaUrl } from "@/lib/media-upload";
 import {
   MapPin,
   MessageSquare,
@@ -65,6 +68,8 @@ export function HandymanWorkspace() {
   const [acceptedJobIds, setAcceptedJobIds] = useState<Set<string>>(new Set());
   const [acceptingJobId, setAcceptingJobId] = useState<string | null>(null);
   const runAcceptJobMatch = useServerFn(acceptJobMatch);
+  const runSendQuestion = useServerFn(sendJobQuestion);
+  const runSaveBid = useServerFn(saveMyBid);
 
   const handleAcceptLead = async (jobId: string) => {
     setAcceptingJobId(jobId);
@@ -141,14 +146,13 @@ export function HandymanWorkspace() {
       setGateOpen(true);
       return;
     }
-    const success = sendQuickQuestion(projectId, questionText);
-    if (success) {
-      toast.success("Question transmitted", {
-        description: "Your query was routed to the homeowner inbox.",
-      });
-      setQuestionText("");
-      setActiveProjectId(null);
-    }
+    runSendQuestion({ data: { jobId: projectId, body: questionText } })
+      .then(() => {
+        toast.success("Question sent", { description: "It's now in the homeowner's inbox." });
+        setQuestionText("");
+        setActiveProjectId(null);
+      })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Could not send question"));
   };
 
   const handleSubmitBid = (projectId: string) => {
@@ -157,15 +161,17 @@ export function HandymanWorkspace() {
       setGateOpen(true);
       return;
     }
-    const success = sendQuickQuestion(
-      projectId,
-      "Bid submitted — full quotation attached. Available to start within 2 weeks.",
-    );
-    if (success) {
-      toast.success("Bid submitted", {
-        description: "Your verified bid is now visible to the homeowner.",
-      });
-    }
+    runSaveBid({
+      data: {
+        jobId: projectId,
+        status: "sent",
+        message: "Bid submitted — available to start within 2 weeks.",
+      },
+    })
+      .then(() =>
+        toast.success("Bid submitted", { description: "The homeowner can now see your bid." }),
+      )
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Could not submit bid"));
   };
 
   const handleUploadCredential = async (kind: "license" | "insurance", file: File | null) => {
@@ -401,6 +407,23 @@ export function HandymanWorkspace() {
                   </div>
                   <MatchBreakdown score={classification.score} />
                   <p className="text-xs text-slate-600 leading-relaxed">{p.description}</p>
+                  {p.mediaKeys.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto">
+                      {p.mediaKeys.map((k) =>
+                        /\.(webm|mp3|m4a|ogg|wav)$/i.test(k) ? (
+                          <audio key={k} controls src={mediaUrl(k)} className="h-16" />
+                        ) : /\.pdf$/i.test(k) ? (
+                          <a key={k} href={mediaUrl(k)} target="_blank" rel="noreferrer" className="text-xs underline">
+                            PDF
+                          </a>
+                        ) : (
+                          <a key={k} href={mediaUrl(k)} target="_blank" rel="noreferrer">
+                            <img src={mediaUrl(k)} alt="Job photo" loading="lazy" className="h-16 w-16 rounded object-cover" />
+                          </a>
+                        ),
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                     <Dialog

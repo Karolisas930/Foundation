@@ -29,6 +29,7 @@ export interface FeedJob {
   status: "open" | "clarifying" | "matched" | "closed" | "cancelled";
   ownerId: string;
   createdAt: string;
+  mediaKeys: string[];
 }
 
 export interface ClassifiedJob {
@@ -72,14 +73,18 @@ export const listContractorJobFeed = createServerFn({ method: "GET" })
       languages: (prof?.languages as string[] | null) ?? [],
     };
 
-    const { data: rows, error: jobsErr } = await supabase
-      .from("jobs")
-      .select(
-        "id, owner_id, title, description, trade, estimated_budget, location_zip, city, language, urgency, status, created_at",
-      )
-      .in("status", ["open", "clarifying"])
-      .order("created_at", { ascending: false })
-      .limit(500);
+    const baseCols =
+      "id, owner_id, title, description, trade, estimated_budget, location_zip, city, language, urgency, status, created_at";
+    const fetchJobs = (cols: string) =>
+      supabase
+        .from("jobs")
+        .select(cols)
+        .in("status", ["open", "clarifying"])
+        .order("created_at", { ascending: false })
+        .limit(500);
+    let { data: rows, error: jobsErr } = await fetchJobs(`${baseCols}, media_keys`);
+    // Older databases may not have media_keys yet.
+    if (jobsErr && /media_keys/i.test(jobsErr.message)) ({ data: rows, error: jobsErr } = await fetchJobs(baseCols));
     if (jobsErr) throw new Error(jobsErr.message);
 
     const jobs: FeedJob[] = (rows ?? []).map((r: any) => ({
@@ -95,6 +100,7 @@ export const listContractorJobFeed = createServerFn({ method: "GET" })
       status: r.status as FeedJob["status"],
       ownerId: r.owner_id as string,
       createdAt: r.created_at as string,
+      mediaKeys: Array.isArray(r.media_keys) ? (r.media_keys as string[]) : [],
     }));
 
     const partition = partitionLeads(
