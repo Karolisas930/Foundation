@@ -3,7 +3,7 @@
  * collaboration from other self-employed trades (backup, partner,
  * equipment sharing).
  *
- * Requests are stored via `addHelpRequest` and surface inside Job Radar
+ * Requests are saved to the database via `addHelpRequest` and surface inside Job Radar
  * under the "Collaboration / Help Needed" filter.
  */
 import { useState } from "react";
@@ -60,7 +60,7 @@ export function PostHelpRequestSheet({ open, onOpenChange }: Props) {
   const [kind, setKind] = useState<HelpRequestKind>("backup");
   const [submitting, setSubmitting] = useState(false);
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const parsed = schema.safeParse({
@@ -79,7 +79,13 @@ export function PostHelpRequestSheet({ open, onOpenChange }: Props) {
       return;
     }
     setSubmitting(true);
-    addHelpRequest(parsed.data);
+    try {
+      await addHelpRequest(parsed.data);
+    } catch (err) {
+      setSubmitting(false);
+      toast.error(err instanceof Error ? err.message : "Could not post the request");
+      return;
+    }
     setSubmitting(false);
     toast.success("Help request posted", {
       description: "Nearby trades will see it in Job Radar.",
