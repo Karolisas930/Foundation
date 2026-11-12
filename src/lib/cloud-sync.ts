@@ -20,10 +20,15 @@ export async function currentUserId(): Promise<string | null> {
 /** Run `fn` once on load and again whenever the user signs in. */
 export function onSignedIn(fn: (uid: string) => void) {
   if (typeof window === "undefined") return;
-  void currentUserId().then((uid) => uid && fn(uid));
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_IN" && session?.user) fn(session.user.id);
-  });
+  // Never let a missing/misconfigured backend crash the page on load.
+  try {
+    void currentUserId().then((uid) => uid && fn(uid));
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) fn(session.user.id);
+    });
+  } catch (err) {
+    console.warn("Cloud sync disabled:", err);
+  }
 }
 
 export function dataUrlToBlob(dataUrl: string): Blob {
