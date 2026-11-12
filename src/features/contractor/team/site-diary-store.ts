@@ -8,6 +8,8 @@
  */
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getEcosystemLedger } from "@/core/demo-session";
+import { currentUserId, dataUrlToBlob, db, onSignedIn } from "@/lib/cloud-sync";
+import { mediaUrl, uploadMedia } from "@/lib/media-upload";
 
 const STORAGE_KEY = "site-diary::entries::v1";
 const ACTIVE_JOB_KEY = "site-diary::active-job::v1";
@@ -92,12 +94,63 @@ export function addSiteDiaryEntry(entry: Omit<SiteDiaryEntry, "id" | "createdAt"
   };
   const next = [full, ...readAll()];
   writeAll(next);
+  void persistEntry(full);
   return full;
 }
 
 export function removeSiteDiaryEntry(id: string) {
   writeAll(readAll().filter((e) => e.id !== id));
+  void db
+    .from("site_diary_entries")
+    .delete()
+    .eq("id", id)
+    .then(({ error }: { error: unknown }) => error && console.error("Diary delete failed:", error));
 }
+
+/* ---- Database + Cloudflare persistence (site_diary_entries) ---- */
+async function persistEntry(entry: SiteDiaryEntry) {
+  const uid = await currentUserId();
+  if (!uid) return;
+  let mediaKey: string | null = null;
+  let stored: SiteDiaryEntry = entry;
+  if (entry.dataUrl?.startsWith("data:")) {
+    try {
+      const blob = dataUrlToBlob(entry.dataUrl);
+      const ext = blob.type.split("/")[1]?.split(";")[0] ?? "bin";
+      [mediaKey] = await uploadMedia([new File([blob], entry.filename ?? `${entry.kind}.${ext}`, { type: blob.type })]);
+      stored = { ...entry, dataUrl: mediaUrl(mediaKey) };
+      // Swap the heavy local copy for the permanent link.
+      writeAll(readAll().map((e) => (e.id === entry.id ? stored : e)));
+    } catch (err) {
+      console.error("Diary file upload failed; kept on this device only:", err);
+      stored = { ...entry, dataUrl: undefined };
+    }
+  }
+  const { error } = await db.from("site_diary_entries").upsert({
+    id: entry.id,
+    owner_id: uid,
+    job_id: entry.jobId,
+    media_key: mediaKey,
+    data: stored,
+  });
+  if (error) console.error("Failed to save diary entry:", error);
+}
+
+onSignedIn(async (uid) => {
+  const { data, error } = await db
+    .from("site_diary_entries")
+    .select("data")
+    .eq("owner_id", uid)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Failed to load site diary:", error);
+    return;
+  }
+  const remote = ((data ?? []) as { data: SiteDiaryEntry }[]).map((r) => r.data);
+  const ids = new Set(remote.map((e) => e.id));
+  const localOnly = readAll().filter((e) => !ids.has(e.id));
+  writeAll([...localOnly, ...remote]);
+});
 
 /**
  * Move an entry earlier (dir=-1) or later (dir=+1) within its own kind,

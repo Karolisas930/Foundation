@@ -6,6 +6,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileText, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { currentUserId, db } from "@/lib/cloud-sync";
+import { mediaUrl, uploadMedia } from "@/lib/media-upload";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,30 +31,23 @@ type MeisterDoc = {
   issuer: string;
   issuedOn: string;
   uploadedAt: string;
-  dataUrl: string; // small previews only; large files stored as marker
+  dataUrl: string; // permanent link to the stored file
+  status?: "pending" | "approved" | "rejected";
 };
+
+type DocRow = {
+  id: string; kind: DocKind; file_name: string; mime: string; size: number;
+  media_key: string; issuer: string | null; issued_on: string | null;
+  status: MeisterDoc["status"]; created_at: string;
+};
+const fromRow = (r: DocRow): MeisterDoc => ({
+  id: r.id, kind: r.kind, fileName: r.file_name, mime: r.mime, size: r.size,
+  issuer: r.issuer ?? "", issuedOn: r.issued_on ?? "", uploadedAt: r.created_at,
+  dataUrl: mediaUrl(r.media_key), status: r.status,
+});
 
 const KEY = "handyman.meisterDocs.v1";
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB per file
-const uid = () => Math.random().toString(36).slice(2, 10);
-
-function loadDocs(): MeisterDoc[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as MeisterDoc[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveDocs(docs: MeisterDoc[]) {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(docs));
-  } catch {
-    /* quota — silently ignore */
-  }
-}
 
 export function MeisterVerification() {
   const [docs, setDocs] = useState<MeisterDoc[]>([]);
@@ -61,8 +56,19 @@ export function MeisterVerification() {
   const [issuedOn, setIssuedOn] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => setDocs(loadDocs()), []);
-  useEffect(() => saveDocs(docs), [docs]);
+  useEffect(() => {
+    void (async () => {
+      const uid = await currentUserId();
+      if (!uid) return;
+      const { data, error } = await db
+        .from("verification_documents")
+        .select("*")
+        .eq("owner_id", uid)
+        .order("created_at", { ascending: false });
+      if (error) console.error("Failed to load documents:", error);
+      else setDocs(((data ?? []) as DocRow[]).map(fromRow));
+    })();
+  }, []);
 
   const provided = docs.length > 0;
 
@@ -89,18 +95,25 @@ export function MeisterVerification() {
         continue;
       }
       try {
-        const dataUrl = await readFile(f);
-        accepted.push({
-          id: uid(),
-          fileName: f.name,
-          mime: f.type,
-          size: f.size,
-          kind,
-          issuer: issuer.trim(),
-          issuedOn,
-          uploadedAt: new Date().toISOString(),
-          dataUrl,
-        });
+        const owner = await currentUserId();
+        if (!owner) throw new Error("Please sign in to upload documents.");
+        const [key] = await uploadMedia([f]);
+        const { data, error } = await db
+          .from("verification_documents")
+          .insert({
+            owner_id: owner,
+            kind,
+            file_name: f.name,
+            mime: f.type,
+            size: f.size,
+            media_key: key,
+            issuer: issuer.trim() || null,
+            issued_on: issuedOn || null,
+          })
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+        accepted.push(fromRow(data as DocRow));
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Upload failed.");
       }
@@ -115,7 +128,12 @@ export function MeisterVerification() {
     }
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
+    const { error } = await db.from("verification_documents").delete().eq("id", id);
+    if (error) {
+      toast.error("Could not remove document.");
+      return;
+    }
     setDocs((d) => d.filter((x) => x.id !== id));
   }
 
@@ -246,6 +264,8 @@ export function MeisterVerification() {
                       {d.issuedOn ? ` · issued ${d.issuedOn}` : ""}
                       {" · "}
                       {(d.size / 1024).toFixed(0)} KB
+                      {" · "}
+                      {d.status === "approved" ? "Approved" : d.status === "rejected" ? "Rejected" : "Under review"}
                     </p>
                   </div>
                   <a

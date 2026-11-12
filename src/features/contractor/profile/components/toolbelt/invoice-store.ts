@@ -15,6 +15,7 @@ import {
   getActiveHandymanProfile,
   updateActiveHandymanProfile,
 } from "@/features/contractor/profile/profile-gate";
+import { currentUserId, db, onSignedIn } from "@/lib/cloud-sync";
 
 export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue";
 
@@ -138,6 +139,34 @@ function emit() {
   listeners.forEach((fn) => fn());
 }
 
+/* ---- Database persistence (contractor_invoices) ---- */
+async function persistInvoice(entry: InvoiceEntry) {
+  const uid = await currentUserId();
+  if (!uid) return;
+  const { error } = await db
+    .from("contractor_invoices")
+    .upsert({ id: entry.id, owner_id: uid, data: entry, updated_at: new Date().toISOString() });
+  if (error) console.error("Failed to save invoice:", error);
+}
+async function removeInvoiceRemote(id: string) {
+  const { error } = await db.from("contractor_invoices").delete().eq("id", id);
+  if (error) console.error("Failed to delete invoice:", error);
+}
+onSignedIn(async (uid) => {
+  const { data, error } = await db
+    .from("contractor_invoices")
+    .select("data")
+    .eq("owner_id", uid);
+  if (error) {
+    console.error("Failed to load invoices:", error);
+    return;
+  }
+  const remote = ((data ?? []) as { data: InvoiceEntry }[]).map((r) => r.data);
+  const ids = new Set(remote.map((e) => e.id));
+  invoiceLedger.entries = [...remote, ...invoiceLedger.entries.filter((e) => !ids.has(e.id))];
+  emit();
+});
+
 function useSubscribe() {
   const [, force] = useState(0);
   useEffect(() => {
@@ -162,6 +191,7 @@ export function addInvoice(input: Omit<InvoiceEntry, "id" | "createdAt">): Invoi
   };
   invoiceLedger.entries.push(entry);
   emit();
+  void persistInvoice(entry);
   return entry;
 }
 
@@ -170,6 +200,7 @@ export function updateInvoice(id: string, patch: Partial<InvoiceEntry>) {
   if (idx === -1) return;
   invoiceLedger.entries[idx] = { ...invoiceLedger.entries[idx], ...patch };
   emit();
+  void persistInvoice(invoiceLedger.entries[idx]);
 }
 
 export function setInvoiceStatus(id: string, status: InvoiceStatus) {
@@ -199,6 +230,7 @@ export function markInvoiceResent(id: string) {
 export function deleteInvoice(id: string) {
   invoiceLedger.entries = invoiceLedger.entries.filter((e) => e.id !== id);
   emit();
+  void removeInvoiceRemote(id);
 }
 
 export function useAllInvoices(): InvoiceEntry[] {
