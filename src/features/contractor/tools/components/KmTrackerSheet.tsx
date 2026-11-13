@@ -90,10 +90,11 @@ export type TripEntry = {
   correctionRequested?: boolean;
 };
 
-const tripLedger: { entries: TripEntry[] } = { entries: [] };
+const tripLedger: { entries: TripEntry[]; loaded: boolean } = { entries: [], loaded: false };
 const tripListeners = new Set<() => void>();
 function subscribeTrips(cb: () => void) {
   tripListeners.add(cb);
+  if (!tripLedger.loaded) void loadTrips();
   return () => {
     tripListeners.delete(cb);
   };
@@ -102,19 +103,106 @@ function notifyTrips() {
   tripListeners.forEach((fn) => fn());
 }
 
-export function pushTripEntry(entry: Omit<TripEntry, "id" | "loggedAt">) {
-  tripLedger.entries.unshift({
-    ...entry,
-    id: crypto.randomUUID(),
-    loggedAt: Date.now(),
-  });
-  notifyTrips();
+type TripRow = {
+  id: string;
+  created_at: string;
+  trip_date: string;
+  purpose: string | null;
+  from_location: string | null;
+  to_location: string | null;
+  km: number;
+  correction_requested?: boolean | null;
+};
+
+function rowToEntry(r: TripRow): TripEntry {
+  const purpose: TripPurpose = r.purpose === "commute" ? "commute" : "client";
+  const effectiveKm = Number(r.km) || 0;
+  const oneWayKm = purpose === "client" ? effectiveKm / 2 : effectiveKm;
+  return {
+    id: r.id,
+    loggedAt: new Date(r.created_at).getTime(),
+    date: r.trip_date,
+    purpose,
+    from: r.from_location ?? "",
+    to: r.to_location ?? "",
+    oneWayKm,
+    effectiveKm,
+    deduction: calcTripDeduction(purpose, oneWayKm).deduction,
+    correctionRequested: !!r.correction_requested,
+  };
 }
-export function requestTripCorrection(id: string) {
+
+async function currentUserId(): Promise<string | null> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.user.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Loads the signed-in user's trips from the database (shared with Finance page). */
+export async function loadTrips() {
+  tripLedger.loaded = true;
+  const uid = await currentUserId();
+  if (!uid) return;
+  try {
+    const { data, error } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("owner_id", uid)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw error;
+    tripLedger.entries = ((data ?? []) as unknown as TripRow[]).map(rowToEntry);
+    notifyTrips();
+  } catch (err) {
+    console.warn("[km] could not load trips", err);
+  }
+}
+
+export async function pushTripEntry(entry: Omit<TripEntry, "id" | "loggedAt">): Promise<boolean> {
+  const uid = await currentUserId();
+  if (!uid) {
+    toast.error("Please sign in to save trips.");
+    return false;
+  }
+  const { data, error } = await supabase
+    .from("trips")
+    .insert({
+      owner_id: uid,
+      trip_date: entry.date,
+      purpose: entry.purpose,
+      from_location: entry.from || null,
+      to_location: entry.to || null,
+      km: entry.effectiveKm,
+    })
+    .select("*")
+    .single();
+  if (error || !data) {
+    console.error("[km] save failed", error);
+    toast.error("Could not save the trip. Please try again.");
+    return false;
+  }
+  tripLedger.entries.unshift(rowToEntry(data as unknown as TripRow));
+  notifyTrips();
+  return true;
+}
+
+export async function requestTripCorrection(id: string) {
   const t = tripLedger.entries.find((e) => e.id === id);
   if (!t || t.correctionRequested) return;
   t.correctionRequested = true;
   notifyTrips();
+  const { error } = await supabase
+    .from("trips")
+    .update({ correction_requested: true } as never)
+    .eq("id", id);
+  if (error) {
+    t.correctionRequested = false;
+    notifyTrips();
+    toast.error("Could not save the correction request.");
+  }
 }
 export function useRecentTrips(limit = 3): TripEntry[] {
   const [, force] = useState(0);
@@ -261,7 +349,7 @@ export function KmTrackerSheet({
   const fmt = (n: number) =>
     `€ ${n.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  function logTrip() {
+  async function logTrip() {
     if (!baseAddress.trim()) {
       toast.error("Set your base / registration address first.");
       return;
@@ -274,7 +362,7 @@ export function KmTrackerSheet({
       toast.error("Enter one-way kilometers — could not auto-estimate.");
       return;
     }
-    pushTripEntry({
+    const ok = await pushTripEntry({
       date: tripDate,
       purpose,
       from: baseAddress,
@@ -283,6 +371,7 @@ export function KmTrackerSheet({
       effectiveKm: draftCalc.effectiveKm,
       deduction: draftCalc.deduction,
     });
+    if (!ok) return;
     setDestAddress("");
     setManualOneWayKm("");
     toast.success(`Logged ${draftCalc.effectiveKm} km · ${fmt(draftCalc.deduction)} deductible.`);
