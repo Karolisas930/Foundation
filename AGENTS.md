@@ -10,3 +10,5 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+- Reconcile the actual database before importing legacy SQL; apply additive migrations through the database migration tool rather than replaying reset/bootstrap history, because imported history may not represent this database.

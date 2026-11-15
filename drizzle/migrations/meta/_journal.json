@@ -120,6 +120,48 @@
       "when": 1789830445506,
       "tag": "0016_drop_tmp_apply_sql_helper",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794608575273,
+      "tag": "0017_initialize_profiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794646486912,
+      "tag": "0018_real_data_base_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794646585124,
+      "tag": "0019_real_data_quotes_scheduling_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794730420654,
+      "tag": "0020_real_data_read_paths_and_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794730437656,
+      "tag": "0021_real_data_matching_read_function",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794730506874,
+      "tag": "0022_profile_pin_persistence",
+      "breakpoints": true
     }
   ]
 }
