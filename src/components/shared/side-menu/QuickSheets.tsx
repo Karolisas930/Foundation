@@ -34,14 +34,6 @@ export function JobRadarSheet({
               <p className="text-xs text-white/55">Trending jobs in your area</p>
             </div>
           </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={() => onOpenChange(false)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white"
-          >
-            <X className="h-5 w-5" strokeWidth={1.5} />
-          </button>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           <JobRadar />
