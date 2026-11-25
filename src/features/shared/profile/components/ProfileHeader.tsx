@@ -5,6 +5,7 @@
  * via the `text-white/*`, `border-white/*` and `glass-panel` utilities.
  */
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Camera, CheckCircle2, Save, ShieldCheck } from "lucide-react";
 import { initials } from "@/features/contractor/onboarding/components/profile-types";
 import type { AVAILABLE_LANGUAGES } from "@/features/contractor/onboarding/components/profile-types";
@@ -34,6 +35,7 @@ export interface ProfileHeaderProps {
 }
 
 export function ProfileHeader(p: ProfileHeaderProps) {
+  const { t } = useTranslation();
   const coverInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
 
@@ -80,10 +82,10 @@ export function ProfileHeader(p: ProfileHeaderProps) {
                 type="button"
                 onClick={() => coverInput.current?.click()}
                 className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur transition hover:bg-white/[0.15]"
-                aria-label="Upload banner image"
+                aria-label={t("profile.uploadBanner", "Upload banner image")}
               >
                 <Camera className="size-3.5" />
-                <span>Banner</span>
+                <span>{t("profile.banner", "Banner")}</span>
               </button>
               <input
                 ref={coverInput}
@@ -139,7 +141,7 @@ export function ProfileHeader(p: ProfileHeaderProps) {
                 type="button"
                 onClick={() => avatarInput.current?.click()}
                 className="grid size-20 place-items-center overflow-hidden rounded-full bg-white/[0.08] text-white shadow-lg ring-4 ring-background transition hover:bg-white/[0.15] sm:size-24"
-                aria-label="Upload profile picture"
+                aria-label={t("profile.uploadPhoto", "Upload profile picture")}
               >
                 {p.avatar ? (
                   <img src={p.avatar} alt="Avatar" className="size-full object-cover" />
@@ -171,10 +173,10 @@ export function ProfileHeader(p: ProfileHeaderProps) {
           {p.verified && (
             <span
               className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-500/[0.06] px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-emerald-200"
-              aria-label="HWK Stuttgart Verifiziert"
+              aria-label={t("profile.hwkVerified", "HWK Stuttgart Verified")}
             >
               <ShieldCheck className="size-3.5" strokeWidth={1.5} />
-              🛡️ HWK Stuttgart Verifiziert
+              🛡️ {t("profile.hwkVerified", "HWK Stuttgart Verified")}
             </span>
           )}
         </div>
@@ -189,7 +191,7 @@ export function ProfileHeader(p: ProfileHeaderProps) {
             {p.city && p.radiusKm > 0 && <span className="mx-2 text-white/25">•</span>}
             {p.radiusKm > 0 && (
               <span className="text-white/90">
-                🚗 Einsatzradius: <span className="font-semibold">{p.radiusKm} km</span>
+                🚗 {t("profile.serviceRadiusLabel", "Service radius:")} <span className="font-semibold">{p.radiusKm} km</span>
               </span>
             )}
           </p>

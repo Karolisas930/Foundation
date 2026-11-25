@@ -5,6 +5,7 @@
  * Presentational only. All state lives in HandymanProfilePage.
  */
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Briefcase,
   CalendarDays,
@@ -64,14 +65,15 @@ export function ProfileHeader({
   onSave,
   onInvite,
 }: ProfileHeaderProps) {
+  const { t } = useTranslation();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const profileStats = [
-    { icon: Briefcase, label: "Jobs done", value: "47" },
-    { icon: Star, label: "Avg rating", value: "4.9" },
-    { icon: Clock, label: "Response", value: "< 2h" },
-    { icon: TrendingUp, label: "Repeat clients", value: "32%" },
+    { icon: Briefcase, label: t("profile.jobsDone", "Jobs done"), value: "47" },
+    { icon: Star, label: t("profile.avgRating", "Avg rating"), value: "4.9" },
+    { icon: Clock, label: t("profile.response", "Response"), value: "< 2h" },
+    { icon: TrendingUp, label: t("profile.repeatClients", "Repeat clients"), value: "32%" },
   ];
 
   return (
@@ -127,7 +129,7 @@ export function ProfileHeader({
                 onClick={onSave}
                 className="btn-glow btn-glow-hover h-10 shrink-0 rounded-full px-5"
               >
-                <Check className="mr-1.5 size-4" /> Save Changes
+                <Check className="mr-1.5 size-4" /> {t("profile.saveChanges", "Save Changes")}
               </Button>
             ) : (
               <Button
@@ -136,7 +138,7 @@ export function ProfileHeader({
                 onClick={onDone}
                 className="h-10 shrink-0 rounded-full border-white/15 bg-white/5 px-5 text-white hover:bg-white/10 hover:text-white"
               >
-                Done
+                {t("profile.done", "Done")}
               </Button>
             )
           ) : (
@@ -147,14 +149,14 @@ export function ProfileHeader({
                 onClick={onInvite}
                 className="h-10 rounded-full border-white/15 bg-white/5 px-4 text-white hover:bg-white/10 hover:text-white"
               >
-                <UserPlus className="mr-1.5 size-4" /> Invite colleague
+                <UserPlus className="mr-1.5 size-4" /> {t("profile.inviteColleague", "Invite colleague")}
               </Button>
               <Button
                 type="button"
                 onClick={onEdit}
                 className="btn-glow btn-glow-hover h-10 rounded-full px-5"
               >
-                <Pencil className="mr-1.5 size-4" /> Edit Profile
+                <Pencil className="mr-1.5 size-4" /> {t("profile.editProfile", "Edit Profile")}
               </Button>
             </div>
           )}
@@ -168,15 +170,15 @@ export function ProfileHeader({
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
-              <CalendarDays className="size-3" /> Joined {joinDate}
+              <CalendarDays className="size-3" /> {t("profile.joined", { date: joinDate, defaultValue: `Joined ${joinDate}` })}
             </span>
             {verified ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-300">
-                <ShieldCheck className="size-3" /> Verified
+                <ShieldCheck className="size-3" /> {t("profile.verified", "Verified")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-orange/30 bg-orange/10 px-2.5 py-0.5 text-[11px] font-semibold text-orange-glow">
-                <ShieldCheck className="size-3" /> Verification pending
+                <ShieldCheck className="size-3" /> {t("profile.verificationPending", "Verification pending")}
               </span>
             )}
           </div>
@@ -190,12 +192,11 @@ export function ProfileHeader({
           <div className="mt-4 space-y-1.5 text-sm text-slate-300">
             <p className="flex items-center gap-2">
               <Hammer className="size-4 text-orange" />
-              <span className="font-semibold text-white">Trade:</span> {trade || "—"}
+              <span className="font-semibold text-white">{t("profile.trade", "Trade")}:</span> {trade || "—"}
             </p>
             <p className="flex items-center gap-2">
               <MapPin className="size-4 text-orange" />
-              <span className="font-semibold text-white">Einsatzradius:</span> {radiusKm} km service
-              radius
+              <span className="font-semibold text-white">{t("profile.serviceRadiusLabel", "Service radius:")}</span> {radiusKm} km {t("profile.serviceRadiusSuffix", "service radius")}
             </p>
           </div>
 

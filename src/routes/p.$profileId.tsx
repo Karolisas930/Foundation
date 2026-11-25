@@ -14,6 +14,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, Compass, Lock, Building2, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 
 import { TopBar } from "@/components/shared/TopBar";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/p/$profileId")({
         { title: `${p?.business_name ?? "Handwerker"} — HANDWERK` },
         {
           name: "description",
-          content: p?.bio?.slice(0, 155) ?? "Verifiziertes Handwerker-Profil auf HANDWERK.",
+          content: p?.bio?.slice(0, 155) ?? "Verified trade professional profile on HANDWERK.",
         },
       ],
     };
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/p/$profileId")({
   errorComponent: ({ error }) => (
     <FrameShell>
       <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center">
-        <p className="text-sm text-red-200">Profil konnte nicht geladen werden.</p>
+        <p className="text-sm text-red-200">Profile could not be loaded.</p>
         <p className="mt-2 text-xs text-red-200/70">{error.message}</p>
       </div>
     </FrameShell>
@@ -63,7 +64,7 @@ export const Route = createFileRoute("/p/$profileId")({
   notFoundComponent: () => (
     <FrameShell>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-slate-300">
-        Dieses Profil existiert nicht.
+        This profile does not exist.
       </div>
     </FrameShell>
   ),
@@ -81,6 +82,7 @@ function FrameShell({ children }: { children: React.ReactNode }) {
 }
 
 function PublicProfilePage() {
+  const { t } = useTranslation();
   const loaderData = Route.useLoaderData() as { profile: PublicProfile | null } | undefined;
   const profile = loaderData?.profile ?? null;
   const { profileId } = Route.useParams();
@@ -133,9 +135,9 @@ function PublicProfilePage() {
       const updated = await runAcceptMatch({ data: { matchId } });
       await viewerQuery.refetch();
       if (updated.status === "unlocked") {
-        toast.success("Match freigeschaltet — Kontaktdaten sind jetzt sichtbar.");
+        toast.success("Match unlocked — contact details are now visible.");
       } else {
-        toast.success("Angebot angenommen — warten auf die Gegenseite.");
+        toast.success("Offer accepted — waiting for the contractor.");
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Aktion fehlgeschlagen.";
@@ -195,14 +197,14 @@ function PublicProfilePage() {
       <FrameShell>
         <div className="rounded-2xl border border-orange-300/20 bg-gradient-to-br from-orange-500/[0.08] via-white/[0.02] to-transparent p-8 text-center">
           <Lock className="mx-auto size-8 text-orange-200" strokeWidth={1.75} />
-          <h1 className="mt-3 font-display text-xl font-bold text-white">Anmeldung erforderlich</h1>
-          <p className="mt-2 text-sm text-slate-300/85">Du wirst zur Anmeldung weitergeleitet …</p>
+          <h1 className="mt-3 font-display text-xl font-bold text-white">Sign-in required</h1>
+          <p className="mt-2 text-sm text-slate-300/85">You are being redirected to sign in …</p>
           <Link
             to="/login"
             search={{ next: `/p/${profileId}` } as never}
             className="mt-4 inline-flex items-center rounded-full bg-orange-500 px-5 py-2 text-sm font-bold text-slate-950"
           >
-            Zur Anmeldung
+            Sign in
           </Link>
         </div>
       </FrameShell>
@@ -213,7 +215,7 @@ function PublicProfilePage() {
     return (
       <FrameShell>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-slate-300">
-          Dieses Profil existiert nicht.
+          This profile does not exist.
         </div>
       </FrameShell>
     );
@@ -233,10 +235,10 @@ function PublicProfilePage() {
           </h1>
           <span
             className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-[0.14em] text-emerald-300 ring-1 ring-emerald-400/25"
-            aria-label="Handwerkskammer verifiziert"
+            aria-label="HWK verified"
           >
             <ShieldCheck className="size-3.5" />
-            HWK verifiziert
+            HWK verified
           </span>
           {signedIn && !isOwner && (
             <div className="ml-auto">
@@ -245,7 +247,7 @@ function PublicProfilePage() {
           )}
         </div>
         <p className="mt-1 text-sm text-slate-300/80">
-          {[tradesLine, display.city].filter(Boolean).join(" · ") || "Handwerker"}
+          {[tradesLine, display.city].filter(Boolean).join(" · ") || "Trade Professional"}
         </p>
 
         {/* Specialty tags — sub-category chips under the trade title */}
@@ -302,15 +304,14 @@ function PublicProfilePage() {
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-display text-lg font-bold tracking-tight text-white">
-                  Kontaktdaten gesperrt
+                  Contact details locked
                 </h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-slate-300/90">
-                  Telefon, E-Mail, Website und Social Profile werden erst freigeschaltet, sobald{" "}
-                  <span className="font-semibold text-white">beide Seiten</span> das Angebot
-                  annehmen und ein{" "}
-                  <span className="font-semibold text-orange-200">gegenseitiges Match</span>{" "}
-                  entsteht. So schützen wir Handwerker vor Kaltakquise und dich vor unverbindlichen
-                  Anfragen.
+                  Phone, email, website and social profiles are unlocked once{" "}
+                  <span className="font-semibold text-white">both parties</span> accept the offer
+                  and form a{" "}
+                  <span className="font-semibold text-orange-200">mutual match</span>.
+                  This protects contractors from cold calls and homeowners from uncommitted inquiries.
                 </p>
               </div>
             </div>
@@ -323,10 +324,10 @@ function PublicProfilePage() {
         <div className="mt-6 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6">
           <p className="text-sm text-slate-300/90">
             {matchStatus === "client_accepted"
-              ? "Du hast das Angebot angenommen. Sobald der Handwerker ebenfalls annimmt, werden die Kontaktdaten freigeschaltet."
+              ? "You accepted the offer. Once the contractor accepts as well, contact details will be unlocked."
               : matchStatus === "contractor_accepted"
-                ? "Der Handwerker hat dich angenommen. Bestätige das Angebot, um die Kontaktdaten freizuschalten."
-                : "Nimm das Angebot beidseitig an, um Website, Social Profile und Geschäftstelefon freizuschalten."}
+                ? "The contractor accepted your inquiry. Confirm the offer to unlock contact details."
+                : "Accept the offer from both sides to unlock website, social profiles and phone number."}
           </p>
           <Button
             onClick={onRequestOrAccept}
@@ -334,10 +335,10 @@ function PublicProfilePage() {
             className="mt-4"
           >
             {matchStatus === "client_accepted"
-              ? "Warten auf Handwerker …"
+              ? "Waiting for contractor …"
               : busy
-                ? "Wird verarbeitet …"
-                : "Angebot annehmen & Kontakt freischalten"}
+                ? "Processing …"
+                : "Accept offer & unlock contact"}
           </Button>
         </div>
       )}
@@ -345,9 +346,9 @@ function PublicProfilePage() {
       {signedIn === false && (
         <div className="mt-6 rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6 text-sm text-slate-300/90">
           <a href="/login" className="font-semibold text-orange-300 hover:underline">
-            Melde dich an
+            Sign in
           </a>{" "}
-          , um ein Match zu starten und die Kontaktdaten freizuschalten.
+          to start a match and unlock contact details.
         </div>
       )}
 

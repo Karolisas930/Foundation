@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface OverviewPanelProps {
   businessName: string;
@@ -46,6 +47,7 @@ function ContactEditor({
   instagram: string;
   onSave: (c: { phone: string; website: string; instagram: string }) => Promise<void> | void;
 }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [v, setV] = useState({ phone, website, instagram });
@@ -54,9 +56,9 @@ function ContactEditor({
     setEditing(true);
   };
   const rows = [
-    { Icon: Globe, key: "website" as const, label: "Website", type: "url", ph: "https://yourbusiness.com" },
-    { Icon: Instagram, key: "instagram" as const, label: "Instagram", type: "text", ph: "@yourhandle" },
-    { Icon: Phone, key: "phone" as const, label: "Phone Number", type: "tel", ph: "+49 30 12345678" },
+    { Icon: Globe, key: "website" as const, label: t("profile.website", "Website"), type: "url", ph: "https://yourbusiness.com" },
+    { Icon: Instagram, key: "instagram" as const, label: t("profile.instagram", "Instagram"), type: "text", ph: "@yourhandle" },
+    { Icon: Phone, key: "phone" as const, label: t("profile.phone", "Phone Number"), type: "tel", ph: "+49 30 12345678" },
   ];
   if (!editing) {
     return (
@@ -72,12 +74,12 @@ function ContactEditor({
             <div key={key} className={`flex items-center gap-2.5 text-sm ${val ? "text-white/90" : "text-white/35"}`}>
               <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
               <span className="min-w-0 truncate underline decoration-white/15 underline-offset-4">{val || label}</span>
-              {!val && <span className="ml-auto text-[11px] text-orange-300/80">+ Add</span>}
+              {!val && <span className="ml-auto text-[11px] text-orange-300/80">{t("profile.add", "+ Add")}</span>}
             </div>
           );
         })}
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-300/90">
-          <Pencil className="size-3" /> Tap to edit
+          <Pencil className="size-3" /> {t("profile.tapToEdit", "Tap to edit")}
         </span>
       </button>
     );
@@ -103,7 +105,7 @@ function ContactEditor({
           onClick={() => setEditing(false)}
           className="inline-flex items-center gap-1 rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/70"
         >
-          <X className="size-3" /> Cancel
+          <X className="size-3" /> {t("common.cancel", "Cancel")}
         </button>
         <button
           type="button"
@@ -119,7 +121,7 @@ function ContactEditor({
           }}
           className="inline-flex items-center gap-1 rounded-full border border-orange-400/40 bg-orange-500/20 px-3 py-1.5 text-xs font-semibold text-orange-100 disabled:opacity-50"
         >
-          <Check className="size-3" /> {busy ? "Saving…" : "Save"}
+          <Check className="size-3" /> {busy ? t("common.saving", "Saving…") : t("common.save", "Save")}
         </button>
       </div>
     </div>
@@ -160,6 +162,7 @@ export function OverviewPanel({
   instagram,
   onSaveContact,
 }: OverviewPanelProps) {
+  const { t } = useTranslation();
   const displayRating = rating > 0 ? rating : 0;
   const reviewCount = jobsCompleted;
   const onTimePct: number | null = null;
@@ -172,7 +175,7 @@ export function OverviewPanel({
       <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
         {/* About: 60% */}
         <div className={`${cardBase} md:col-span-3`}>
-          <h3 className="font-display text-lg font-bold text-white mb-3">About {businessName}</h3>
+          <h3 className="font-display text-lg font-bold text-white mb-3">{t("profile.about", { name: businessName, defaultValue: `About ${businessName}` })}</h3>
           <p className="leading-relaxed text-slate-300/90 text-[15px]">{bio}</p>
 
           {/* Privacy Gate — locked contact channels */}
@@ -187,9 +190,9 @@ export function OverviewPanel({
             ) : (
             <div className="flex flex-col gap-2.5">
               {[
-                { Icon: Globe, label: "Website", value: website },
-                { Icon: Instagram, label: "Instagram", value: instagram },
-                { Icon: Phone, label: "Phone Number", value: phone },
+                { Icon: Globe, label: t("profile.website", "Website"), value: website },
+                { Icon: Instagram, label: t("profile.instagram", "Instagram"), value: instagram },
+                { Icon: Phone, label: t("profile.phone", "Phone Number"), value: phone },
               ].map(({ Icon, label, value }) => (
                 <div key={label} className={`flex items-center gap-2.5 text-sm ${value ? "text-white/90" : "text-white/35"}`}>
                   <Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
@@ -201,7 +204,7 @@ export function OverviewPanel({
             <div className="mt-3 flex items-start gap-2 border-t border-white/[0.05] pt-3 text-[12px] text-white/55">
               <Lock className="mt-0.5 size-3.5 shrink-0 text-white/50" strokeWidth={1.5} />
               <p className="leading-relaxed">
-                🔒 Contact details will be unlocked after mutual acceptance of the offer.
+                {t("profile.contactLocked", "🔒 Contact details will be unlocked after mutual acceptance of the offer.")}
               </p>
             </div>
           </div>
@@ -216,7 +219,7 @@ export function OverviewPanel({
                 {displayRating.toFixed(1)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {reviewCount} review{reviewCount === 1 ? "" : "s"}
+                {reviewCount} {reviewCount === 1 ? t("profile.review", "review") : t("profile.reviews", "reviews")}
               </p>
             </div>
           </div>
@@ -226,7 +229,7 @@ export function OverviewPanel({
               <div className="font-display text-xl font-bold text-white leading-tight">
                 {onTimePct === null ? "—" : `${onTimePct}%`}
               </div>
-              <p className="text-xs text-muted-foreground">On-time delivery</p>
+              <p className="text-xs text-muted-foreground">{t("profile.onTimeDelivery", "On-time delivery")}</p>
             </div>
           </div>
         </div>
@@ -235,7 +238,7 @@ export function OverviewPanel({
       {/* Before & After Gallery */}
       <section className={cardBase}>
         <h4 className="font-display text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <ImageIcon className="size-5 text-orange/70" /> Before & After Gallery
+          <ImageIcon className="size-5 text-orange/70" /> {t("profile.beforeAfter", "Before & After Gallery")}
         </h4>
         <div className="space-y-3">
           {[1, 2].map((i) => (
@@ -249,22 +252,22 @@ export function OverviewPanel({
                     {slot}
                   </span>
                   <Camera className="size-6 text-muted-foreground/60" />
-                  <span className="text-xs text-muted-foreground">No photos uploaded yet</span>
+                  <span className="text-xs text-muted-foreground">{t("profile.noPhotosYet", "No photos uploaded yet")}</span>
                 </div>
               ))}
             </div>
           ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Completed project photos appear here as the pro adds them from their portfolio.
+          {t("profile.photosHint", "Completed project photos appear here as the pro adds them from their portfolio.")}
         </p>
       </section>
 
-      {/* Verified Client Reviews */}
+      {/* {t("profile.verifiedReviews", "Verified Client Reviews")} */}
       <section className={cardBase}>
-        <h4 className="font-display text-lg font-bold text-white mb-4">Verified Client Reviews</h4>
+        <h4 className="font-display text-lg font-bold text-white mb-4">{t("profile.verifiedReviews", "Verified Client Reviews")}</h4>
         {DEMO_REVIEWS.length === 0 && (
-          <p className="text-sm text-muted-foreground">No reviews yet. Reviews appear after completed jobs.</p>
+          <p className="text-sm text-muted-foreground">{t("profile.noReviewsYet", "No reviews yet. Reviews appear after completed jobs.")}</p>
         )}
         <ul className="space-y-3">
           {DEMO_REVIEWS.map((r) => (

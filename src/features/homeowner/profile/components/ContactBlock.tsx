@@ -9,6 +9,7 @@
  * flag returned by `getProfileForViewer`. The gate lives on the server.
  */
 import { Lock, Globe, Instagram, Phone, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export type ContactBlockData = {
   website_url: string | null;
@@ -24,6 +25,7 @@ interface ContactBlockProps {
 const card = "rounded-2xl border border-white/[0.05] bg-white/[0.025] p-6";
 
 export function ContactBlock({ unlocked, contact }: ContactBlockProps) {
+  const { t } = useTranslation();
   if (!unlocked || !contact) {
     return (
       <section className={`${card} relative overflow-hidden`} aria-live="polite" data-locked="true">
@@ -37,16 +39,14 @@ export function ContactBlock({ unlocked, contact }: ContactBlockProps) {
           </div>
           <div className="min-w-0">
             <h4 className="font-display text-base font-bold text-white">
-              🔒 Kontaktdaten werden nach gegenseitiger Annahme des Angebots freigeschaltet
+              {t("profile.contactLockedTitle", "🔒 Contact details will be unlocked after mutual acceptance of the offer")}
             </h4>
             <p className="mt-2 text-sm leading-relaxed text-slate-300/80">
-              Website, Social-Profile und Geschäftstelefon werden erst sichtbar, sobald beide Seiten
-              das Match bestätigt haben. So bleibt der Erstkontakt fair &amp; spamfrei — für dich
-              und den Handwerker.
+{t("profile.contactLockedNotice", "Website, social profiles and business phone will become visible once both parties have confirmed the match. This keeps first contact fair & spam-free — for you and the contractor.")}
             </p>
             <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/[0.03] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 ring-1 ring-white/10">
               <ShieldCheck className="size-3.5" />
-              Privacy Gate aktiv
+              {t("profile.privacyGateActive", "Privacy Gate active")}
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@ export function ContactBlock({ unlocked, contact }: ContactBlockProps) {
       <div className="mb-4 flex items-center gap-2">
         <ShieldCheck className="size-5 text-emerald-400" />
         <h4 className="font-display text-base font-bold text-white">
-          Kontaktdaten — freigeschaltet
+          {t("profile.contactUnlocked", "Contact details — unlocked")}
         </h4>
       </div>
       <dl className="space-y-3">
@@ -89,7 +89,7 @@ export function ContactBlock({ unlocked, contact }: ContactBlockProps) {
         )}
         {!contact.website_url && !contact.instagram_handle && !contact.phone_e164 && (
           <p className="text-sm text-slate-400">
-            Dieser Handwerker hat noch keine Kontaktdaten hinterlegt.
+            {t("profile.noContactDetailsYet", "This trade professional has not added contact details yet.")}
           </p>
         )}
       </dl>

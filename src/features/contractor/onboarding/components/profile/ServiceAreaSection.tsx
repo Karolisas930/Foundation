@@ -15,6 +15,7 @@ interface Props {
 }
 
 export function ServiceAreaSection({ editing, radius, setRadius, onDirty }: Props) {
+  const { t } = useTranslation();
   return (
     <SectionShell
       id="section-area"
@@ -25,7 +26,7 @@ export function ServiceAreaSection({ editing, radius, setRadius, onDirty }: Prop
     >
       <div>
         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-          Einsatzradius — {radius[0]} km
+          {t("profile.serviceRadius", "Service radius")} — {radius[0]} km
         </Label>
         <div className="mt-3 flex items-center gap-3">
           <Slider

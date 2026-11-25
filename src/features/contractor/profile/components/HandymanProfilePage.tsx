@@ -3,6 +3,7 @@
  * Practical tools for tradespeople + strong public profile for winning jobs.
  */
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
@@ -114,6 +115,7 @@ export function HandymanProfilePage({
   initialPage = "overview",
   initialSpecialtySlug,
 }: { initialPage?: FullPageTab; initialSpecialtySlug?: string } = {}) {
+  const { t } = useTranslation();
   const activeSpecialty: TradeSpecialtyDef | undefined = initialSpecialtySlug
     ? getTradeSpecialtyBySlug(initialSpecialtySlug)
     : undefined;
@@ -300,7 +302,7 @@ export function HandymanProfilePage({
               onClick={() => setTab(tab === "edit" ? "overview" : "edit")}
               className="rounded-full border border-orange-400/40 bg-orange-500/15 px-4 py-1.5 text-xs font-semibold text-orange-100 hover:bg-orange-500/25"
             >
-              {tab === "edit" ? "View public profile" : "Edit profile"}
+              {tab === "edit" ? t("profile.viewPublic", "View public profile") : t("profile.editProfile", "Edit profile")}
             </button>
           </div>
         )}
@@ -311,29 +313,29 @@ export function HandymanProfilePage({
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-300/80">
-                    Active trade tool
+                    {t("profile.activeTradeTool", "Active trade tool")}
                   </p>
                   <h3 className="mt-1 font-display text-lg font-extrabold text-white">
                     {activeSpecialty.label}
                   </h3>
                   <p className="mt-1 text-xs text-slate-300">
-                    Required certifications: {activeSpecialty.requiredCertifications.join(" · ")}
+                    {t("profile.requiredCerts", "Required certifications:")} {activeSpecialty.requiredCertifications.join(" · ")}
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-end gap-1.5">
                   {activeSpecialty.features.permits && (
                     <span className="rounded-full border border-orange-400/40 bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-100">
-                      Permits
+                      {t("profile.permits", "Permits")}
                     </span>
                   )}
                   {activeSpecialty.features.inspection && (
                     <span className="rounded-full border border-orange-400/40 bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-100">
-                      Inspection
+                      {t("profile.inspection", "Inspection")}
                     </span>
                   )}
                   {activeSpecialty.features.subsidyPrograms && (
                     <span className="rounded-full border border-orange-400/40 bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold text-orange-100">
-                      Subsidies
+                      {t("profile.subsidies", "Subsidies")}
                     </span>
                   )}
                 </div>
