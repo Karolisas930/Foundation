@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Camera, ClipboardList, Mic, PenLine, Plus, Receipt as ReceiptIcon } from "lucide-react";
+import { Camera, ClipboardList, Mic, PenLine, Plus, Receipt as ReceiptIcon, X } from "lucide-react";
 import {
   addLocalJob,
   getActiveJobId,
@@ -90,6 +91,7 @@ export function SiteDiarySheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        hideClose
         className="mx-auto flex h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-[#0b0d10] p-0 text-white shadow-2xl"
       >
         <SheetHeader className="sticky top-0 z-10 shrink-0 border-b border-white/10 bg-gradient-to-br from-orange/20 via-[#0b0d10] to-[#0b0d10] p-5 pt-4">
@@ -104,7 +106,19 @@ export function SiteDiarySheet({
                 Everything from today's job, in one place.
               </SheetDescription>
             </div>
-            <SaveFlash tick={savedFlash} count={entries.length} />
+            <div className="flex items-center gap-2">
+              <SaveFlash tick={savedFlash} count={entries.length} />
+              <SheetClose asChild>
+                <button
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-orange/50"
+                  aria-label="Close Site Diary"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </SheetClose>
+            </div>
           </div>
 
           <div className="mt-4 space-y-2">
