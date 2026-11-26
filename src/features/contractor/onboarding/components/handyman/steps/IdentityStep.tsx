@@ -1,7 +1,8 @@
 /**
  * IdentityStep — Step 1 of the Handyman onboarding wizard.
- * Collects first name, last name and (optional) company name.
+ * Collects first name, last name and company name with automatic lookup.
  */
+import { CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -9,29 +10,35 @@ import {
   CARD_CLS,
   HEADER_CLS,
 } from "@/features/contractor/onboarding/components/onboarding-constants";
+import { CompanyAutocomplete } from "@/features/contractor/onboarding/components/CompanyAutocomplete";
+import { type CompanySuggestion } from "@/regions";
 
 interface Props {
   firstName: string;
   lastName: string;
   businessName: string;
+  selectedCompany?: CompanySuggestion | null;
   errors: Record<string, string>;
   touched: Record<string, boolean>;
   onTouch: (k: string) => void;
   setFirstName: (v: string) => void;
   setLastName: (v: string) => void;
   setBusinessName: (v: string) => void;
+  onSelectCompany?: (company: CompanySuggestion) => void;
 }
 
 export function IdentityStep({
   firstName,
   lastName,
   businessName,
+  selectedCompany,
   errors,
   touched,
   onTouch,
   setFirstName,
   setLastName,
   setBusinessName,
+  onSelectCompany,
 }: Props) {
   return (
     <section id="identity" className={CARD_CLS}>
@@ -88,14 +95,25 @@ export function IdentityStep({
         <Label htmlFor="businessName" className="text-white">
           Business / company name
         </Label>
-        <Input
+        <CompanyAutocomplete
           id="businessName"
-          maxLength={120}
-          placeholder="e.g. Müller Bau GmbH"
           value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
-          className="intake-input mt-2"
+          onChange={(val) => {
+            setBusinessName(val);
+          }}
+          onSelectCompany={onSelectCompany}
+          placeholder="e.g. Müller Bau GmbH"
         />
+        {selectedCompany ? (
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-emerald-400">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            <span>Address details auto-filled for Step 3 (Service area)</span>
+          </p>
+        ) : (
+          <p className="mt-1.5 text-[11px] text-white/40">
+            Start typing to search registered businesses or type a custom company name.
+          </p>
+        )}
       </div>
     </section>
   );

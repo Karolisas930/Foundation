@@ -18,3 +18,5 @@ export {
   fetchStreetsOpenPLZ,
   type PostcodeHit as OpenPlzPostcodeHit,
 } from "./openplz";
+
+export * from "./company-lookup";

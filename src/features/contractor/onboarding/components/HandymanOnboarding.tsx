@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { FormShell } from "@/components/shared/FormShell";
-import { REGULATED_TRADES, TRADE_OPTIONS } from "@/regions";
+import { REGULATED_TRADES, TRADE_OPTIONS, type CompanySuggestion } from "@/regions";
 
 import {
   EMAIL_RE,
@@ -47,6 +47,7 @@ export function HandymanOnboarding() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState<CompanySuggestion | null>(null);
 
   // Trades
   const [trades, setTrades] = useState<string[]>([]);
@@ -59,7 +60,7 @@ export function HandymanOnboarding() {
   const [city, setCity] = useState("");
   const [cityAutoFilled, setCityAutoFilled] = useState(false);
   const [stateName, setStateName] = useState("");
-  const [, setStateAutoFilled] = useState(false);
+  const [stateAutoFilled, setStateAutoFilled] = useState(false);
   const [streetAddress, setStreetAddress] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
   const [radius, setRadius] = useState<number[]>([25]);
@@ -108,6 +109,29 @@ export function HandymanOnboarding() {
   useEffect(() => {
     if (sessionEmail) setBusinessEmail((cur) => cur || sessionEmail);
   }, [sessionEmail]);
+
+  function handleSelectCompany(company: CompanySuggestion) {
+    setSelectedCompany(company);
+    setBusinessName(company.name);
+    if (company.street) {
+      setStreetAddress(company.street);
+    }
+    if (company.houseNumber) {
+      setHouseNumber(company.houseNumber);
+    }
+    if (company.postcode) {
+      setPostalCode(company.postcode);
+    }
+    if (company.city) {
+      setCity(company.city);
+      setCityAutoFilled(true);
+    }
+    if (company.state) {
+      setStateName(company.state);
+      setStateAutoFilled(true);
+    }
+    toast.success(`Selected "${company.name}" — address pre-filled for Step 3`);
+  }
 
   function toggleTrade(t: string) {
     setTrades((cur) => {
@@ -458,12 +482,19 @@ export function HandymanOnboarding() {
               firstName={firstName}
               lastName={lastName}
               businessName={businessName}
+              selectedCompany={selectedCompany}
               errors={errors}
               touched={touched}
               onTouch={touch}
               setFirstName={setFirstName}
               setLastName={setLastName}
-              setBusinessName={setBusinessName}
+              setBusinessName={(val) => {
+                setBusinessName(val);
+                if (selectedCompany && val !== selectedCompany.name) {
+                  setSelectedCompany(null);
+                }
+              }}
+              onSelectCompany={handleSelectCompany}
             />
           )}
 
