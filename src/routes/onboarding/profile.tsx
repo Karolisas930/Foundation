@@ -19,7 +19,14 @@ export const Route = createFileRoute("/onboarding/profile")({
     return {};
   },
   head: () => ({
-    meta: [{ title: "Onboarding — HANDWERK" }],
+    meta: [
+      { title: "Professional registration — HANDWERK" },
+      { name: "description", content: "Register your HANDWERK profile with company, address and contact details." },
+      { property: "og:title", content: "Professional registration — HANDWERK" },
+      { property: "og:description", content: "Set up your company or professional profile on HANDWERK." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
   }),
   component: OnboardingProfileRoute,
 });

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { persistOnboardingProfile } from "@/components/shared/shared";
+import { CompanyLookup } from "./CompanyLookup";
 
 type PostalEntry = { match: RegExp; city: string; state: string };
 type CountryEntry = {
@@ -117,6 +118,8 @@ export function ArchitectForm() {
   const [countrySearch, setCountrySearch] = useState("");
   const [phone, setPhone] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [companyPostalCode, setCompanyPostalCode] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
   const [city, setCity] = useState("Berlin");
   const [stateRegion, setStateRegion] = useState("Berlin");
   const [autoFilled, setAutoFilled] = useState(true);
@@ -137,13 +140,14 @@ export function ArchitectForm() {
   }, [specSearch]);
 
   useEffect(() => {
+    if (postalCode && postalCode === companyPostalCode) return;
     const hit = lookupPostalCode(country, postalCode);
     if (hit) {
       setCity(hit.city);
       setStateRegion(hit.state);
       setAutoFilled(true);
     } else setAutoFilled(false);
-  }, [postalCode, country]);
+  }, [postalCode, country, companyPostalCode]);
 
   function handleCountrySelect(code: string) {
     setCountry(code);
@@ -187,6 +191,7 @@ export function ArchitectForm() {
       country,
       phone,
       postalCode,
+      streetAddress,
       city,
       stateRegion,
     });
@@ -241,10 +246,21 @@ export function ArchitectForm() {
                 </Field>
               </div>
               <Field id="firm" label="Architecture Firm / Company Name">
-                <Input
+                <CompanyLookup
                   id="firm"
                   value={firm}
-                  onChange={(e) => setFirm(e.target.value)}
+                  onChange={setFirm}
+                  countryCode={country}
+                  onSelect={(company) => {
+                    if (company.postalCode) { setPostalCode(company.postalCode); setCompanyPostalCode(company.postalCode); }
+                    if (company.city) setCity(company.city);
+                    if (company.state) setStateRegion(company.state);
+                    const address = [company.street, company.houseNumber].filter(Boolean).join(" ");
+                    if (address) setStreetAddress(address);
+                    if (company.email) setEmail(company.email);
+                    if (company.phone) setPhone(company.phone);
+                    setAutoFilled(false);
+                  }}
                   placeholder="Schmidt Architekten GmbH"
                 />
               </Field>
@@ -423,6 +439,9 @@ export function ArchitectForm() {
                 </div>
               </Field>
 
+              <Field id="streetAddress" label="Street address">
+                <Input id="streetAddress" value={streetAddress} onChange={(event) => setStreetAddress(event.target.value)} autoComplete="street-address" maxLength={200} />
+              </Field>
               <div className="grid grid-cols-3 gap-3">
                 <Field id="plz" label="Postal Code">
                   <Input

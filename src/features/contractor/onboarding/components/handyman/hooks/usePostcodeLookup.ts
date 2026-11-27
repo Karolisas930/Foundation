@@ -9,6 +9,7 @@ import { lookupPostalCodeOpenPLZ } from "@/regions";
 
 interface Params {
   postalCode: string;
+  resolvedPostalCode?: string;
   cityAutoFilled: boolean;
   setCity: (v: string) => void;
   setStateName: (v: string) => void;
@@ -18,6 +19,7 @@ interface Params {
 
 export function usePostcodeLookup({
   postalCode,
+  resolvedPostalCode,
   cityAutoFilled,
   setCity,
   setStateName,
@@ -25,6 +27,7 @@ export function usePostcodeLookup({
   setStateAutoFilled,
 }: Params) {
   useEffect(() => {
+    if (postalCode && postalCode === resolvedPostalCode) return;
     const hit = lookupGermanPostcode(postalCode);
     if (hit) {
       setCity(hit.city);
@@ -53,5 +56,5 @@ export function usePostcodeLookup({
       });
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postalCode]);
+  }, [postalCode, resolvedPostalCode]);
 }

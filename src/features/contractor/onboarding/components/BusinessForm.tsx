@@ -10,12 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormShell } from "@/components/shared/FormShell";
 import { persistOnboardingProfile } from "@/components/shared/shared";
+import { CompanyLookup } from "./CompanyLookup";
 
 const TEAM_SIZE_OPTIONS = ["1", "2 – 5", "6 – 10", "11 – 20", "21 – 50", "50+"];
 
 export function BusinessForm() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [details, setDetails] = useState({ headquartersStreetAddress: "", headquartersCity: "", headquartersPostalCode: "", corporateEmail: "", companyPhone: "" });
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,6 +37,7 @@ export function BusinessForm() {
       teamSize: String(fd.get("teamSize") ?? "").trim(),
       headquartersCity: String(fd.get("headquartersCity") ?? "").trim(),
       headquartersPostalCode: String(fd.get("headquartersPostalCode") ?? "").trim(),
+      headquartersStreetAddress: String(fd.get("headquartersStreetAddress") ?? "").trim(),
     };
     if (!profile.legalCompanyName || !profile.taxId) {
       toast.error("Legal company name and Tax ID are required.");
@@ -63,10 +67,18 @@ export function BusinessForm() {
           <div className="mt-3 space-y-4">
             <div>
               <Label htmlFor="legalCompanyName">Legal Company Name</Label>
-              <Input
+              <CompanyLookup
                 id="legalCompanyName"
                 name="legalCompanyName"
-                autoComplete="organization"
+                value={companyName}
+                onChange={setCompanyName}
+                onSelect={(company) => setDetails((current) => ({
+                  headquartersStreetAddress: [company.street, company.houseNumber].filter(Boolean).join(" ") || current.headquartersStreetAddress,
+                  headquartersCity: company.city || current.headquartersCity,
+                  headquartersPostalCode: company.postalCode || current.headquartersPostalCode,
+                  corporateEmail: company.email || current.corporateEmail,
+                  companyPhone: company.phone || current.companyPhone,
+                }))}
                 required
                 maxLength={160}
               />
@@ -124,6 +136,8 @@ export function BusinessForm() {
                 <Input
                   id="corporateEmail"
                   name="corporateEmail"
+                  value={details.corporateEmail}
+                  onChange={(event) => setDetails((current) => ({ ...current, corporateEmail: event.target.value }))}
                   type="email"
                   required
                   maxLength={254}
@@ -131,7 +145,7 @@ export function BusinessForm() {
               </div>
               <div>
                 <Label htmlFor="companyPhone">Company Phone Number</Label>
-                <Input id="companyPhone" name="companyPhone" type="tel" required maxLength={30} />
+                <Input id="companyPhone" name="companyPhone" type="tel" required maxLength={30} value={details.companyPhone} onChange={(event) => setDetails((current) => ({ ...current, companyPhone: event.target.value }))} />
               </div>
             </div>
             <div>
@@ -157,19 +171,25 @@ export function BusinessForm() {
 
         <section>
           <h2 className="font-display text-base font-semibold text-navy">Headquarters</h2>
+          <div className="mt-3">
+            <Label htmlFor="headquartersStreetAddress">Street address</Label>
+            <Input id="headquartersStreetAddress" name="headquartersStreetAddress" autoComplete="street-address" maxLength={200} value={details.headquartersStreetAddress} onChange={(event) => setDetails((current) => ({ ...current, headquartersStreetAddress: event.target.value }))} />
+          </div>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="headquartersPostalCode">Postal Code</Label>
               <Input
                 id="headquartersPostalCode"
                 name="headquartersPostalCode"
+                value={details.headquartersPostalCode}
+                onChange={(event) => setDetails((current) => ({ ...current, headquartersPostalCode: event.target.value }))}
                 inputMode="numeric"
                 maxLength={10}
               />
             </div>
             <div>
               <Label htmlFor="headquartersCity">City</Label>
-              <Input id="headquartersCity" name="headquartersCity" maxLength={120} />
+              <Input id="headquartersCity" name="headquartersCity" maxLength={120} value={details.headquartersCity} onChange={(event) => setDetails((current) => ({ ...current, headquartersCity: event.target.value }))} />
             </div>
           </div>
         </section>
