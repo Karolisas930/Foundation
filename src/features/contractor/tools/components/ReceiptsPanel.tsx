@@ -1,9 +1,14 @@
 /**
- * ReceiptsPanel — upload receipts to Supabase Storage, optionally OCR, list & delete.
+ * ReceiptsPanel — upload receipts to private Cloudflare storage, optionally OCR, list & delete.
  */
 import { useEffect, useRef, useState } from "react";
 import { Camera, Loader2, Receipt, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  deletePrivateFile,
+  getPrivateFileUrl,
+  uploadPrivateFile,
+} from "@/lib/private-files.functions";
 import { useOcr } from "@/features/contractor/tools/hooks/useOcr";
 
 import { Button } from "@/components/ui/button";
@@ -100,10 +105,11 @@ export function ReceiptsPanel({ userId, receipts, onChange, autoOpenScanner }: P
       if (draft.file) {
         const ext = draft.file.name.split(".").pop() || "bin";
         filePath = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error } = await supabase.storage
-          .from("receipts")
-          .upload(filePath, draft.file, { contentType: draft.file.type });
-        if (error) throw error;
+        const fd = new FormData();
+        fd.append("bucket", "receipts");
+        fd.append("path", filePath);
+        fd.append("file", draft.file);
+        await uploadPrivateFile({ data: fd });
         fileMime = draft.file.type;
       }
       const amountCents = Math.round(Number((draft.amount || "0").replace(",", ".")) * 100);
@@ -138,7 +144,9 @@ export function ReceiptsPanel({ userId, receipts, onChange, autoOpenScanner }: P
   async function handleDelete(row: ReceiptRow) {
     if (!confirm("Delete this receipt?")) return;
     if (row.file_path) {
-      await supabase.storage.from("receipts").remove([row.file_path]);
+      await deletePrivateFile({ data: { bucket: "receipts", path: row.file_path } }).catch(
+        (e: unknown) => console.error("[receipts] file delete failed", e),
+      );
     }
     const { error } = await supabase.from("receipts").delete().eq("id", row.id);
     if (error) {
@@ -284,12 +292,11 @@ function ReceiptRowView({ row, onDelete }: { row: ReceiptRow; onDelete: () => vo
   useEffect(() => {
     let alive = true;
     if (!row.file_path) return;
-    supabase.storage
-      .from("receipts")
-      .createSignedUrl(row.file_path, 3600)
-      .then(({ data }: { data: { signedUrl: string } | null }) => {
-        if (alive && data) setUrl(data.signedUrl);
-      });
+    getPrivateFileUrl({ data: { bucket: "receipts", path: row.file_path } })
+      .then(({ url }) => {
+        if (alive) setUrl(url);
+      })
+      .catch(() => {});
     return () => {
       alive = false;
     };

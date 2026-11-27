@@ -23,5 +23,16 @@ export function getR2() {
     async get(key: string) {
       return client.fetch(`${base}/${key}`);
     },
+    async remove(key: string) {
+      const res = await client.fetch(`${base}/${key}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 404) throw new Error(`R2 delete failed [${res.status}]`);
+    },
+    /** Time-limited download link that works without our server in between. */
+    async signedUrl(key: string, expiresInSeconds = 3600) {
+      const url = new URL(`${base}/${key}`);
+      url.searchParams.set("X-Amz-Expires", String(expiresInSeconds));
+      const signed = await client.sign(url.toString(), { method: "GET", aws: { signQuery: true } });
+      return signed.url;
+    },
   };
 }

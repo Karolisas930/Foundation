@@ -1,7 +1,7 @@
 /**
  * verification-ocr — Analyzes uploaded credential documents (Meisterbrief or
  * Betriebshaftpflicht insurance policy) with the Lovable AI multimodal model,
- * stores the file in the private `verifications` bucket, and inserts a row in
+ * stores the file privately in Cloudflare R2, and inserts a row in
  * the `verifications` table with the structured extraction payload.
  */
 import { createServerFn } from "@tanstack/react-start";
@@ -196,17 +196,17 @@ export const extractVerification = createServerFn({ method: "POST" })
     const bytes = base64ToBytes(fileBase64);
     const path = `${userId}/${kind}/${Date.now()}_${safeFileName(fileName)}`;
 
-    const uploadRes = await supabase.storage.from("verifications").upload(path, bytes, {
-      contentType: mime,
-      upsert: false,
-    });
-
-    if (uploadRes.error) {
-      console.error("[verification-ocr] storage upload failed", uploadRes.error);
+    try {
+      const { getR2 } = await import("./r2.server");
+      const { r2Key } = await import("./private-files.server");
+      const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+      await getR2().put(r2Key("verifications", path), buf, mime);
+    } catch (err) {
+      console.error("[verification-ocr] storage upload failed", err);
       return {
         ok: false as const,
         error: "storage_failed" as const,
-        message: uploadRes.error.message,
+        message: "Document could not be stored",
       };
     }
 

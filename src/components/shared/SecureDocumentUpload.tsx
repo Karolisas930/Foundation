@@ -4,7 +4,7 @@
  * Mobile-optimized: opens the rear camera viewfinder directly via
  * `capture="environment"` for photos, plus a separate PDF picker.
  *
- * Storage layout: bucket `staff-documents`, path `<ownerId>/<memberId>/<uuid>.<ext>`.
+ * Storage layout: Cloudflare R2 `private/staff-documents/`, path `<ownerId>/<memberId>/<uuid>.<ext>`.
  * Metadata is logged to `public.staff_document_logs` (owner_id + text member_id),
  * kept fully separate from the manager finanz views.
  */
@@ -13,6 +13,7 @@ import { Camera, FileText, Loader2, Upload, CheckCircle2, AlertTriangle } from "
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase as supabaseTyped } from "@/integrations/supabase/client";
+import { uploadPrivateFile } from "@/lib/private-files.functions";
 
 // Cast to bypass generated Database types (the staff_document_logs table
 // lives in a migration that isn't reflected in the generated types yet).
@@ -112,12 +113,11 @@ export function SecureDocumentUpload({
         const id = uuid();
         const path = `${ownerId}/${memberId}/${id}.${ext}`;
 
-        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
-          cacheControl: "3600",
-          contentType: file.type || (isPdf ? "application/pdf" : "image/jpeg"),
-          upsert: false,
-        });
-        if (upErr) throw upErr;
+        const fd = new FormData();
+        fd.append("bucket", BUCKET);
+        fd.append("path", path);
+        fd.append("file", file);
+        await uploadPrivateFile({ data: fd });
 
         const { data: logRow, error: logErr } = await supabase
           .from("staff_document_logs")
