@@ -2,6 +2,7 @@
  * ReceiptsPanel — upload receipts to private Cloudflare storage, optionally OCR, list & delete.
  */
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Camera, Loader2, Receipt, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -49,6 +50,8 @@ interface Props {
 }
 
 export function ReceiptsPanel({ userId, receipts, onChange, autoOpenScanner }: Props) {
+  const uploadFile = useServerFn(uploadPrivateFile);
+  const deleteFile = useServerFn(deletePrivateFile);
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const { scan, busy: ocrBusy } = useOcr();
@@ -109,7 +112,7 @@ export function ReceiptsPanel({ userId, receipts, onChange, autoOpenScanner }: P
         fd.append("bucket", "receipts");
         fd.append("path", filePath);
         fd.append("file", draft.file);
-        await uploadPrivateFile({ data: fd });
+        await uploadFile({ data: fd });
         fileMime = draft.file.type;
       }
       const amountCents = Math.round(Number((draft.amount || "0").replace(",", ".")) * 100);
@@ -144,7 +147,7 @@ export function ReceiptsPanel({ userId, receipts, onChange, autoOpenScanner }: P
   async function handleDelete(row: ReceiptRow) {
     if (!confirm("Delete this receipt?")) return;
     if (row.file_path) {
-      await deletePrivateFile({ data: { bucket: "receipts", path: row.file_path } }).catch(
+      await deleteFile({ data: { bucket: "receipts", path: row.file_path } }).catch(
         (e: unknown) => console.error("[receipts] file delete failed", e),
       );
     }
@@ -288,11 +291,12 @@ export function ReceiptsPanel({ userId, receipts, onChange, autoOpenScanner }: P
 }
 
 function ReceiptRowView({ row, onDelete }: { row: ReceiptRow; onDelete: () => void }) {
+  const getFileUrl = useServerFn(getPrivateFileUrl);
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     if (!row.file_path) return;
-    getPrivateFileUrl({ data: { bucket: "receipts", path: row.file_path } })
+    getFileUrl({ data: { bucket: "receipts", path: row.file_path } })
       .then(({ url }) => {
         if (alive) setUrl(url);
       })
@@ -300,7 +304,7 @@ function ReceiptRowView({ row, onDelete }: { row: ReceiptRow; onDelete: () => vo
     return () => {
       alive = false;
     };
-  }, [row.file_path]);
+  }, [row.file_path, getFileUrl]);
 
   return (
     <li className="flex items-center gap-3 py-2">

@@ -9,6 +9,7 @@
  * kept fully separate from the manager finanz views.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Camera, FileText, Loader2, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -63,6 +64,7 @@ export function SecureDocumentUpload({
   memberName,
   onUploaded,
 }: SecureDocumentUploadProps) {
+  const uploadFile = useServerFn(uploadPrivateFile);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -117,7 +119,7 @@ export function SecureDocumentUpload({
         fd.append("bucket", BUCKET);
         fd.append("path", path);
         fd.append("file", file);
-        await uploadPrivateFile({ data: fd });
+        await uploadFile({ data: fd });
 
         const { data: logRow, error: logErr } = await supabase
           .from("staff_document_logs")
@@ -150,7 +152,7 @@ export function SecureDocumentUpload({
         if (pdfInputRef.current) pdfInputRef.current.value = "";
       }
     },
-    [ownerId, memberId, onUploaded],
+    [ownerId, memberId, onUploaded, uploadFile],
   );
 
   return (
